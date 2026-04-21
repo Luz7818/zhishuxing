@@ -1,0 +1,15 @@
+{
+  "name": "zhishuxing",
+  "version": "1.0.0",
+  "description": "综合交通枢纽智慧换乘引导项目，聚焦“动态客流 + 多智能体协同 + 可视化交互”。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@flyfish-group/file-viewer3": "^1.0.5"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "智枢星-手机版换乘引导",
+  "short_name": "智枢星",
+  "start_url": "./mobile_app.html",
+  "display": "standalone",
+  "background_color": "#f4f1e8",
+  "theme_color": "#0f766e",
+  "lang": "zh-CN",
+  "description": "交通枢纽智慧换乘引导的移动端表层演示应用",
+  "icons": []
+}

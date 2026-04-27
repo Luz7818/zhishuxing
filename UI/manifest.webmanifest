@@ -7,5 +7,17 @@
   "theme_color": "#0f766e",
   "lang": "zh-CN",
   "description": "交通枢纽智慧换乘引导的移动端表层演示应用",
-  "icons": []
+  "icons": [
+    {
+      "src": "./图标.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./图标.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }

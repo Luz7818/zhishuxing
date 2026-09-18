@@ -87,6 +87,20 @@ def create_app(service: ZhiShuXingWebService | None = None) -> Flask:
         except Exception as exc:
             return fail(exc)
 
+    @app.get("/api/navigation/grid")
+    def api_navigation_grid():
+        try:
+            return ok(service.grid())
+        except Exception as exc:
+            return fail(exc)
+
+    @app.get("/api/scenarios")
+    def api_scenarios():
+        try:
+            return ok(service.default_groups())
+        except Exception as exc:
+            return fail(exc)
+
     # ------------------------------------------------------------ LLM
 
     @app.post("/api/llm/load")

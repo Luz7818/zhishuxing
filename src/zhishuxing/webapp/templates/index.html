@@ -3,115 +3,350 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>智枢星 Web 控制台</title>
+  <title>智枢星 · Web 控制台</title>
   <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
-  <header>
-    <h1>智枢星：综合交通枢纽智慧换乘引导系统</h1>
-    <p>支持导航图加载、换乘路径规划、MADDPG 多智能体强化学习策略推理与引导仿真、LLM 加载与微调、既有功能联动。</p>
-  </header>
+<div class="app">
 
-  <main class="grid">
-    <section class="card">
-      <h2>导航图加载</h2>
-      <label>导航文件路径</label>
-      <input id="navPath" type="text" value="{{ default_navigation }}" />
-      <button id="btnLoadNav">加载导航</button>
-      <pre id="navResult"></pre>
-    </section>
+  <!-- ============ 侧边导航 ============ -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">✦</div>
+      <span>智枢星<small>智慧换乘引导系统</small></span>
+    </div>
+    <button class="nav-item active" data-view="overview"><span class="icon">📊</span><span class="label">概览</span></button>
+    <button class="nav-item" data-view="navigation"><span class="icon">🗺️</span><span class="label">枢纽导航</span></button>
+    <button class="nav-item" data-view="rl"><span class="icon">🤖</span><span class="label">RL 智能体</span></button>
+    <button class="nav-item" data-view="flow"><span class="icon">🌡️</span><span class="label">客流面板</span></button>
+    <button class="nav-item" data-view="plan"><span class="icon">🧭</span><span class="label">路线规划</span></button>
+    <button class="nav-item" data-view="llm"><span class="icon">✨</span><span class="label">LLM 引擎</span></button>
+    <button class="nav-item" data-view="reports"><span class="icon">📑</span><span class="label">分析报告</span></button>
+    <div class="sidebar-foot">v2.0 · Flask 控制台<br />MADDPG 多智能体 · 换乘引导</div>
+  </aside>
 
-    <section class="card">
-      <h2>路径规划接口</h2>
-      <label>起点 [x,y]</label>
-      <input id="start" type="text" value="[1,2]" />
-      <label>终点 [x,y]</label>
-      <input id="goal" type="text" value="[28,12]" />
-      <label>途经地标 ["security"]</label>
-      <input id="via" type="text" value='["security"]' />
-      <button id="btnPlan">规划路径</button>
-      <pre id="planResult"></pre>
-    </section>
-
-    <section class="card">
-      <h2>真实路线规划</h2>
-      <label>出行诉求（自然语言）</label>
-      <input id="planQuestion" type="text" value="从深圳北站到宝安机场" />
-      <label>规划引擎</label>
-      <select id="planEngine">
-        <option value="amap">高德真实路线（需 AMAP_REST_KEY）</option>
-        <option value="hub">枢纽内 A* + RL 引导</option>
-      </select>
-      <button id="btnRealPlan">发起规划</button>
-      <pre id="realPlanResult"></pre>
-    </section>
-
-    <section class="card">
-      <h2>大模型接口</h2>
-      <label>模型ID</label>
-      <input id="modelId" type="text" value="DeepSeek-R1-Distill-Qwen-7B" />
-      <label>模型路径（可选）</label>
-      <input id="modelPath" type="text" placeholder="D:/models/xxx" />
-      <button id="btnLoadLLM">加载模型</button>
-      <hr />
-      <label>微调数据路径</label>
-      <input id="datasetPath" type="text" value="{{ default_dataset }}" />
-      <label>微调配置JSON</label>
-      <textarea id="tuneConfig">{"method":"LoRA","epochs":2,"lr":0.0002,"rank":16}</textarea>
-      <button id="btnTune">执行微调接口</button>
-      <pre id="llmResult"></pre>
-    </section>
-
-    <section class="card">
-      <h2>微调指标模拟（可视化）</h2>
-      <label>训练轮数 Epochs</label>
-      <input id="simEpochs" type="number" min="5" max="300" value="30" />
-      <label>随机种子 Seed</label>
-      <input id="simSeed" type="number" value="42" />
-      <label>噪声控制（Loss / Metric）</label>
-      <div class="row row-fill">
-        <input id="simLossNoise" type="number" step="0.001" value="0.04" />
-        <input id="simMetricNoise" type="number" step="0.001" value="0.012" />
+  <!-- ============ 主区域 ============ -->
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="viewTitle">概览</h1>
+        <p class="sub" id="viewSub">系统状态总览与快捷入口</p>
       </div>
-      <button id="btnSimMetrics">生成 Loss / BLEU-4 / ROUGE 图</button>
-      <pre id="simResult"></pre>
-      <img id="simMetricsImage" alt="微调指标图" />
-    </section>
-
-    <section class="card wide">
-      <h2>多智能体强化学习（MADDPG）</h2>
-      <label>训练产物：策略权重 model/ 目录、奖励数据 data_train/*_env_*.npy</label>
-      <div class="row">
-        <button id="btnRLStatus">刷新训练状态</button>
-        <button id="btnRLPolicy">加载最新策略权重</button>
+      <div class="topbar-right">
+        <span class="badge info" id="policyBadge"><span class="dot"></span>策略加载中…</span>
+        <span class="pill" id="healthPill"><span class="dot"></span>检测连接…</span>
       </div>
-      <div class="row">
-        <button id="btnRLRewards">查看训练奖励曲线</button>
-        <button id="btnRLSim">运行 RL 引导仿真（使用下方群组）</button>
-      </div>
-      <label>策略推理测试（观测：[目标dx,dy, 速度vx,vy, 邻近行人dx,dy×3]，留空使用示例）</label>
-      <textarea id="rlObs" placeholder="[[0.5, 0.25, 1.0, 0.0, 0.2, 0.1, -0.3, 0.4, 0.0, -0.2]]"></textarea>
-      <button id="btnRLAct">策略推理（观测 → 动作）</button>
-      <pre id="rlResult">尚未操作。点击“刷新训练状态”检查 MADDPG 训练产物与策略加载情况。</pre>
-      <img id="rlRewardImage" alt="MADDPG 奖励曲线" />
-      <img id="rlSimImage" alt="RL 引导仿真结果" />
-    </section>
+    </header>
 
-    <section class="card wide">
-      <h2>可视化与系统联动</h2>
-      <label>乘客群组 JSON</label>
-      <textarea id="groups">{{ default_groups }}</textarea>
-      <label>标题（可选）</label>
-      <input id="title" type="text" value="智枢星网页控制台演示" />
-      <div class="row">
-        <button id="btnDashboard">生成可视化面板</button>
-        <button id="btnExisting">运行已有功能脚本</button>
-      </div>
-      <pre id="runResult"></pre>
-      <img id="dashboardImage" alt="可视化输出" />
-    </section>
-  </main>
+    <main class="content">
 
-  <script src="/static/app.js"></script>
+      <!-- ================= 概览 ================= -->
+      <section class="view active" id="view-overview">
+        <div class="grid-4">
+          <div class="kpi accent"><div class="kpi-label">当前策略</div><div class="kpi-value" id="kpiPolicy">—</div><div class="kpi-foot">MADDPG 权重 / 启发式回退</div></div>
+          <div class="kpi"><div class="kpi-label">最新训练步数</div><div class="kpi-value" id="kpiSteps">—</div><div class="kpi-foot" id="kpiStepsFoot">检查点加载后显示</div></div>
+          <div class="kpi"><div class="kpi-label">策略检查点</div><div class="kpi-value" id="kpiCheckpoints">—</div><div class="kpi-foot">model/ 目录 actor 权重</div></div>
+          <div class="kpi ok"><div class="kpi-label">奖励数据</div><div class="kpi-value" id="kpiRewards">—</div><div class="kpi-foot">*_env_*.npy 评估序列</div></div>
+        </div>
+
+        <div class="grid-2" style="margin-top:18px">
+          <div class="card">
+            <h3>⚡ 快捷操作</h3>
+            <p class="desc">常用链路一键直达，执行后自动跳转到对应视图。</p>
+            <div class="row">
+              <button class="btn" id="btnQuickSim">▶ 运行引导仿真</button>
+              <button class="btn ghost" id="btnQuickPanel">🌡 生成客流面板</button>
+              <button class="btn subtle" id="btnQuickPolicy">⤓ 加载最新权重</button>
+              <button class="btn subtle" id="btnQuickReports">📑 运行全部报告</button>
+            </div>
+            <div class="callout" id="overviewGuidance" style="margin-top:16px;display:none"></div>
+          </div>
+          <div class="card">
+            <h3>🩺 系统状态</h3>
+            <p class="desc">运行环境与关键组件实时状态。</p>
+            <table class="table">
+              <tbody>
+                <tr><td>导航图</td><td class="strong" id="stNav">—</td></tr>
+                <tr><td>LLM 模型</td><td class="strong" id="stLLM">—</td></tr>
+                <tr><td>PyTorch</td><td class="strong" id="stTorch">—</td></tr>
+                <tr><td>仿真引擎</td><td class="strong">内置网格多智能体（观测对齐 Unity）</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 枢纽导航 ================= -->
+      <section class="view" id="view-navigation">
+        <div class="layout-split">
+          <div class="card">
+            <h3>🗺️ 枢纽网格</h3>
+            <p class="desc">依次点击两格设定起点与终点（蓝色→绿色），规划路径将实时绘制。</p>
+            <div class="canvas-box"><canvas id="navCanvas" width="930" height="496"></canvas></div>
+            <div class="legend">
+              <span class="key"><span class="swatch" style="background:#22d3ee"></span>起点</span>
+              <span class="key"><span class="swatch" style="background:#34d399"></span>终点</span>
+              <span class="key"><span class="swatch" style="background:#475f8f"></span>阻挡区域</span>
+              <span class="key"><span class="swatch" style="background:#f59e0b"></span>地标</span>
+              <span class="key"><span class="swatch" style="background:#38bdf8"></span>规划路径</span>
+            </div>
+          </div>
+          <div>
+            <div class="card">
+              <h3>🧾 规划参数</h3>
+              <p class="desc">可直接输入中文地标（A口 / 主安检 / 地铁…），或点击网格选取。</p>
+              <div class="field"><label>起点</label><select id="navStart"></select></div>
+              <div class="field"><label>终点</label><select id="navGoal"></select></div>
+              <div class="field"><label>途经地标（可多选）</label>
+                <div class="chips" id="viaChips"></div>
+              </div>
+              <div class="row">
+                <button class="btn" id="btnNavPlan">规划路径</button>
+                <button class="btn subtle" id="btnNavReload">⟳ 重新加载导航图</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>📏 规划结果</h3>
+              <div class="empty" id="navResultEmpty"><span class="icon">🧭</span>设定起终点后点击「规划路径」。<br />支持"必经安检"等业务约束。</div>
+              <div id="navResult" style="display:none">
+                <div class="kv">
+                  <span class="item">路径长度<b id="navLen">—</b></span>
+                  <span class="item">途经点<b id="navVia">—</b></span>
+                </div>
+                <details class="raw"><summary>查看完整路径坐标</summary><pre id="navRaw"></pre></details>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= RL 智能体 ================= -->
+      <section class="view" id="view-rl">
+        <div class="card">
+          <h3>🤖 策略状态</h3>
+          <p class="desc">扫描训练产物并加载每个智能体最新 step 的 actor 权重；无权重时自动以启发式回退并如实标注。</p>
+          <div class="row" style="margin-bottom:14px">
+            <button class="btn" id="btnRLPolicy">⤓ 加载最新策略权重</button>
+            <button class="btn subtle" id="btnRLRefresh">⟳ 刷新状态</button>
+            <span class="badge" id="rlSourceBadge">—</span>
+          </div>
+          <div class="empty" id="rlCkptEmpty"><span class="icon">💾</span>model/ 目录暂无 actor 权重。<br />运行 <code>zhishuxing train</code> 后此处将展示检查点列表。</div>
+          <table class="table" id="rlCkptTable" style="display:none">
+            <thead><tr><th>Agent</th><th>算法</th><th>训练步数</th><th>权重文件</th></tr></thead>
+            <tbody id="rlCkptBody"></tbody>
+          </table>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>📈 训练奖励曲线</h3>
+            <p class="desc">来自 data 目录的评估奖励序列（多 seed 叠加）。</p>
+            <div class="canvas-box"><canvas id="rewardCanvas" width="760" height="300"></canvas></div>
+            <div class="legend" id="rewardLegend"></div>
+            <div class="row" style="margin-top:12px"><button class="btn subtle sm" id="btnRLRewards">⟳ 刷新曲线</button></div>
+          </div>
+          <div class="card">
+            <h3>🎯 策略推理测试</h3>
+            <p class="desc">观测向量 = [目标dx, dy, 速度vx, vy, 邻近行人dx, dy ×3]，动作 = [前进, 转向]。</p>
+            <div class="field"><label>观测（JSON 二维数组）</label><textarea id="rlObs">[[0.5, 0.25, 1.0, 0.0, 0.2, 0.1, -0.3, 0.4, 0.0, -0.2]]</textarea></div>
+            <button class="btn ghost" id="btnRLAct">推理（观测 → 动作）</button>
+            <div id="rlActResult" style="margin-top:14px"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🚶 引导仿真</h3>
+          <p class="desc">多智能体在枢纽网格内按当前策略引导通行：输出换乘时间、拥堵与轨迹快照。</p>
+          <div class="field-row">
+            <div class="field"><label>最大步数</label><input id="simSteps" type="number" value="240" min="10" max="1000" /></div>
+            <div class="field"><label>每组智能体数</label><input id="simAgents" type="number" value="6" min="1" max="20" /></div>
+            <div class="field"><label>随机种子</label><input id="simSeed" type="number" value="42" /></div>
+            <div class="field" style="align-self:flex-end"><button class="btn" id="btnRLSim">▶ 运行仿真</button></div>
+          </div>
+          <div class="empty" id="simEmpty"><span class="icon">🛰️</span>点击「运行仿真」查看策略在枢纽中的实际表现。</div>
+          <div id="simResult" style="display:none">
+            <div class="grid-4" style="margin-bottom:14px">
+              <div class="kpi ok"><div class="kpi-label">到达率</div><div class="kpi-value" id="simArrive">—</div></div>
+              <div class="kpi"><div class="kpi-label">平均换乘步数</div><div class="kpi-value" id="simAvg">—</div><div class="kpi-foot">自由流基线 <span id="simBase">—</span></div></div>
+              <div class="kpi warn"><div class="kpi-label">拥堵峰值</div><div class="kpi-value" id="simCong">—</div></div>
+              <div class="kpi"><div class="kpi-label">碰撞事件</div><div class="kpi-value" id="simColl">—</div></div>
+            </div>
+            <div class="kv" style="margin-bottom:8px">
+              <span class="item">执行步数<b id="simExec">—</b></span>
+              <span class="item">策略来源<b id="simPolicy">—</b></span>
+            </div>
+            <figure class="output-frame" id="simImageFrame">
+              <img id="simImage" alt="引导仿真轨迹" />
+              <figcaption>仿真轨迹与累计客流快照</figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 客流面板 ================= -->
+      <section class="view" id="view-flow">
+        <div class="card">
+          <h3>👥 乘客群组</h3>
+          <p class="desc">默认三组场景（来自 configs/scenarios.json），可修改人数与释放时间后生成动态客流面板。</p>
+          <table class="table">
+            <thead><tr><th>群组</th><th>路径</th><th>释放时刻</th><th>人数</th></tr></thead>
+            <tbody id="groupBody"></tbody>
+          </table>
+          <div class="row" style="margin-top:14px">
+            <button class="btn" id="btnPanel">🌡 生成可视化面板</button>
+            <button class="btn subtle" id="btnGroupReset">⟳ 恢复默认场景</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>🖼 输出面板</h3>
+          <p class="desc">左：动态客流热力；右：各组引导路径。</p>
+          <div class="empty" id="panelEmpty"><span class="icon">🖼️</span>生成后在此预览，并给出 LLM 引导文案。</div>
+          <div id="panelResult" style="display:none">
+            <div class="callout" id="panelGuidance" style="margin-bottom:14px"></div>
+            <figure class="output-frame show">
+              <img id="panelImage" alt="客流面板" />
+              <figcaption id="panelMeta"></figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 路线规划 ================= -->
+      <section class="view" id="view-plan">
+        <div class="card">
+          <h3>🧭 真实路线规划</h3>
+          <p class="desc">高德引擎需配置 AMAP_REST_KEY 环境变量；枢纽引擎离线可用（A* + RL 引导仿真）。</p>
+          <div class="field"><label>出行诉求（自然语言）</label>
+            <input id="planQuestion" value="从深圳北站到宝安机场" placeholder="例如：从深圳北站A20出站口到五号线" />
+          </div>
+          <div class="field-row">
+            <div class="field"><label>规划引擎</label>
+              <select id="planEngine">
+                <option value="amap">高德真实路线</option>
+                <option value="hub">枢纽内 A* + RL 引导</option>
+              </select>
+            </div>
+            <div class="field"><label>路线策略</label>
+              <div class="chips" id="strategyChips">
+                <button class="chip active" data-v="balanced">均衡</button>
+                <button class="chip" data-v="fast">时间优先</button>
+                <button class="chip" data-v="economy">费用优先</button>
+                <button class="chip" data-v="comfort">舒适优先</button>
+              </div>
+            </div>
+          </div>
+          <div class="chips" style="margin-bottom:16px">
+            <button class="chip" id="chipWalk" data-v="short">🚶 少步行</button>
+            <button class="chip" id="chipCrowd" data-v="avoid">🚫 避开拥堵</button>
+          </div>
+          <button class="btn" id="btnRealPlan">发起规划</button>
+        </div>
+
+        <div class="empty" id="planEmpty"><span class="icon">🧭</span>规划结果将在此展示：用时 / 费用 / 换乘 / 路线详情 / 出行提醒。</div>
+        <div id="planResult" style="display:none">
+          <div class="grid-4" style="margin-bottom:18px">
+            <div class="kpi accent"><div class="kpi-label">预计用时</div><div class="kpi-value" id="planDur">—</div></div>
+            <div class="kpi"><div class="kpi-label">预计费用</div><div class="kpi-value" id="planCost">—</div></div>
+            <div class="kpi"><div class="kpi-label">换乘次数</div><div class="kpi-value" id="planSeg">—</div></div>
+            <div class="kpi"><div class="kpi-label">引擎 / OD 来源</div><div class="kpi-value" id="planEngineUsed" style="font-size:16px">—</div></div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <h3>🛣️ 路线详情</h3>
+              <p class="desc" id="planOD"></p>
+              <div class="canvas-box" id="planMapBox" style="display:none"><canvas id="planCanvas" width="620" height="330"></canvas></div>
+              <ol class="list" id="planDetails" style="margin-top:12px"></ol>
+            </div>
+            <div class="card">
+              <h3>💡 出行提醒</h3>
+              <ul class="list" id="planTips"></ul>
+              <details class="raw"><summary>查看原始规划数据</summary><pre id="planRaw"></pre></details>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= LLM 引擎 ================= -->
+      <section class="view" id="view-llm">
+        <div class="grid-2">
+          <div class="card">
+            <h3>🔌 模型加载</h3>
+            <p class="desc">默认 Mock 适配器（演示）；配置 SILICONFLOW_API_KEY 后可加载真实 OpenAI 兼容模型。</p>
+            <div class="field"><label>模型 ID</label><input id="llmModel" value="DeepSeek-R1-Distill-Qwen-7B" /></div>
+            <div class="chips" style="margin-bottom:14px"><button class="chip" id="chipReal">使用真实适配器（需密钥）</button></div>
+            <button class="btn" id="btnLLMLoad">加载模型</button>
+            <div id="llmLoadResult" style="margin-top:14px"></div>
+          </div>
+          <div class="card">
+            <h3>🧪 微调接口</h3>
+            <p class="desc">写入微调任务元数据（Mock 占位，可替换为 LoRA/PEFT 实际流程）。</p>
+            <div class="field"><label>训练配置（JSON）</label><textarea id="llmTuneConfig">{"method":"LoRA","epochs":2,"lr":0.0002,"rank":16}</textarea></div>
+            <button class="btn ghost" id="btnLLMTune">执行微调接口</button>
+            <div id="llmTuneResult" style="margin-top:14px"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>📈 微调指标报告</h3>
+          <p class="desc">模拟 LoRA 微调的 Loss / BLEU-4 / ROUGE 曲线（固定种子可复现）。</p>
+          <div class="field-row" style="max-width:420px">
+            <div class="field"><label>Epochs</label><input id="ftEpochs" type="number" value="36" min="5" max="300" /></div>
+            <div class="field"><label>Seed</label><input id="ftSeed" type="number" value="42" /></div>
+            <div class="field" style="align-self:flex-end"><button class="btn" id="btnFT">生成指标报告</button></div>
+          </div>
+          <div class="empty" id="ftEmpty"><span class="icon">📈</span>生成后在此查看 Loss 下降与指标上升曲线。</div>
+          <div id="ftResult" style="display:none">
+            <div class="kv" style="margin-bottom:14px">
+              <span class="item">最终 Loss<b id="ftLoss">—</b></span>
+              <span class="item">BLEU-4<b id="ftBleu">—</b></span>
+              <span class="item">ROUGE-1<b id="ftR1">—</b></span>
+              <span class="item">ROUGE-L<b id="ftRL">—</b></span>
+            </div>
+            <div class="canvas-box"><canvas id="ftLossCanvas" width="620" height="240"></canvas></div>
+            <div class="canvas-box" style="margin-top:12px"><canvas id="ftMetricCanvas" width="620" height="260"></canvas></div>
+            <div class="legend">
+              <span class="key"><span class="swatch" style="background:#38bdf8"></span>BLEU-4</span>
+              <span class="key"><span class="swatch" style="background:#34d399"></span>ROUGE-1</span>
+              <span class="key"><span class="swatch" style="background:#f59e0b"></span>ROUGE-L</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= 分析报告 ================= -->
+      <section class="view" id="view-reports">
+        <div class="card">
+          <h3>📑 分析报告中心</h3>
+          <p class="desc">七类报告一键生成（固定种子，可复现）；完成后输出到 data/outputs 并在下方画廊预览。</p>
+          <div class="row">
+            <button class="btn" id="btnReportsAll">▶ 运行全部报告</button>
+            <span class="badge" id="reportProgress"></span>
+          </div>
+          <table class="table" style="margin-top:14px">
+            <thead><tr><th>报告</th><th>说明</th><th>状态</th></tr></thead>
+            <tbody id="reportBody">
+              <tr data-r="reward"><td>奖励曲线</td><td>MADDPG 评估奖励（平滑 + 归一化）</td><td class="rstate">待运行</td></tr>
+              <tr data-r="congestion_heatmap"><td>拥堵热力图</td><td>深圳北站 12 区域 × 17 时段 训练前后对比</td><td class="rstate">待运行</td></tr>
+              <tr data-r="transfer_time_distribution"><td>换乘时间分布</td><td>P50 / P90 / Max 随迭代收敛</td><td class="rstate">待运行</td></tr>
+              <tr data-r="security_queue_comparison"><td>安检排队对比</td><td>无引导 vs MADDPG 动态分流</td><td class="rstate">待运行</td></tr>
+              <tr data-r="transfer_efficiency_scenarios"><td>场景效率对比</td><td>高峰/平峰 × 普通/大件行李</td><td class="rstate">待运行</td></tr>
+              <tr data-r="finetune_metrics"><td>微调指标</td><td>Loss / BLEU / ROUGE 曲线</td><td class="rstate">待运行</td></tr>
+              <tr data-r="transfer_env_animation"><td>换乘动图</td><td>44 行人微观仿真 GIF</td><td class="rstate">待运行</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <h3>🖼 输出画廊</h3>
+          <p class="desc">运行后自动收录新产出图片。</p>
+          <div class="empty" id="galleryEmpty"><span class="icon">🖼️</span>暂无输出。点击「运行全部报告」生成。</div>
+          <div class="grid-2" id="gallery" style="display:none"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<div id="toastHost"></div>
+<script src="/static/app.js"></script>
 </body>
 </html>

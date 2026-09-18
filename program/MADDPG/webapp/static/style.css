@@ -101,6 +101,7 @@ pre {
 
 .row {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -127,6 +128,19 @@ pre {
   border-radius: 8px;
   border: 1px solid rgba(148, 163, 184, 0.25);
   display: none;
+}
+
+#rlRewardImage,
+#rlSimImage {
+  margin-top: 12px;
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  display: none;
+}
+
+#rlObs {
+  min-height: 64px;
 }
 
 @media (max-width: 1024px) {

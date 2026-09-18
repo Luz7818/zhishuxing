@@ -76,6 +76,34 @@ def run_smoke_test() -> None:
     sim_csv_resp = client.get(f"/outputs/{sim_csv_name}")
     assert sim_csv_resp.status_code == 200
 
+    rl_status = client.get("/api/rl/status")
+    assert rl_status.status_code == 200, rl_status.data
+    rl_payload = json.loads(rl_status.data.decode("utf-8"))
+    assert "policy_source" in rl_payload["data"]
+
+    rl_act = client.post(
+        "/api/rl/act",
+        json={"observations": [[0.5, 0.25, 1.0, 0.0, 0.2, 0.1, -0.3, 0.4, 0.0, -0.2]]},
+    )
+    assert rl_act.status_code == 200, rl_act.data
+    act_payload = json.loads(rl_act.data.decode("utf-8"))
+    assert len(act_payload["data"]["actions"][0]) == 2
+
+    rl_rewards = client.get("/api/rl/rewards")
+    assert rl_rewards.status_code == 200, rl_rewards.data
+
+    rl_sim = client.post(
+        "/api/rl/simulate",
+        json={"groups": groups, "config": {"max_steps": 120, "agents_per_group": 3}},
+    )
+    assert rl_sim.status_code == 200, rl_sim.data
+    sim_payload = json.loads(rl_sim.data.decode("utf-8"))
+    assert sim_payload["data"]["agents_total"] > 0
+
+    rl_sim_image_url = sim_payload["data"]["image_url"]
+    rl_sim_image_resp = client.get(f"/outputs/{rl_sim_image_url.split('/')[-1]}")
+    assert rl_sim_image_resp.status_code == 200
+
     print("Web smoke test passed.")
 
 

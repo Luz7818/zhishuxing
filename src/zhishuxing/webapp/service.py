@@ -71,6 +71,19 @@ class ZhiShuXingWebService:
         )
         return {"length": len(route), "route": [list(p) for p in route]}
 
+    def grid(self) -> Dict[str, Any]:
+        """完整导航网格（供前端 Canvas 渲染）。"""
+        nav_map = self.system.nav_map
+        if nav_map is None:
+            raise RuntimeError("请先加载导航图。")
+        return {
+            "width": nav_map.width,
+            "height": nav_map.height,
+            "blocked": [list(p) for p in nav_map.blocked],
+            "landmarks": {k: list(v) for k, v in nav_map.landmarks.items()},
+            "file": self.loaded_navigation,
+        }
+
     # ------------------------------------------------------------ LLM
 
     def load_llm(self, model_id: str, model_path: Optional[str] = None, prefer_real: bool = False) -> Dict[str, Any]:
@@ -147,9 +160,11 @@ class ZhiShuXingWebService:
 
     def rl_rewards(self) -> Dict[str, Any]:
         rendered = self.rl.render_reward_curve()
+        # 图表需要完整 x/y 序列；render_reward_curve 只返回摘要，需从 reward_series 取全量
+        full_series = self.rl.reward_series()["series"]
         result: Dict[str, Any] = {
             "series_count": rendered["series_count"],
-            "series": rendered.get("series", []),
+            "series": full_series,
         }
         if rendered.get("error"):
             result["error"] = rendered["error"]

@@ -18,8 +18,43 @@ def test_index_page(client):
     resp = client.get("/")
     assert resp.status_code == 200
     html = resp.data.decode("utf-8")
-    for key in ("多智能体强化学习", "真实路线规划", "btnRLSim", "btnRealPlan"):
+    # 应用外壳与关键交互元素
+    for key in (
+        "view-overview",
+        "view-navigation",
+        "view-rl",
+        "view-flow",
+        "view-plan",
+        "view-llm",
+        "view-reports",
+        "navCanvas",
+        "rewardCanvas",
+        "btnRLSim",
+        "btnRealPlan",
+        "btnPanel",
+        "btnReportsAll",
+        "app.js",
+    ):
         assert key in html
+
+
+def test_navigation_grid_endpoint(client):
+    resp = client.get("/api/navigation/grid")
+    assert resp.status_code == 200
+    grid = resp.get_json()["data"]
+    assert grid["width"] == 30 and grid["height"] == 16
+    assert len(grid["blocked"]) == 20
+    assert "entry_a" in grid["landmarks"]
+
+
+def test_scenarios_endpoint(client):
+    resp = client.get("/api/scenarios")
+    assert resp.status_code == 200
+    groups = resp.get_json()["data"]
+    assert len(groups) == 3
+    for group in groups:
+        assert isinstance(group["start"], list) and len(group["start"]) == 2
+        assert group["passengers"] > 0
 
 
 def test_navigation_load_and_plan(client):

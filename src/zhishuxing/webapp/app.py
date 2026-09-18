@@ -7,7 +7,6 @@
 
 from __future__ import annotations
 
-import json
 import traceback
 from pathlib import Path
 
@@ -37,12 +36,7 @@ def create_app(service: ZhiShuXingWebService | None = None) -> Flask:
 
     @app.get("/")
     def home():
-        return render_template(
-            "index.html",
-            default_navigation=service.loaded_navigation,
-            default_groups=json.dumps(service.default_groups(), ensure_ascii=False, indent=2),
-            default_dataset=str(service.default_dataset),
-        )
+        return render_template("index.html")
 
     @app.get("/health")
     def health():

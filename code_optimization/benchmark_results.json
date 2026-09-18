@@ -1,0 +1,82 @@
+{
+  "cases": [
+    {
+      "label": "默认规模 (44人×1000帧)",
+      "n_agents": 44,
+      "steps": 1000,
+      "impls": {
+        "baseline": {
+          "sec": 0.682,
+          "reached": 44,
+          "interventions": 88,
+          "congestion": 1.0
+        },
+        "v1": {
+          "sec": 0.447,
+          "reached": 44,
+          "interventions": 83,
+          "congestion": 0.9545
+        },
+        "v2": {
+          "sec": 0.035,
+          "reached": 44,
+          "interventions": 84,
+          "congestion": 0.9545
+        },
+        "optimized_core": {
+          "sec": 0.035,
+          "reached": 44,
+          "interventions": 84,
+          "congestion": 0.9545
+        }
+      },
+      "speedup_v1": 1.53,
+      "speedup_v2": 19.53,
+      "speedup_core": 19.25,
+      "equivalence": {
+        "reached_equal": true,
+        "interventions_delta": 4,
+        "congestion_delta": 0.0455
+      }
+    },
+    {
+      "label": "大规模 (500人×300帧)",
+      "n_agents": 500,
+      "steps": 300,
+      "impls": {
+        "baseline": {
+          "sec": 7.162,
+          "reached": 500,
+          "interventions": 1309,
+          "congestion": 1.0
+        },
+        "v1": {
+          "sec": 6.774,
+          "reached": 500,
+          "interventions": 1342,
+          "congestion": 1.0
+        },
+        "v2": {
+          "sec": 0.812,
+          "reached": 500,
+          "interventions": 1333,
+          "congestion": 1.0
+        },
+        "optimized_core": {
+          "sec": 0.825,
+          "reached": 500,
+          "interventions": 1333,
+          "congestion": 1.0
+        }
+      },
+      "speedup_v1": 1.06,
+      "speedup_v2": 8.82,
+      "speedup_core": 8.69,
+      "equivalence": {
+        "reached_equal": true,
+        "interventions_delta": 24,
+        "congestion_delta": 0.0
+      }
+    }
+  ]
+}

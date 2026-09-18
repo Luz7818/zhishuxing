@@ -1,0 +1,18 @@
+# 基础依赖（Web 控制台 / 演示 / 分析报告）
+numpy>=1.24
+matplotlib>=3.7
+flask>=3.0
+waitress>=3.0
+requests>=2.31
+
+# 训练链路（连接 Unity ML-Agents 时需要）
+# torch>=2.1
+# tensorboard>=2.14
+# mlagents-envs：PyPI 无 1.x 版本，请从仓库源码安装（本地镜像见 third_party/ 或上游 Unity 仓库）：
+#   pip install ./third_party/ml-agents-develop/ml-agents-develop/ml-agents-envs
+
+# 真实 LLM 适配器（SiliconFlow 等 OpenAI 兼容接口，可选）
+# openai>=1.30
+
+# 开发
+# pytest>=8.0

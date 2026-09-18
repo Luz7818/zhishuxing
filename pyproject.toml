@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zhishuxing"
+version = "2.0.0"
+description = "智枢星：动态客流下的综合性交通枢纽智慧换乘引导系统（MADDPG 多智能体强化学习 + 可视化 + Web/PWA）"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "智枢星项目组" }]
+dependencies = [
+    "numpy>=1.24",
+    "matplotlib>=3.7",
+    "flask>=3.0",
+    "waitress>=3.0",
+    "requests>=2.31",
+]
+
+[project.optional-dependencies]
+train = ["torch>=2.1", "tensorboard>=2.14"]
+llm = ["openai>=1.30"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+zhishuxing = "zhishuxing.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+zhishuxing = ["webapp/templates/*.html", "webapp/static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

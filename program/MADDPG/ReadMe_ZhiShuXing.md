@@ -11,6 +11,7 @@
 - `MADDPG/zhishuxing/adapters.py`：大模型适配接口与默认实现 `MockLLMAdapter`
 - `MADDPG/zhishuxing/navigation.py`：导航图加载 + A* 路径规划
 - `MADDPG/zhishuxing/visualization.py`：动态客流热力图 + 引导路径可视化
+- `MADDPG/zhishuxing/rl_bridge.py`：MADDPG 运行时桥接（策略权重加载 / 观测→动作推理 / 内置多智能体引导仿真 / 训练奖励曲线）
 - `MADDPG/zhishuxing/system.py`：系统编排（仿真、策略建议、既有能力桥接）
 - `MADDPG/zhishuxing/sample_navigation.json`：示例导航图
 - `MADDPG/zhishuxing/sample_instruction_data.jsonl`：示例微调数据
@@ -44,6 +45,14 @@ python .\MADDPG\run_zhishuxing_demo.py --output_dir .\data_train
 - `load_navigation(path)`：加载 JSON 路网
 - `plan_path(start, goal)`：A* 规划
 - `plan_landmark_path(start, via, goal)`：支持“必经安检”等业务路径
+
+### MADDPG 强化学习桥接接口
+`MADDPGRuntime`（`zhishuxing/rl_bridge.py`，Web 前端经 `webapp` 的 `/api/rl/*` 端点调用）：
+- `get_status()` / `refresh()`：扫描 `model/integrated_hub_transfer/` 下的 actor 权重与 `data_train/*_env_*.npy` 奖励数据
+- `load_policy(checkpoint_dir=None)`：按 agent 加载各自最新 step 的 actor 权重（从权重张量形状自动推断网络维度）；无权重或无 torch 时自动回退启发式策略并如实标注 `policy_source`
+- `act(observations)`：批量推理，观测语义与 `UnityTemplate/HubTransferAgent.cs` 对齐（目标相对位置 + 自身速度 + 邻近行人相对位置）
+- `reward_series()` / `render_reward_curve()`：读取训练评估奖励序列并出图
+- `run_guided_simulation(navigation, groups, ...)`：内置网格枢纽仿真，多智能体在已加载策略（或启发式）引导下沿 A* 路径通行，输出换乘步数、拥堵指数与轨迹图
 
 ## 5. 与现有功能联动
 如需同时触发已有可视化脚本：

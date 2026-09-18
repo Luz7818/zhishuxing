@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>智枢星：综合交通枢纽智慧换乘引导系统</h1>
-    <p>支持导航图加载、换乘路径规划、可视化面板生成、LLM 加载与微调、既有功能联动。</p>
+    <p>支持导航图加载、换乘路径规划、MADDPG 多智能体强化学习策略推理与引导仿真、LLM 加载与微调、既有功能联动。</p>
   </header>
 
   <main class="grid">
@@ -63,6 +63,25 @@
       <button id="btnSimMetrics">生成 Loss / BLEU-4 / ROUGE 图</button>
       <pre id="simResult"></pre>
       <img id="simMetricsImage" alt="微调指标图" />
+    </section>
+
+    <section class="card wide">
+      <h2>多智能体强化学习（MADDPG）</h2>
+      <label>训练产物：策略权重 model/ 目录、奖励数据 data_train/*_env_*.npy</label>
+      <div class="row">
+        <button id="btnRLStatus">刷新训练状态</button>
+        <button id="btnRLPolicy">加载最新策略权重</button>
+      </div>
+      <div class="row">
+        <button id="btnRLRewards">查看训练奖励曲线</button>
+        <button id="btnRLSim">运行 RL 引导仿真（使用下方群组）</button>
+      </div>
+      <label>策略推理测试（观测：[目标dx,dy, 速度vx,vy, 邻近行人dx,dy×3]，留空使用示例）</label>
+      <textarea id="rlObs" placeholder="[[0.5, 0.25, 1.0, 0.0, 0.2, 0.1, -0.3, 0.4, 0.0, -0.2]]"></textarea>
+      <button id="btnRLAct">策略推理（观测 → 动作）</button>
+      <pre id="rlResult">尚未操作。点击“刷新训练状态”检查 MADDPG 训练产物与策略加载情况。</pre>
+      <img id="rlRewardImage" alt="MADDPG 奖励曲线" />
+      <img id="rlSimImage" alt="RL 引导仿真结果" />
     </section>
 
     <section class="card wide">

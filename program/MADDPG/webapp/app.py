@@ -20,7 +20,26 @@ MADDPG_DIR = CURRENT_DIR.parent
 if str(MADDPG_DIR) not in sys.path:
     sys.path.insert(0, str(MADDPG_DIR))
 
-from zhishuxing import PassengerGroup, ZhiShuXingSystem
+from zhishuxing import MADDPGRuntime, PassengerGroup, ZhiShuXingSystem
+
+DEFAULT_GROUPS = [
+    {
+        "name": "A口进站->地铁",
+        "start": [1, 2],
+        "goal": [28, 12],
+        "via_landmarks": ["security"],
+        "release_time": 0,
+        "passengers": 15,
+    },
+    {
+        "name": "B口进站->高铁",
+        "start": [1, 13],
+        "goal": [28, 3],
+        "via_landmarks": ["security_backup"],
+        "release_time": 8,
+        "passengers": 18,
+    },
+]
 
 
 class ZhiShuXingWebService:
@@ -33,6 +52,7 @@ class ZhiShuXingWebService:
         self.default_nav = MADDPG_DIR / "zhishuxing" / "sample_navigation.json"
         self.default_dataset = MADDPG_DIR / "zhishuxing" / "sample_instruction_data.jsonl"
         self.loaded_navigation = ""
+        self.rl = MADDPGRuntime(maddpg_dir=MADDPG_DIR, data_dir=self.output_dir)
 
         self._ensure_ready()
 
@@ -41,6 +61,8 @@ class ZhiShuXingWebService:
             self.system.load_navigation(str(self.default_nav))
             self.loaded_navigation = str(self.default_nav)
             self.system.attach_llm(model_id="Qwen2.5-7B-Instruct")
+            # 启动时即尝试加载 MADDPG 策略权重；无权重时自动回退启发式并在状态中注明
+            self.rl.load_policy()
 
     def load_navigation(self, file_path: str) -> Dict[str, Any]:
         nav = self.system.load_navigation(file_path)
@@ -153,8 +175,9 @@ class ZhiShuXingWebService:
             "route": route,
         }
 
-    def run_dashboard(self, groups_payload: List[Dict[str, Any]], title: str | None = None) -> Dict[str, Any]:
-        groups = [
+    @staticmethod
+    def _parse_groups(groups_payload: List[Dict[str, Any]]) -> List[PassengerGroup]:
+        return [
             PassengerGroup(
                 name=item["name"],
                 start=(int(item["start"][0]), int(item["start"][1])),
@@ -166,8 +189,56 @@ class ZhiShuXingWebService:
             for item in groups_payload
         ]
 
+    def run_dashboard(self, groups_payload: List[Dict[str, Any]], title: str | None = None) -> Dict[str, Any]:
+        groups = self._parse_groups(groups_payload)
+
         image_file = self.output_dir / "zhishuxing_web_dashboard.png"
         result = self.system.render_dashboard(groups=groups, output_png=str(image_file), title=title or "智枢星网页控制台")
+        return {
+            **result,
+            "image_url": f"/outputs/{image_file.name}",
+        }
+
+    # ------------------------------------------------------------ MADDPG 强化学习桥接
+
+    def rl_status(self) -> Dict[str, Any]:
+        return self.rl.get_status()
+
+    def rl_load_policy(self, checkpoint_dir: str | None = None) -> Dict[str, Any]:
+        return self.rl.load_policy(checkpoint_dir)
+
+    def rl_act(self, observations: List[List[float]]) -> Dict[str, Any]:
+        if not observations:
+            raise ValueError("缺少 observations")
+        return self.rl.act(observations)
+
+    def rl_rewards(self) -> Dict[str, Any]:
+        rendered = self.rl.render_reward_curve()
+        result: Dict[str, Any] = {
+            "series_count": rendered["series_count"],
+            "series": rendered.get("series", []),
+        }
+        if rendered.get("error"):
+            result["error"] = rendered["error"]
+        if rendered.get("image"):
+            result["image_url"] = f"/outputs/{Path(rendered['image']).name}"
+        return result
+
+    def rl_simulate(self, groups_payload: List[Dict[str, Any]] | None, config: Dict[str, Any] | None = None) -> Dict[str, Any]:
+        payload = groups_payload or DEFAULT_GROUPS
+        groups = self._parse_groups(payload)
+        cfg = config or {}
+
+        image_file = self.output_dir / "rl_guided_simulation.png"
+        result = self.rl.run_guided_simulation(
+            navigation=self.system.navigation,
+            groups=groups,
+            output_png=str(image_file),
+            title=cfg.get("title", "智枢星 MADDPG 引导仿真"),
+            seed=int(cfg.get("seed", 42)),
+            max_steps=int(cfg.get("max_steps", 240)),
+            agents_per_group=int(cfg.get("agents_per_group", 6)),
+        )
         return {
             **result,
             "image_url": f"/outputs/{image_file.name}",
@@ -195,28 +266,10 @@ def create_app() -> Flask:
 
     @app.get("/")
     def home():
-        default_groups = [
-            {
-                "name": "A口进站->地铁",
-                "start": [1, 2],
-                "goal": [28, 12],
-                "via_landmarks": ["security"],
-                "release_time": 0,
-                "passengers": 15,
-            },
-            {
-                "name": "B口进站->高铁",
-                "start": [1, 13],
-                "goal": [28, 3],
-                "via_landmarks": ["security_backup"],
-                "release_time": 8,
-                "passengers": 18,
-            },
-        ]
         return render_template(
             "index.html",
             default_navigation=service.loaded_navigation,
-            default_groups=json.dumps(default_groups, ensure_ascii=False, indent=2),
+            default_groups=json.dumps(DEFAULT_GROUPS, ensure_ascii=False, indent=2),
             default_dataset=str(service.default_dataset),
         )
 
@@ -304,6 +357,55 @@ def create_app() -> Flask:
     def api_run_existing():
         try:
             data = service.run_existing_features()
+            return jsonify({"ok": True, "data": data})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc), "trace": traceback.format_exc()}), 500
+
+    # ------------------------------------------------------------ MADDPG 强化学习 API
+
+    @app.get("/api/rl/status")
+    def api_rl_status():
+        try:
+            return jsonify({"ok": True, "data": service.rl_status()})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc), "trace": traceback.format_exc()}), 500
+
+    @app.post("/api/rl/load_policy")
+    def api_rl_load_policy():
+        try:
+            payload = request.get_json(force=True, silent=True) or {}
+            data = service.rl_load_policy(payload.get("checkpoint_dir"))
+            return jsonify({"ok": True, "data": data})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc), "trace": traceback.format_exc()}), 500
+
+    @app.post("/api/rl/act")
+    def api_rl_act():
+        try:
+            payload = request.get_json(force=True, silent=True) or {}
+            observations = payload.get("observations")
+            if not isinstance(observations, list):
+                return jsonify({"error": "缺少 observations（二维数值数组）"}), 400
+            data = service.rl_act(observations)
+            return jsonify({"ok": True, "data": data})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc), "trace": traceback.format_exc()}), 500
+
+    @app.get("/api/rl/rewards")
+    def api_rl_rewards():
+        try:
+            return jsonify({"ok": True, "data": service.rl_rewards()})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc), "trace": traceback.format_exc()}), 500
+
+    @app.post("/api/rl/simulate")
+    def api_rl_simulate():
+        try:
+            payload = request.get_json(force=True, silent=True) or {}
+            data = service.rl_simulate(
+                groups_payload=payload.get("groups"),
+                config=payload.get("config", {}),
+            )
             return jsonify({"ok": True, "data": data})
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc), "trace": traceback.format_exc()}), 500

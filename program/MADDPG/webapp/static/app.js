@@ -11,6 +11,21 @@ async function postJSON(url, payload) {
   return data;
 }
 
+async function getJSON(url) {
+  const response = await fetch(url);
+  const data = await response.json();
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `请求失败: ${response.status}`);
+  }
+  return data;
+}
+
+function showImage(imgId, url) {
+  const img = document.getElementById(imgId);
+  img.src = `${url}?t=${Date.now()}`;
+  img.style.display = "block";
+}
+
 function parseJSONText(text, fallback) {
   try {
     return JSON.parse(text);
@@ -115,5 +130,60 @@ document.getElementById("btnExisting").onclick = async () => {
     show("runResult", res.data);
   } catch (error) {
     show("runResult", String(error));
+  }
+};
+
+document.getElementById("btnRLStatus").onclick = async () => {
+  try {
+    const res = await getJSON("/api/rl/status");
+    show("rlResult", res.data);
+  } catch (error) {
+    show("rlResult", String(error));
+  }
+};
+
+document.getElementById("btnRLPolicy").onclick = async () => {
+  try {
+    const res = await postJSON("/api/rl/load_policy", {});
+    show("rlResult", res.data);
+  } catch (error) {
+    show("rlResult", String(error));
+  }
+};
+
+document.getElementById("btnRLRewards").onclick = async () => {
+  try {
+    const res = await getJSON("/api/rl/rewards");
+    show("rlResult", res.data);
+    if (res.data.image_url) {
+      showImage("rlRewardImage", res.data.image_url);
+    }
+  } catch (error) {
+    show("rlResult", String(error));
+  }
+};
+
+const DEFAULT_RL_OBS = [[0.5, 0.25, 1.0, 0.0, 0.2, 0.1, -0.3, 0.4, 0.0, -0.2]];
+
+document.getElementById("btnRLAct").onclick = async () => {
+  const observations = parseJSONText(document.getElementById("rlObs").value, DEFAULT_RL_OBS);
+  try {
+    const res = await postJSON("/api/rl/act", { observations });
+    show("rlResult", res.data);
+  } catch (error) {
+    show("rlResult", String(error));
+  }
+};
+
+document.getElementById("btnRLSim").onclick = async () => {
+  const groups = parseJSONText(document.getElementById("groups").value, null);
+  try {
+    const res = await postJSON("/api/rl/simulate", { groups });
+    show("rlResult", res.data);
+    if (res.data.image_url) {
+      showImage("rlSimImage", res.data.image_url);
+    }
+  } catch (error) {
+    show("rlResult", String(error));
   }
 };

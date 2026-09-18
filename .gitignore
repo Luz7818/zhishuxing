@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+
+# 运行时产物（参考样本在 data/samples/，运行输出不入库）
+data/outputs/
+data/model/
+data/runs/
+runs/
+model/
+
+# Node（历史遗留依赖已移除）
+node_modules/
+
+# 第三方库镜像（本机参考用，不入库）
+third_party/
+
+# 大型媒体与分发包
+*.mp4
+*.zip
+*.gif
+# 参考样本产物例外（README 展示所需）
+!data/samples/*.gif
+
+# Unity / ML-Agents 生成物
+*.unitypackage
+Library/
+Logs/
+obj/
+
+# IDE 与本地配置
+.vscode/
+.idea/
+.zcode/
+
+# 密钥与本地配置（一律走环境变量）
+.env
+.env.*
+config_direct.py
+config_local.py

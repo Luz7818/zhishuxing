@@ -1,145 +1,99 @@
-# 智枢星（ZhiShuXing）
+# 智枢星（ZhiShuXing）v2
 
-综合交通枢纽智慧换乘引导项目，聚焦“动态客流 + 多智能体协同 + 可视化交互”。
+动态客流下的综合性交通枢纽智慧换乘引导系统：**MADDPG 多智能体强化学习 + 枢纽仿真 + LLM 引导 + Web/移动端**。
 
-本仓库集成了以下能力：
+## 功能总览
 
-- 基于 Unity ML-Agents 环境的 MADDPG 训练与评估
-- 面向换乘场景的数据生成、结果分析与可视化
-- Web 交互界面与流式应用原型（Flask / Streamlit）
-- 预置模拟结果文件，支持快速复现实验图表
-
-## 项目亮点
-
-- 面向真实场景：围绕综合交通枢纽换乘效率提升设计指标与流程
-- 端到端链路：覆盖训练、评估、可视化、交互展示
-- 多形态输出：支持奖励曲线、换乘时间分布、场景对比等成果图
+- **多智能体强化学习**：MADDPG / MATD3 双算法（Unity ML-Agents 环境），训练产物（评估奖励 npy、actor 权重）可被 Web/CLI 直接加载推理
+- **智慧换乘引导**：A* 路径规划（支持“必经安检”）、动态客流热力、MADDPG（或启发式回退）驱动的多智能体引导仿真
+- **真实路线规划**：LLM 提取出行诉求 → 高德地理编码/公交换乘（偏好参数真实生效），内置枢纽引擎（A* + RL 仿真）可离线运行
+- **分析报告**：奖励曲线、深圳北站拥堵热力图、P50/P90/Max 换乘时间、安检排队对比、场景效率对比、微调指标、行人动图——固定种子可复现
+- **Web 控制台 + 移动端 PWA**：同一后端（Flask）服务，PWA 可安装、离线缓存、后端不可用时自动回退演示数据
 
 ## 仓库结构
 
 ```text
 .
-├─ program/                          # 核心代码与实验脚本
-│  ├─ MADDPG/                        # 训练、环境封装、Web 服务、智枢星模块
-│  │  ├─ MADDPG_main.py              # MADDPG 主训练入口（Unity ML-Agents）
-│  │  ├─ run_zhishuxing_demo.py      # 智枢星演示脚本
-│  │  ├─ run_zhishuxing_web.py       # Flask Web 服务入口
-│  │  ├─ webapp/                     # Web 控制台
-│  │  └─ zhishuxing/                 # 导航、系统、可视化模块
-│  ├─ fine/                          # 微调与场景对比分析脚本
-│  ├─ data_train/                    # 训练与模拟输出数据
-│  └─ requirements.txt               # Python 依赖
-├─ UI/                               # 交互界面素材与 Streamlit 原型
-├─ ml-agents-develop/                # ML-Agents 开发版本代码镜像
-└─ ml-agents-release_18_branch/      # ML-Agents release_18 分支代码镜像
+├─ configs/                 # 导航图 / 演示场景 / 训练超参 / 微调样例数据
+├─ src/zhishuxing/          # 核心 Python 包
+│  ├─ config.py             # 路径与密钥（环境变量，零硬编码）
+│  ├─ cli.py                # 统一入口 demo/train/analyze/simulate/animate/serve/smoke
+│  ├─ core/                 # 导航A*、场景、客流、引导仿真、行人动图、系统编排
+│  ├─ rl/                   # networks、agents(MADDPG+MATD3)、buffer、Unity环境、训练Runner、运行时
+│  ├─ llm/                  # LLM 适配器（Mock + SiliconFlow 真实实现）
+│  ├─ planning/             # 高德真实路线规划（OD提取/编码/换乘/详情）
+│  ├─ analysis/             # 绘图/IO工具、合成数据生成器、7类分析报告
+│  └─ webapp/               # Flask 应用工厂、服务层、前端
+├─ web/mobile/              # 移动端 PWA（可安装、ServiceWorker 缓存）
+├─ unity/                   # Unity 侧智能体模板 HubTransferAgent.cs
+├─ tests/                   # pytest 测试套件（46 项）
+├─ data/samples/            # 参考产物（README 展示图、奖励 npy 等）
+├─ data/outputs|model|runs/ # 运行时输出（gitignore）
+├─ code_optimization/       # 性能优化基准与报告（行人仿真 step 19x 加速）
+├─ docs/architecture.md     # 架构说明与迁移映射
+└─ legacy/ui/               # 历史 Streamlit 原型归档（密钥已移除）
 ```
 
 ## 快速开始
 
-### 1. 环境准备
-
-建议 Python 3.11+。
-
 ```bash
-cd program
-pip install -r requirements.txt
+pip install -e .            # 基础依赖；训练链路: pip install -e .[train]
+zhishuxing demo             # 一键演示 → data/outputs/zhishuxing_dashboard.png + summary
+zhishuxing analyze --report all   # 全部 7 类分析报告
+zhishuxing simulate         # MADDPG（无权重时启发式回退）引导仿真
+zhishuxing serve --port 7860      # Web 控制台 http://127.0.0.1:7860
+                                  # 移动端 PWA   http://127.0.0.1:7860/mobile
+pytest                      # 运行测试套件
 ```
 
-如果需要运行 UI 目录下的 Streamlit 原型，可额外安装：
+### 环境变量（密钥，绝无默认值）
+
+| 变量 | 用途 |
+|---|---|
+| `SILICONFLOW_API_KEY` | LLM 引导文案 / OD 提取（OpenAI 兼容） |
+| `AMAP_REST_KEY` / `AMAP_JS_KEY` | 高德真实路线规划 / 地图 JS 渲染 |
+| `ZHISHUXING_WORKSPACE` | 工作区根目录覆盖（默认自动推导） |
+
+> 历史版本曾将密钥硬编码在 `UI/config_direct.py` 并已进入 git 历史，**请务必到平台作废重发**。
+
+### MADDPG 训练（连接 Unity）
 
 ```bash
-pip install streamlit openai requests
+zhishuxing train \
+  --mlagents_file "D:\\Builds\\HubTransfer\\HubTransfer.exe" \
+  --behavior_name HubAgent \
+  --episode_limit 200 --max_train_steps 500000 --evaluate_freq 5000
+# 留空 --mlagents_file 连接 Unity Editor；--algorithm MATD3 启用 TD3 变体
 ```
 
-### 2. 运行智枢星演示
+训练产物：`data/outputs/MADDPG_env_*.npy`（评估奖励）、`data/model/integrated_hub_transfer/*_actor_*_agent_*.pth`（权重）。
+训练完成后在 Web 控制台点击“加载最新策略权重”，即可用真实策略执行引导仿真。
 
-```bash
-cd program
-python MADDPG/run_zhishuxing_demo.py --output_dir data_train
-```
+## Web API 一览
 
-运行后会在 data_train 中生成汇总与可视化结果（如 zhishuxing_summary.json）。
+| 端点 | 说明 |
+|---|---|
+| `GET /health` | 健康检查 |
+| `POST /api/navigation/load` / `POST /api/navigation/plan` | 导航图加载 / A* 规划（支持必经地标） |
+| `GET /api/rl/status` | MADDPG 训练产物扫描与策略状态 |
+| `POST /api/rl/load_policy` | 加载每个 agent 最新 step 的 actor 权重 |
+| `POST /api/rl/act` | 观测→动作推理（观测语义与 Unity 模板对齐） |
+| `GET /api/rl/rewards` | 训练评估奖励曲线 |
+| `POST /api/rl/simulate` | 多智能体引导仿真（换乘步数/拥堵/轨迹图） |
+| `POST /api/llm/load` / `fine_tune` / `simulate_metrics` | LLM 加载（Mock/真实）/ 微调 / 指标报告 |
+| `POST /api/dashboard/run` | 客流热力 + 引导路径面板 |
+| `POST /api/plan` | 真实路线规划（engine=amap 高德 / engine=hub 枢纽内） |
+| `POST /api/features/run_existing` | 运行全部 7 类分析报告（结构化结果） |
+| `GET /mobile` | 移动端 PWA |
 
-### 3. 启动 Web 控制台（Flask）
+## 成果预览
 
-```bash
-cd program
-python MADDPG/run_zhishuxing_web.py --host 0.0.0.0 --port 7860
-```
-
-浏览器访问：`http://127.0.0.1:7860`
-
-### 4. 启动 MADDPG 训练（连接 Unity）
-
-```bash
-cd program
-python MADDPG/MADDPG_main.py \
-	--mlagents_file "D:\\Builds\\HubTransfer\\HubTransfer.exe" \
-	--behavior_name "HubAgent" \
-	--base_port 5005 \
-	--episode_limit 200 \
-	--max_train_steps 500000 \
-	--evaluate_freq 5000
-```
-
-说明：
-
-- 若连接 Unity Editor，可将 --mlagents_file 留空（默认 None）
-- behavior_name 为空时，将自动选取第一个 Behavior
-
-## 结果分析与可视化
-
-在 program 目录下可运行：
-
-```bash
-# 奖励曲线
-python MADDPG/plot_results.py --data_dir ./data_train
-
-# 换乘时间分布（可生成模拟 CSV 与图）
-python MADDPG/plot_transfer_time_distribution.py
-
-# 训练前后不同场景效率对比
-python fine/compare_transfer_efficiency_scenarios.py
-
-# 微调指标可视化（模拟）
-python fine/plot_finetune_metrics.py
-```
-
-## 展示素材
-
-仓库已包含部分展示素材，可用于项目汇报与 GitHub 展示：
-
-- AR 动态效果：picture/transfer_env_demo.gif
-- 奖励曲线：picture/reward_curve.png
-- 微调指标图：picture/finetune_metrics_simulated.png
-
-### 预览
-
-![AR 动态效果](picture/transfer_env_demo.gif)
-
-![奖励曲线](picture/reward_curve.png)
-
-![微调指标图](picture/finetune_metrics_simulated.png)
-
-## 依赖与兼容性
-
-主要依赖（见 program/requirements.txt）：
-
-- torch
-- torchvision
-- gym
-- mlagents-envs
-- numpy
-- matplotlib
-- flask
-- waitress
+![换乘环境动图](data/samples/transfer_env_demo.gif)
+![拥堵热力图](data/samples/shenzhen_north_congestion_heatmap.png)
+![安检排队对比](data/samples/security_queue_comparison.png)
 
 ## 注意事项
 
-- 请勿将真实 API Key、模型密钥提交到公开仓库
-- 训练依赖 Unity 场景配置与通信端口，建议先用小步数验证链路
-- Windows 路径中如包含空格或中文，请使用引号包裹命令参数
-
-## 许可与使用
-
-本仓库当前未在根目录声明统一开源许可证。若计划公开发布，建议补充 LICENSE 文件并明确第三方代码（如 ML-Agents 镜像）的许可边界。
+- 训练需 Unity 场景（Behavior 名 `HubAgent`、连续动作），建议先用小步数验证链路；`mlagents-envs` 需从源码安装（见 `requirements.txt` 注释与 `docs/architecture.md`）
+- `data/outputs` 中的分析图基于固定种子合成数据，保证可复现；接入真实训练数据后同一脚本直接出图
+- 本仓库未声明统一开源许可证；ML-Agents 镜像（`third_party/`，不入库）遵循其原许可

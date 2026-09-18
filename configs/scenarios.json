@@ -1,0 +1,29 @@
+{
+  "description": "智枢星默认演示场景：三组乘客（与 run_zhishuxing_demo 历史场景一致），坐标对应 configs/hub_default.json 的网格与地标",
+  "groups": [
+    {
+      "name": "A口进站->地铁",
+      "start_landmark": "entry_a",
+      "goal_landmark": "metro_gate",
+      "via_landmarks": ["security"],
+      "release_time": 0,
+      "passengers": 15
+    },
+    {
+      "name": "B口进站->高铁",
+      "start_landmark": "entry_b",
+      "goal_landmark": "rail_gate",
+      "via_landmarks": ["security_backup"],
+      "release_time": 8,
+      "passengers": 18
+    },
+    {
+      "name": "A口进站->公交",
+      "start_landmark": "entry_a",
+      "goal_landmark": "bus_gate",
+      "via_landmarks": ["security"],
+      "release_time": 14,
+      "passengers": 9
+    }
+  ]
+}

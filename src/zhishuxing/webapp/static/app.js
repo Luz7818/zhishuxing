@@ -484,6 +484,16 @@ function animateRoute() {
   requestAnimationFrame(frame);
 }
 
+function selectPoint(selectEl, point, label) {
+  const value = point.join(",");
+  let opt = [...selectEl.options].find((o) => o.value === value);
+  if (!opt) {
+    selectEl.insertAdjacentHTML("beforeend", `<option value="${value}">${label}</option>`);
+    opt = [...selectEl.options].find((o) => o.value === value);
+  }
+  selectEl.value = value;
+}
+
 function initNavigation() {
   const canvas = $("navCanvas");
   canvas.addEventListener("click", (event) => {
@@ -509,13 +519,11 @@ function initNavigation() {
       state.nav.start = point;
       state.nav.goal = null;
       state.nav.route = null;
-      $("navStart").insertAdjacentHTML("beforeend", `<option value="${point.join(",")}">${label}</option>`);
-      $("navStart").value = point.join(",");
+      selectPoint($("navStart"), point, label);
       $("navGoal").value = "";
     } else {
       state.nav.goal = point;
-      $("navGoal").insertAdjacentHTML("beforeend", `<option value="${point.join(",")}">${label}</option>`);
-      $("navGoal").value = point.join(",");
+      selectPoint($("navGoal"), point, label);
     }
     repaintNav();
   });

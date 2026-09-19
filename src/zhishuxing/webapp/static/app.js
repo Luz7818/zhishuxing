@@ -339,6 +339,104 @@ function drawPolyline(canvas, coords, labels = {}) {
   pin(coords[coords.length - 1], "#34d399", labels.destination || "终点");
 }
 
+/* ---------------- 高德 JS API 底图 ---------------- */
+
+const amapState = { scriptLoading: false, loaded: false, map: null, overlays: [] };
+
+function loadAmapScript() {
+  return new Promise((resolve, reject) => {
+    if (amapState.loaded) return resolve();
+    const key = window.ZSX_CONFIG && window.ZSX_CONFIG.amapJsKey;
+    if (!key) return reject(new Error("未配置 AMAP_JS_KEY"));
+
+    if (amapState.scriptLoading) {
+      const started = Date.now();
+      const timer = setInterval(() => {
+        if (amapState.loaded) {
+          clearInterval(timer);
+          resolve();
+        } else if (Date.now() - started > 8000) {
+          clearInterval(timer);
+          reject(new Error("高德地图脚本加载超时"));
+        }
+      }, 120);
+      return;
+    }
+    amapState.scriptLoading = true;
+
+    // 2021-12 之后申请的 Key 需要配合安全密钥使用
+    if (window.ZSX_CONFIG.amapSecurityCode) {
+      window._AMapSecurityConfig = { securityJsCode: window.ZSX_CONFIG.amapSecurityCode };
+    }
+    const script = document.createElement("script");
+    script.src = `https://webapi.amap.com/maps?v=2.0&key=${encodeURIComponent(key)}&plugin=AMap.ToolBar,AMap.Scale`;
+    script.onload = () => {
+      // v2.0 脚本加载成功不代表初始化完成：Key 无效时 AMap 全局可能缺失
+      const started = Date.now();
+      const timer = setInterval(() => {
+        if (window.AMap) {
+          clearInterval(timer);
+          amapState.loaded = true;
+          resolve();
+        } else if (Date.now() - started > 2500) {
+          clearInterval(timer);
+          amapState.scriptLoading = false;
+          reject(new Error("高德地图初始化失败（Key 无效或缺少 AMAP_SECURITY_CODE 安全密钥）"));
+        }
+      }, 100);
+    };
+    script.onerror = () => {
+      amapState.scriptLoading = false;
+      reject(new Error("高德地图脚本加载失败（网络不可用）"));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+async function renderAmapMap(polyline, labels) {
+  await loadAmapScript();
+  const container = $("amapContainer");
+  if (!amapState.map) {
+    const mid = polyline[Math.floor(polyline.length / 2)];
+    amapState.map = new AMap.Map(container, {
+      zoom: 12,
+      center: mid,
+      resizeEnable: true,
+      mapStyle: "amap://styles/dark",
+    });
+    amapState.map.addControl(new AMap.ToolBar());
+    amapState.map.addControl(new AMap.Scale());
+  }
+
+  amapState.overlays.forEach((o) => amapState.map.remove(o));
+  amapState.overlays = [];
+
+  const path = polyline.map(([lng, lat]) => new AMap.LngLat(lng, lat));
+  const line = new AMap.Polyline({
+    path,
+    strokeColor: "#38bdf8",
+    strokeWeight: 6,
+    strokeOpacity: 0.92,
+    showDir: true,
+    lineJoin: "round",
+  });
+  amapState.map.add(line);
+  amapState.overlays.push(line);
+
+  const marker = (position, label) => {
+    const m = new AMap.Marker({
+      position,
+      label: { content: `<span class="amap-label">${label}</span>`, direction: "top" },
+    });
+    amapState.map.add(m);
+    amapState.overlays.push(m);
+  };
+  marker(path[0], labels.origin || "起点");
+  marker(path[path.length - 1], labels.destination || "终点");
+
+  amapState.map.setFitView(amapState.overlays, false, [42, 42, 42, 42]);
+}
+
 /* ---------------- 全局状态 ---------------- */
 
 const state = {
@@ -746,10 +844,28 @@ function initPlan() {
       const mapBox = $("planMapBox");
       if (result.engine === "amap" && result.polyline && result.polyline.length > 1) {
         mapBox.style.display = "";
-        drawPolyline($("planCanvas"), result.polyline, {
-          origin: result.origin_text,
-          destination: result.destination_text,
-        });
+        const container = $("amapContainer");
+        const canvas = $("planCanvas");
+        const note = $("planMapNote");
+        const labels = { origin: result.origin_text, destination: result.destination_text };
+        const drawFallback = (reason) => {
+          container.style.display = "none";
+          canvas.style.display = "";
+          drawPolyline(canvas, result.polyline, labels);
+          note.textContent = `离线折线示意 · ${reason}`;
+        };
+        if (window.ZSX_CONFIG && window.ZSX_CONFIG.amapJsKey) {
+          try {
+            await renderAmapMap(result.polyline, labels);
+            container.style.display = "";
+            canvas.style.display = "none";
+            note.textContent = "底图：高德地图 JS API · 折线沿真实道路";
+          } catch (error) {
+            drawFallback(error.message);
+          }
+        } else {
+          drawFallback("未配置 AMAP_JS_KEY");
+        }
       } else {
         mapBox.style.display = "none";
       }

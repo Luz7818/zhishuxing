@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>智枢星 · Web 控制台</title>
   <link rel="stylesheet" href="/static/style.css" />
+  <script>
+    /* 服务端注入的运行配置：高德 JS Key 仅在配置了环境变量时存在 */
+    window.ZSX_CONFIG = {
+      amapJsKey: {{ amap_js_key | tojson }},
+      amapSecurityCode: {{ amap_security_code | tojson }}
+    };
+  </script>
 </head>
 <body>
 <div class="app">
@@ -254,7 +261,11 @@
             <div class="card">
               <h3>🛣️ 路线详情</h3>
               <p class="desc" id="planOD"></p>
-              <div class="canvas-box" id="planMapBox" style="display:none"><canvas id="planCanvas" width="620" height="330"></canvas></div>
+              <div class="canvas-box" id="planMapBox" style="display:none">
+                <div id="amapContainer"></div>
+                <canvas id="planCanvas" width="620" height="330"></canvas>
+                <div class="map-note" id="planMapNote"></div>
+              </div>
               <ol class="list" id="planDetails" style="margin-top:12px"></ol>
             </div>
             <div class="card">

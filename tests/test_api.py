@@ -36,6 +36,20 @@ def test_index_page(client):
         "app.js",
     ):
         assert key in html
+    # 高德底图配置注入与双通道容器
+    assert "ZSX_CONFIG" in html
+    assert "amapContainer" in html
+
+
+def test_index_page_injects_amap_js_key(client, monkeypatch):
+    monkeypatch.setenv("AMAP_JS_KEY", "test-js-key-123")
+    html = client.get("/").data.decode("utf-8")
+    assert "test-js-key-123" in html
+
+    monkeypatch.delenv("AMAP_JS_KEY", raising=False)
+    monkeypatch.delenv("AMAP_REST_KEY", raising=False)
+    html = client.get("/").data.decode("utf-8")
+    assert 'amapJsKey: ""' in html
 
 
 def test_navigation_grid_endpoint(client):

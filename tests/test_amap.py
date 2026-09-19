@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from zhishuxing import config as cfg
 from zhishuxing.planning.amap import (
     build_route_details,
     build_route_tips,
@@ -22,7 +23,8 @@ def test_extract_od_locally_fallback():
     assert result["destination_text"] == "目的地"
 
 
-def test_polyline_parsing():
+def test_polyline_parsing_flat_structure():
+    """旧响应结构：segments[].steps[].polyline。"""
     transit = {
         "segments": [
             {"steps": [{"polyline": "114.05,22.55;114.06,22.56"}]},
@@ -31,6 +33,21 @@ def test_polyline_parsing():
     }
     coords = polyline_from_transit(transit)
     assert coords == [(114.05, 22.55), (114.06, 22.56), (114.07, 22.57), (114.08, 22.58)]
+
+
+def test_polyline_parsing_nested_structure():
+    """新响应结构：折线在 walking.steps / bus.buslines 子对象中（2026-09 实测）。"""
+    transit = {
+        "segments": [
+            {
+                "walking": {"steps": [{"polyline": "114.02,22.61;114.03,22.62"}]},
+                "bus": {"buslines": [{"name": "地铁5号线", "polyline": "114.03,22.62;114.04,22.63"}]},
+                "steps": [],
+            }
+        ]
+    }
+    coords = polyline_from_transit(transit)
+    assert coords == [(114.02, 22.61), (114.03, 22.62), (114.03, 22.62), (114.04, 22.63)]
 
 
 def test_resolve_strategy_applies_preferences():
@@ -56,6 +73,31 @@ def test_build_route_details_from_real_transit():
     assert "地铁11号线" in details[1]
 
 
+def test_build_route_details_nested_structure():
+    """新结构：步行距离 + 公交线路名 + 上下车站点。"""
+    transit = {
+        "segments": [
+            {
+                "walking": {"distance": "773", "steps": [{"instruction": "步行"}]},
+                "bus": {
+                    "buslines": [
+                        {
+                            "name": "地铁5号线(环中线)(大剧院--赤湾)",
+                            "departure_stop": {"name": "深圳北站"},
+                            "arrival_stop": {"name": "前海湾"},
+                        }
+                    ]
+                },
+            }
+        ]
+    }
+    details = build_route_details(transit)
+    assert len(details) == 1
+    assert "步行773米" in details[0]
+    assert "地铁5号线(环中线)" in details[0]
+    assert "深圳北站 → 前海湾" in details[0]
+
+
 def test_build_route_tips_with_prefs():
     transit = {"duration": "1500", "walking_distance": "800"}
     tips = build_route_tips(transit, {"crowd": "avoid", "riskOn": True})
@@ -63,8 +105,21 @@ def test_build_route_tips_with_prefs():
     assert any("避开拥堵" in t for t in tips)
 
 
-def test_geocode_and_transit_error_shapes(requests_stub=None):
-    """网络层错误应返回 None / 抛 ValueError，而不是静默吞掉（由 plan_route 的用户文案保证）。"""
-    from zhishuxing import config as cfg
+def test_dotenv_loader(tmp_path, monkeypatch):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "# 注释行\nTEST_DOTENV_KEY = abc123\nQUOTED = \"hello world\"\n",
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("TEST_DOTENV_KEY", raising=False)
+    monkeypatch.delenv("QUOTED", raising=False)
 
-    assert cfg.amap_config()["rest_key"] in (None, "") or True  # 密钥可缺省
+    cfg._load_dotenv(env_file)
+
+    import os
+
+    assert os.environ["TEST_DOTENV_KEY"] == "abc123"
+    assert os.environ["QUOTED"] == "hello world"
+
+    monkeypatch.delenv("TEST_DOTENV_KEY", raising=False)
+    monkeypatch.delenv("QUOTED", raising=False)

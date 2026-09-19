@@ -15,6 +15,29 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 
+def _load_dotenv(env_file: Optional[Path] = None) -> None:
+    """加载 .env（键=值/行注释），不覆盖已存在的环境变量。
+
+    项目不依赖 python-dotenv：仅支持 KEY=VALUE 与 # 注释两种行，满足本地密钥配置需求。
+    默认读取 workspace 根目录的 .env。
+    """
+    env_file = env_file or WORKSPACE_ROOT / ".env"
+    if not env_file.exists():
+        return
+    try:
+        for raw_line in env_file.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
+    except OSError:
+        pass
+
+
 def _find_workspace_root() -> Path:
     """定位工作区根目录：优先环境变量，其次从包源码位置向上推导（src/zhishuxing -> 根）。"""
     override = os.environ.get("ZHISHUXING_WORKSPACE")
@@ -29,6 +52,8 @@ def _find_workspace_root() -> Path:
 
 WORKSPACE_ROOT = _find_workspace_root()
 PACKAGE_DIR = Path(__file__).resolve().parent
+
+_load_dotenv()
 
 
 @dataclass

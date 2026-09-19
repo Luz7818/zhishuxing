@@ -36,6 +36,7 @@
 | 合成数据单一来源 | `analysis/synthetic.py`：拥堵矩阵（12区×17时段、三峰、分层缓解率）、换乘时间分布（520→398 收敛）、安检排队（sigmoid 分流、双种子）、微调指标（历史两套发散实现合并，`monotonic` 参数兼顾两种展示形态） |
 | 报告函数化 | `analysis/reports.py` 每个 `run_*_report()` 可 import 可 CLI，返回结构化结果；webapp 的“既有功能联动”从 subprocess+吞异常 改为进程内调用+逐报告状态 |
 | PWA 同源服务 | `/mobile`、`/mobile/<file>` 同前缀，ServiceWorker scope 覆盖页面；`planRoute` 先 fetch `/api/plan`，失败回退 mock 并标注“演示数据” |
+| 高德底图双通道 | `home()` 经 Jinja 注入 `ZSX_CONFIG`（`AMAP_JS_KEY`/`AMAP_SECURITY_CODE`，均来自环境变量）；前端动态加载高德 JS API 2.0 渲染真实底图（深色样式 + 方向折线 + 起终点标注），脚本加载/初始化失败或未配置 Key 时自动回退 Canvas 折线示意并在说明栏注明原因 |
 
 ## 迁移映射（旧 → 新）
 

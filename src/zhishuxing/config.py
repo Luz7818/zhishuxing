@@ -100,9 +100,13 @@ def siliconflow_config() -> Dict[str, Optional[str]]:
 
 
 def amap_config() -> Dict[str, Optional[str]]:
-    """高德开放平台配置：Web 服务 Key（REST）与 JS Key 分开管理。"""
+    """高德开放平台配置：Web 服务 Key（REST）与 JS Key 分开管理。
+
+    security_code 为 JS API 的安全密钥（2021-12 后申请的 Key 需要配合使用）。
+    """
     return {
         "rest_key": os.environ.get("AMAP_REST_KEY"),
         "js_key": os.environ.get("AMAP_JS_KEY", os.environ.get("AMAP_REST_KEY")),
+        "security_code": os.environ.get("AMAP_SECURITY_CODE"),
         "timeout": float(os.environ.get("AMAP_TIMEOUT", "10")),
     }

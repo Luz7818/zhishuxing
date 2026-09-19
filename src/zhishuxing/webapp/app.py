@@ -36,7 +36,12 @@ def create_app(service: ZhiShuXingWebService | None = None) -> Flask:
 
     @app.get("/")
     def home():
-        return render_template("index.html")
+        amap_conf = cfg.amap_config()
+        return render_template(
+            "index.html",
+            amap_js_key=amap_conf["js_key"] or "",
+            amap_security_code=amap_conf["security_code"] or "",
+        )
 
     @app.get("/health")
     def health():

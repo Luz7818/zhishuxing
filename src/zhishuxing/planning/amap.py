@@ -149,10 +149,21 @@ def transit_route(
     return routes[0]
 
 
+def _iter_segment_steps(segment: Dict) -> List[Dict]:
+    """兼容新旧两种响应结构：扁平 steps[] 或 walking/bus/railway 子对象。"""
+    steps: List[Dict] = list(segment.get("steps") or [])
+    for container_key in ("walking", "bus", "railway", "taxi"):
+        obj = segment.get(container_key)
+        if isinstance(obj, dict):
+            steps.extend(obj.get("steps") or [])
+            steps.extend(obj.get("buslines") or [])
+    return steps
+
+
 def polyline_from_transit(transit: Dict) -> List[Tuple[float, float]]:
     coords: List[Tuple[float, float]] = []
     for segment in transit.get("segments", []):
-        for step in segment.get("steps", []):
+        for step in _iter_segment_steps(segment):
             polyline = step.get("polyline", "")
             pairs = polyline.split(";") if polyline else []
             for pair in pairs:
@@ -173,18 +184,41 @@ def resolve_strategy(prefs: Optional[Dict[str, Any]]) -> int:
 
 
 def build_route_details(transit: Dict) -> List[str]:
-    """从真实 transit 数据构建路线详情（替代历史写死的“深圳北→宝安机场”话术）。"""
+    """从真实 transit 数据构建路线详情（兼容新旧响应结构）。"""
     details: List[str] = []
     for index, segment in enumerate(transit.get("segments", []), start=1):
         parts: List[str] = []
-        for step in segment.get("steps", []):
-            mode = (step.get("type") or step.get("vehicle", "") or "").strip()
-            name = (step.get("name") or step.get("bus", {}).get("name", "") or "").strip()
-            entry = name or mode or "步行"
-            if entry not in parts:
+
+        walking = segment.get("walking") or {}
+        walking_steps = walking.get("steps") or []
+        if walking_steps:
+            distance = walking.get("distance")
+            parts.append(f"步行{distance}米" if distance else "步行")
+
+        for line in (segment.get("bus") or {}).get("buslines") or []:
+            name = (line.get("name") or "").strip()
+            departure = ((line.get("departure_stop") or {}).get("name") or "").strip()
+            arrival = ((line.get("arrival_stop") or {}).get("name") or "").strip()
+            entry = name + (f"（{departure} → {arrival}）" if departure and arrival else "")
+            if entry and entry not in parts:
                 parts.append(entry)
+
+        railway = segment.get("railway") or {}
+        if railway:
+            parts.append((railway.get("name") or "城际铁路").strip())
+
+        if segment.get("taxi"):
+            parts.append("打车")
+
+        if not parts:  # 旧扁平结构回退
+            for step in _iter_segment_steps(segment):
+                name = (step.get("name") or step.get("vehicle") or "").strip()
+                if name and name not in parts:
+                    parts.append(name)
+
         if parts:
             details.append(f"{index}. " + " → ".join(parts))
+
     if not details:
         details.append("未解析到分段详情，请查看地图折线。")
     return details

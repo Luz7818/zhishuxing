@@ -396,6 +396,8 @@ function loadAmapScript() {
 async function renderAmapMap(polyline, labels) {
   await loadAmapScript();
   const container = $("amapContainer");
+  // 必须先让容器可见（有尺寸）再创建地图，否则瓦片按 0×0 初始化后一片空白
+  container.style.display = "block";
   if (!amapState.map) {
     const mid = polyline[Math.floor(polyline.length / 2)];
     amapState.map = new AMap.Map(container, {
@@ -406,6 +408,8 @@ async function renderAmapMap(polyline, labels) {
     });
     amapState.map.addControl(new AMap.ToolBar());
     amapState.map.addControl(new AMap.Scale());
+  } else {
+    amapState.map.resize();
   }
 
   amapState.overlays.forEach((o) => amapState.map.remove(o));
@@ -857,7 +861,6 @@ function initPlan() {
         if (window.ZSX_CONFIG && window.ZSX_CONFIG.amapJsKey) {
           try {
             await renderAmapMap(result.polyline, labels);
-            container.style.display = "";
             canvas.style.display = "none";
             note.textContent = "底图：高德地图 JS API · 折线沿真实道路";
           } catch (error) {

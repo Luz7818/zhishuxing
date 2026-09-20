@@ -22,8 +22,21 @@
                     │
  webapp.service ────┴──▶ webapp.app（Flask）──▶ Web 控制台 / 移动端 PWA
         │
+        ├── llm.assistant（对话编排）──▶ llm.profile（需求档案）+ llm.kb（BM25 经验检索）
+        │                                   └─ 起终点命中地标 → 偏好规划；否则 ▼
         ├── planning.amap（高德真实规划）──▶ REST 高德 + LLM OD 提取
         └── analysis.reports（7 类报告）──▶ data/outputs/*.png|csv|gif
+```
+
+### 对话式助手链路（`/api/chat`）
+
+```text
+消息 → ① llm.profile：规则关键词优先、LLM JSON 兜底解析 → PassengerProfile
+     → ② 与会话档案增量合并（多轮累积，会话态在内存）
+     → ③ OD 分流：起终点命中枢纽地标 → core.navigation.plan_with_preferences（偏好加权 A* + 软必经点）
+                   否则 → planning.amap（高德引擎，无 Key 时答话术不 500）
+     → ④ llm.kb BM25 检索 top-3 站内经验（注明来源）
+     → ⑤ llm.adapters 合成回答；Mock 模式确定性模板，全链路离线可演示
 ```
 
 ## 关键决策
@@ -37,6 +50,8 @@
 | 报告函数化 | `analysis/reports.py` 每个 `run_*_report()` 可 import 可 CLI，返回结构化结果；webapp 的“既有功能联动”从 subprocess+吞异常 改为进程内调用+逐报告状态 |
 | PWA 同源服务 | `/mobile`、`/mobile/<file>` 同前缀，ServiceWorker scope 覆盖页面；`planRoute` 先 fetch `/api/plan`，失败回退 mock 并标注“演示数据” |
 | 高德底图双通道 | `home()` 经 Jinja 注入 `ZSX_CONFIG`（`AMAP_JS_KEY`/`AMAP_SECURITY_CODE`，均来自环境变量）；前端动态加载高德 JS API 2.0 渲染真实底图（深色样式 + 方向折线 + 起终点标注），脚本加载/初始化失败或未配置 Key 时自动回退 Canvas 折线示意并在说明栏注明原因 |
+| 对话助手 Mock 闭环 | `TransferAssistant` 每一环（解析/规划/检索/合成）在无密钥时都有确定性降级：规则解析兜底 LLM、内置枢纽引擎兜底高德、模板回答兜底对话合成——断网可完整演示 |
+| .env 自动加载 | `config.py` 启动时解析 workspace 根 `.env`（键=值、行注释，零第三方依赖），不覆盖已存在环境变量；`.env.example` 提供模板 |
 
 ## 迁移映射（旧 → 新）
 
@@ -67,6 +82,11 @@
 - 移动端 sw.js 预缓存引用不存在的 `VR1.png` 导致安装失败、页面从未注册 SW
 - manifest theme 色与页面 meta 不一致
 - 无 .gitignore 导致 node_modules(187M)/pyc/大媒体/密钥入库（已治理，历史需单独清理）
+- 新版高德 v3 换乘响应嵌套结构（`walking.steps`/`bus.buslines`）导致折线解析为空 → 新旧两代结构兼容解析（单测覆盖）
+- 地图容器零尺寸时创建高德地图渲染空白 → 容器先显示后再建图
+- 训练 TensorBoard 日志目录 `format` 多传一个 `args.algorithm` 导致 seed 错位 → 对齐 npy 产物命名
+- 移动端引用未入库的 9.9MB `AR.gif` 导致克隆后破图 → 缺失时展示占位说明；`sw.js` 预缓存无引用的 1.8MB `VR.png` → 移除并升级缓存版本号
+- 全仓 pyflakes 告警（未定义名 `Any`、未使用导入/死变量）→ 清零，CI 固化静态检查
 
 ## 性能优化
 

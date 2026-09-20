@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import copy
 import time
-from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 import numpy as np
 import torch
@@ -78,7 +77,7 @@ class Runner:
         try:
             from torch.utils.tensorboard import SummaryWriter
 
-            log_dir = cfg.paths.runs_dir / "{}_env_{}_number_{}_seed_{}".format(args.algorithm, args.algorithm, env_name, number, seed)
+            log_dir = cfg.paths.runs_dir / "{}_env_{}_number_{}_seed_{}".format(args.algorithm, env_name, number, seed)
             self.writer = SummaryWriter(log_dir=str(log_dir))
         except ImportError:
             print("未安装 tensorboard，跳过训练曲线记录")

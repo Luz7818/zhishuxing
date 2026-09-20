@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-import json
+from typing import Dict, List, Optional
 
 from .. import config as cfg
-from .navigation import NavigationAdapter, NavigationMap, Point
+from .navigation import NavigationMap, Point
 
 
 @dataclass

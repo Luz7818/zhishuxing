@@ -14,7 +14,7 @@ import numpy as np
 
 from .. import config as cfg
 from ..analysis.plotting import ensure_parent
-from ..core.navigation import NavigationAdapter, NavigationMap, Point
+from ..core.navigation import NavigationAdapter
 from ..core.scenarios import PassengerGroup
 from ..core.simulation import run_guided_simulation as _run_guided_simulation
 

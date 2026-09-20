@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -8,7 +7,6 @@ import pytest
 
 torch = pytest.importorskip("torch", reason="RL 运行时测试需要 torch")
 
-from zhishuxing.analysis.plotting import ensure_parent  # noqa: E402
 from zhishuxing.rl.networks import Actor  # noqa: E402
 from zhishuxing.rl.runtime import MADDPGRuntime  # noqa: E402
 from zhishuxing import config as cfg  # noqa: E402

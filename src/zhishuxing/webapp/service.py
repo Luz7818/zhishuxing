@@ -1,4 +1,4 @@
-"""Web 服务层：编排 智枢星系统 + MADDPG 运行时 + 真实规划。"""
+"""Web 服务层：编排 智枢星系统 + MADDPG 运行时 + 真实规划 + 对话式换乘助手。"""
 
 from __future__ import annotations
 
@@ -7,10 +7,18 @@ from typing import Any, Dict, List, Optional
 
 from .. import config as cfg
 from ..analysis import reports
-from ..core.navigation import NavigationAdapter, NavigationMap
+from ..core.navigation import (
+    NavigationMap,
+    TAG_LABELS,
+    landmark_label,
+    resolve_hub_landmark,
+)
 from ..core.scenarios import PassengerGroup, load_scenarios, resolve_groups
 from ..core.system import ZhiShuXingSystem
-from ..llm.adapters import MockLLMAdapter, SiliconFlowLLMAdapter
+from ..llm.adapters import SiliconFlowLLMAdapter
+from ..llm.assistant import TransferAssistant
+from ..llm.kb import TransferKB
+from ..llm.profile import profile_from_api_prefs
 from ..planning.amap import plan_route as amap_plan_route
 from ..rl.runtime import MADDPGRuntime
 
@@ -41,6 +49,8 @@ class ZhiShuXingWebService:
         self.loaded_navigation = ""
 
         self._ensure_ready()
+        self.kb = TransferKB.load_default()
+        self.assistant = TransferAssistant(self, kb=self.kb)
 
     def _ensure_ready(self) -> None:
         if not self.loaded_navigation:
@@ -72,7 +82,7 @@ class ZhiShuXingWebService:
         return {"length": len(route), "route": [list(p) for p in route]}
 
     def grid(self) -> Dict[str, Any]:
-        """完整导航网格（供前端 Canvas 渲染）。"""
+        """完整导航网格（供前端 Canvas 渲染），含设施语义层。"""
         nav_map = self.system.nav_map
         if nav_map is None:
             raise RuntimeError("请先加载导航图。")
@@ -81,6 +91,9 @@ class ZhiShuXingWebService:
             "height": nav_map.height,
             "blocked": [list(p) for p in nav_map.blocked],
             "landmarks": {k: list(v) for k, v in nav_map.landmarks.items()},
+            "landmark_labels": {k: landmark_label(k) for k in nav_map.landmarks},
+            "cell_tags": {tag: [list(p) for p in cells] for tag, cells in nav_map.cell_tags.items()},
+            "cell_size_m": nav_map.cell_size_m,
             "file": self.loaded_navigation,
         }
 
@@ -199,11 +212,21 @@ class ZhiShuXingWebService:
     # ------------------------------------------------------------ 真实路线规划
 
     def plan_route(self, question: str, engine: str = "amap", prefs: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """engine=amap：高德真实路线；engine=hub：枢纽内 A* + RL 引导仿真。"""
-        if engine == "amap":
-            return amap_plan_route(question, prefs=prefs)
+        """engine=amap：高德真实路线；engine=hub：枢纽内偏好感知 A* + RL 引导仿真。
 
-        # hub 引擎：解析“从X到Y”中的地标并规划枢纽内路径
+        两引擎都会解析需求档案(prefs.note 自由文本 + 结构化开关),档案随结果返回供前端展示。
+        """
+        profile = profile_from_api_prefs(prefs, self.system.llm)
+        if engine == "amap":
+            result = amap_plan_route(question, prefs=prefs)
+            result["profile"] = profile.to_payload()
+            if not profile.is_empty():
+                result.setdefault("tips", []).append(
+                    f"已按需求「{profile.summary()}」优化建议;市内段以高德策略为准,站内设施请跟随站内指引。"
+                )
+            return result
+
+        # hub 引擎:解析"从X到Y"中的地标并做偏好感知规划
         from ..planning.amap import extract_od_locally
 
         od = extract_od_locally(question)
@@ -211,44 +234,34 @@ class ZhiShuXingWebService:
         if nav_map is None:
             raise RuntimeError("请先加载导航图。")
 
-        # 中文关键词 → 导航图地标（入口别名优先，避免“从A口经主安检”中起点被安检抢先匹配）
-        landmark_aliases = {
-            "A口": "entry_a",
-            "B口": "entry_b",
-            "备用安检": "security_backup",
-            "主安检": "security",
-            "安检": "security",
-            "地铁": "metro_gate",
-            "高铁": "rail_gate",
-            "公交": "bus_gate",
-        }
-
-        def resolve(text: str) -> Optional[List[int]]:
-            text = (text or "").strip()
-            for name, point in nav_map.landmarks.items():
-                if name and name in text:
-                    return list(point)
-            for keyword, landmark in landmark_aliases.items():
-                if keyword in text and landmark in nav_map.landmarks:
-                    return list(nav_map.landmarks[landmark])
-            return None
-
-        start = resolve(od.get("origin_text", ""))
-        goal = resolve(od.get("destination_text", ""))
+        start = resolve_hub_landmark(od.get("origin_text", ""), nav_map)
+        goal = resolve_hub_landmark(od.get("destination_text", ""), nav_map)
         if start is None or goal is None:
-            raise ValueError("无法在枢纽导航图中识别起终点地标，可用地标: " + ", ".join(nav_map.landmarks))
+            raise ValueError("无法在枢纽导航图中识别起终点地标,可用地标: " + ", ".join(nav_map.landmarks))
 
-        via = ["security"] if ("安检" in question and "备" not in question) else []
-        if "备用安检" in question:
-            via = ["security_backup"]
-        plan = self.plan_path(start, goal, via=via)
+        # 明确提及安检 → 硬必经;其余需求走加权代价与软必经(卫生间等)
+        via = ["security_backup"] if "备用安检" in question else (["security"] if "安检" in question else [])
+        cost_spec = profile.to_cost_spec()
+        if via:
+            route_points = self.system.navigation.plan_landmark_path(start=start, via=via, goal=goal, cost_spec=cost_spec)
+            plan = {
+                "route": [list(p) for p in route_points],
+                "length": len(route_points),
+                "meters": int(round((len(route_points) - 1) * nav_map.cell_size_m)),
+                "notes": [],
+                "tags_on_path": {},
+                "soft_via": {},
+                "degraded": False,
+            }
+        else:
+            plan = self.system.navigation.plan_with_preferences(start, goal, cost_spec)
 
         sim = self.rl_simulate(
             groups_payload=[
                 {
                     "name": f"{od.get('origin_text', '')}->{od.get('destination_text', '')}",
-                    "start": start,
-                    "goal": goal,
+                    "start": list(start),
+                    "goal": list(goal),
                     "via_landmarks": via,
                     "release_time": 0,
                     "passengers": 10,
@@ -256,6 +269,23 @@ class ZhiShuXingWebService:
             ],
             config={"agents_per_group": 4, "max_steps": 200},
         )
+
+        details = [f"枢纽内路径:约 {plan['meters']} 米({plan['length']} 格)"]
+        if not profile.is_empty():
+            details.append(f"需求理解:{profile.summary()}")
+        details.extend(plan.get("notes", []))
+        facility_bits = [
+            f"{TAG_LABELS.get(tag, tag)}×{count}" for tag, count in plan.get("tags_on_path", {}).items()
+        ]
+        if facility_bits:
+            details.append("路径经过设施:" + "、".join(facility_bits))
+        details.append(f"途经点:{'、'.join(landmark_label(v) for v in via) if via else '无'}")
+        details.append(f"RL 策略:{sim.get('policy_source')}")
+
+        tips = ["请跟随站内引导标识与电子屏指引前往目标检票口。"]
+        if plan.get("degraded"):
+            tips.append("您的通行约束较严格,已自动放宽规划,请注意脚下设施类型。")
+
         return {
             "engine": "hub",
             "od_source": "landmark",
@@ -263,14 +293,25 @@ class ZhiShuXingWebService:
             "destination_text": od.get("destination_text", ""),
             "route": plan["route"],
             "length": plan["length"],
+            "meters": plan["meters"],
             "simulation": sim,
-            "details": [
-                f"枢纽内路径长度：{plan['length']} 格（约 {plan['length'] * 30} 米）",
-                f"途经点：{'、'.join(via) if via else '无'}",
-                f"RL 策略：{sim.get('policy_source')}",
-            ],
-            "tips": ["请跟随站内引导标识与电子屏指引前往目标检票口。"],
+            "profile": profile.to_payload(),
+            "details": details,
+            "tips": tips,
         }
+
+    # ------------------------------------------------------------ 对话式换乘助手
+
+    def chat(
+        self,
+        message: str,
+        session_id: Optional[str] = None,
+        prefs: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        return self.assistant.handle(message, session_id=session_id, prefs=prefs)
+
+    def chat_reset(self, session_id: str) -> Dict[str, Any]:
+        return self.assistant.reset(session_id)
 
     # ------------------------------------------------------------ 场景
 

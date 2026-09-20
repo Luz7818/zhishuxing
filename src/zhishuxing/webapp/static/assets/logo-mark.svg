@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="智枢星">
+  <title>智枢星 · 综合枢纽智慧换乘引导系统</title>
+  <defs>
+    <linearGradient id="zsx-tile" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset=".55" stop-color="#7c4df0"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <radialGradient id="zsx-sheen" cx=".2" cy=".1" r="1">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity=".5"/>
+      <stop offset=".5" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="zsx-star" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#a5f3fc"/>
+    </linearGradient>
+  </defs>
+
+  <!-- 底板:渐变圆角方 + 青色光泽 + 内描边 -->
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#zsx-tile)"/>
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#zsx-sheen)"/>
+  <rect x="3.2" y="3.2" width="57.6" height="57.6" rx="13.8" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="1.2"/>
+
+  <!-- 两道换乘环轨(旋转 ±26°)携站点圆点 -->
+  <g transform="rotate(-26 32 32)">
+    <ellipse cx="32" cy="32" rx="21" ry="12" fill="none" stroke="#ffffff" stroke-opacity=".8" stroke-width="2.4"/>
+    <circle cx="49.5" cy="37.5" r="3" fill="#ffffff"/>
+    <circle cx="14.5" cy="26.5" r="2.1" fill="#67e8f9"/>
+  </g>
+  <g transform="rotate(26 32 32)">
+    <ellipse cx="32" cy="32" rx="21" ry="12" fill="none" stroke="#ffffff" stroke-opacity=".38" stroke-width="2.4"/>
+    <circle cx="47.5" cy="24.5" r="2.1" fill="#ffffff" fill-opacity=".85"/>
+  </g>
+
+  <!-- 中心四角星:引导核心 -->
+  <path d="M32 19.5 C 33.6 27.6 36.4 30.4 44.5 32 C 36.4 33.6 33.6 36.4 32 44.5 C 30.4 36.4 27.6 33.6 19.5 32 C 27.6 30.4 30.4 27.6 32 19.5 Z"
+        fill="url(#zsx-star)"/>
+  <circle cx="44.8" cy="19.2" r="1.4" fill="#67e8f9"/>
+</svg>

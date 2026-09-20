@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0b63d9" />
+  <meta name="theme-color" content="#4f46e5" />
   <title>智枢星 —— 你的换乘不折腾</title>
-  <link rel="icon" type="image/png" href="./图标.png" />
-  <link rel="apple-touch-icon" href="./图标.png" />
+  <!-- 页面由 /mobile(无斜杠)提供,base 使 ./ 相对资源落在 /mobile/ 前缀下,SW scope 才能覆盖 -->
+  <base href="/mobile/" />
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -18,10 +21,10 @@
       --card: rgba(255, 255, 255, 0.95);
       --ink: #0c1730;
       --muted: #5e7397;
-      --brand: #0b63d9;
-      --brand-light: #18b8c6;
+      --brand: #4f46e5;
+      --brand-light: #06b6d4;
       --line: rgba(0, 0, 0, 0.08);
-      --shadow: 0 12px 32px rgba(11, 99, 217, 0.14);
+      --shadow: 0 12px 32px rgba(79, 70, 229, 0.14);
       --radius: 24px;
     }
     :root.dark {
@@ -43,7 +46,7 @@
       font-family: "Noto Sans SC", sans-serif;
       background:
         radial-gradient(1200px 500px at 8% -10%, rgba(24, 184, 198, 0.18), transparent 60%),
-        radial-gradient(900px 400px at 95% 0%, rgba(11, 99, 217, 0.14), transparent 62%),
+        radial-gradient(900px 400px at 95% 0%, rgba(79, 70, 229, 0.14), transparent 62%),
         var(--bg-1);
       color: var(--ink);
       min-height: 100vh;
@@ -62,7 +65,7 @@
       left: 0;
       width: 100%;
       height: 100vh;
-      background: linear-gradient(150deg, #0a58c9, #18b8c6);
+      background: linear-gradient(150deg, #6366f1, #06b6d4);
       display: grid;
       place-items: center;
       z-index: 9999;
@@ -196,7 +199,7 @@
     }
     .form-group input:focus {
       border-color: var(--brand);
-      box-shadow: 0 0 0 3px rgba(11, 99, 217, 0.16);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.16);
     }
     .btn-primary {
       width: 100%;
@@ -208,7 +211,7 @@
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 10px 24px rgba(11, 99, 217, 0.24);
+      box-shadow: 0 10px 24px rgba(79, 70, 229, 0.24);
       transition: 0.2s ease;
       margin-top: 10px;
     }
@@ -707,7 +710,7 @@
     }
     .pref-note:focus {
       border-color: var(--brand);
-      box-shadow: 0 0 0 3px rgba(11, 99, 217, 0.12);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
     }
     .route-detail-head {
       display: flex;
@@ -856,7 +859,7 @@
 <body>
   <div class="splash fade-in" id="splash">
     <div class="slide-up">
-      <div class="splash-icon"><img src="./图标.png" alt="智枢星图标" /></div>
+      <div class="splash-icon"><img src="./icon-192.png" alt="智枢星图标" /></div>
       <h1>智枢星</h1>
       <p>AI交通枢纽智慧换乘助手</p>
       <button class="btn-splash" id="enterBtn">立即进入</button>
@@ -884,7 +887,7 @@
 
   <div class="app" id="app">
     <header class="top-nav" id="topNav">
-      <img class="top-brand-icon" src="./图标.png" alt="APP图标" />
+      <img class="top-brand-icon" src="./icon-192.png" alt="APP图标" />
       <div class="top-nav-row-actions">
         <button class="top-locate" id="locateBtn" aria-label="定位">📍</button>
         <button class="top-pref" id="prefBtn" aria-label="偏好设置">⚙ 偏好</button>
@@ -901,7 +904,7 @@
     <div class="page active" id="homePage">
       <div class="input-card">
         <h3>规划你的换乘路线</h3>
-        <textarea class="ai-textarea" id="routeInput" placeholder="例如：从深圳北站A20出站口到五号线"></textarea>
+        <textarea class="ai-textarea" id="routeInput" placeholder="例如：带老人行李多，优先直梯，去地铁前先上趟卫生间，从A口出发"></textarea>
         <!-- quick-bar removed: 清空输入 按钮已删除 -->
         <button class="btn-primary" id="planBtn">规划路线</button>
       </div>
@@ -948,6 +951,14 @@
             <div class="label">拥堵风险</div>
             <div class="value" id="riskLevel">-</div>
           </div>
+        </div>
+        <div id="profileChips" style="display:none;padding:12px 14px 0">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">已理解你的需求</div>
+          <div id="profileChipsRow" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
+        <div class="route-subcard" id="assistantCard" style="display:none;margin-top:10px">
+          <h4>助手回答</h4>
+          <div id="assistantReply" class="route-detail-text" style="white-space:pre-line"></div>
         </div>
         <div class="route-bottom-grid">
           <div class="route-subcard">
@@ -1169,6 +1180,7 @@
       history: Array.isArray(savedHistory) ? savedHistory : [],
       darkMode: localStorage.getItem('darkMode') === 'true',
       isPlanning: false,
+      chatSessionId: null,
       user: (() => {
         try {
           return JSON.parse(localStorage.getItem('zsx_user') || 'null') || { account: '' };
@@ -1203,7 +1215,18 @@
       state.navMode = mode;
       modeTabs.forEach(t => t.classList.remove('active'));
       document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
-      $('navImage').src = mode === 'map' ? './地图.png' : './AR.gif';
+      const navImage = $('navImage');
+      // AR 素材(AR.gif,约10MB)不随仓库分发,缺失时展示占位说明而不是破图
+      navImage.onerror = () => {
+        navImage.onerror = null;
+        navImage.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360">' +
+          '<rect width="100%" height="100%" fill="#0f172a"/>' +
+          '<text x="50%" y="46%" fill="#94a3b8" font-size="22" text-anchor="middle" font-family="sans-serif">AR 实景演示素材未随仓库分发</text>' +
+          '<text x="50%" y="58%" fill="#64748b" font-size="15" text-anchor="middle" font-family="sans-serif">将 AR.gif 放入 web/mobile/ 即可启用</text></svg>'
+        );
+      };
+      navImage.src = mode === 'map' ? './地图.png' : './AR.gif';
     }
 
     function setSwitch(button, on) {
@@ -1336,24 +1359,85 @@
       toast('历史记录已清空');
     }
 
-    function renderPlanResult(plan) {
-      const durationMin = plan.duration_sec ? Math.round(Number(plan.duration_sec) / 60) : null;
-      $('origin').textContent = plan.origin_text || '-';
-      $('destination').textContent = plan.destination_text || '-';
+    function renderProfileChips(profile) {
+      const wrap = $('profileChips');
+      const row = $('profileChipsRow');
+      if (!profile || !profile.labels) { wrap.style.display = 'none'; return; }
+      const chips = [];
+      const PRIORITY_LABELS = { time: '时间优先', distance: '距离优先', comfort: '舒适优先', crowd: '少拥挤优先' };
+      const entries = Object.entries(profile.priorities || {}).sort((a, b) => b[1] - a[1]);
+      if (entries.length && entries[0][1] > 0.3) chips.push(PRIORITY_LABELS[entries[0][0]] || entries[0][0]);
+      ['hard', 'soft', 'persona'].forEach(cat => (profile.labels[cat] || []).forEach(item => chips.push(item.label)));
+      if (!chips.length) { wrap.style.display = 'none'; return; }
+      row.innerHTML = chips.map(t =>
+        `<span style="background:rgba(79,70,229,.12);color:#4f46e5;border-radius:999px;padding:4px 10px;font-size:12px">${t}</span>`
+      ).join('');
+      wrap.style.display = '';
+    }
+
+    function renderPlanResult(data) {
+      const route = data.route || {};
+      const durationMin = route.duration_sec ? Math.round(Number(route.duration_sec) / 60) : null;
+      $('origin').textContent = route.origin_text || (data.od_incomplete ? '待补充' : '-');
+      $('destination').textContent = route.destination_text || (data.od_incomplete ? '待补充' : '-');
       $('duration').textContent = durationMin ? `${durationMin}分钟` : '-';
-      $('cost').textContent = plan.cost !== undefined && plan.cost !== null ? `${plan.cost}元` : '-';
-      $('transferCount').textContent = `${plan.segments !== undefined ? plan.segments : '-'}次`;
+      $('cost').textContent = route.cost !== undefined && route.cost !== null ? `${route.cost}元` : '-';
+      $('transferCount').textContent = route.segments !== undefined ? `${route.segments}次` : '-';
       const crowd = state.prefs.crowd || 'normal';
-      $('riskLevel').textContent = plan.risk || (crowd === 'avoid' ? '低' : '中');
-      $('planStatus').textContent = plan.demo ? '演示数据' : '规划完成';
-      $('lastPlan').textContent = `${plan.origin_text || '-'}→${plan.destination_text || '-'}`;
-      const details = (plan.details && plan.details.length ? plan.details : ['暂无分段详情']).join('<br>');
-      const tips = plan.tips && plan.tips.length ? `<br><br>出行提醒：<br>${plan.tips.join('<br>')}` : '';
+      $('riskLevel').textContent = route.risk || (crowd === 'avoid' ? '低' : '中');
+      $('planStatus').textContent = data.demo ? '演示数据' : (data.od_incomplete ? '需求已记录' : '规划完成');
+      $('lastPlan').textContent = `${route.origin_text || '-'}→${route.destination_text || '-'}`;
+      renderProfileChips(data.profile);
+      const assistantCard = $('assistantCard');
+      if (data.reply) {
+        $('assistantReply').textContent = data.reply;
+        assistantCard.style.display = '';
+      } else {
+        assistantCard.style.display = 'none';
+      }
+      const details = (route.details && route.details.length ? route.details : ['暂无分段详情']).join('<br>');
+      const tips = route.tips && route.tips.length ? `<br><br>出行提醒：<br>${route.tips.join('<br>')}` : '';
       $('routeDetail').innerHTML = details + tips;
+    }
+
+    function mockProfile(text) {
+      const t = text || '';
+      const hard = [], soft = [], persona = [];
+      const push = (cat, key, label) => {
+        const bucket = cat === 'hard' ? hard : (cat === 'soft' ? soft : persona);
+        if (!bucket.includes(key)) bucket.push(key);
+      };
+      if (/卫生间|洗手间|厕所|wc/i.test(t)) push('hard', 'need_restroom', '途经卫生间');
+      if (/楼梯|爬楼/.test(t)) push('hard', 'avoid_stairs', '少走楼梯');
+      if (/直梯|电梯/.test(t)) push('soft', 'prefer_elevator', '优先直梯');
+      if (/少走路|少步行|长通道/.test(t)) push('soft', 'least_walk', '少步行');
+      if (/人少|拥挤|拥堵|不挤/.test(t)) push('soft', 'avoid_crowd', '避开拥挤');
+      if (/行李|箱子|拉杆/.test(t)) push('persona', 'luggage', '行李较多');
+      if (/老人|父母|爸妈|长辈/.test(t)) push('persona', 'elderly', '携老人');
+      if (/小孩|孩子|儿童|宝宝/.test(t)) push('persona', 'child', '携儿童');
+      if (/轮椅|行动不便|腿脚/.test(t)) push('persona', 'mobility', '轮椅/行动不便');
+      if (/赶时间|最快|着急|尽快/.test(t)) push('persona', 'rushed', '赶时间');
+      const priorities = { time: 0.25, distance: 0.25, comfort: 0.25, crowd: 0.25 };
+      if (persona.includes('rushed')) priorities.time = 0.55;
+      const labels = {
+        hard: hard.map(k => ({ key: k, label: { need_restroom: '途经卫生间', avoid_stairs: '少走楼梯' }[k] || k })),
+        soft: soft.map(k => ({ key: k, label: { prefer_elevator: '优先直梯', least_walk: '少步行', avoid_crowd: '避开拥挤' }[k] || k })),
+        persona: persona.map(k => ({ key: k, label: { luggage: '行李较多', elderly: '携老人', child: '携儿童', mobility: '轮椅/行动不便', rushed: '赶时间' }[k] || k })),
+      };
+      const all = [...labels.hard, ...labels.soft, ...labels.persona].map(i => i.label);
+      if (priorities.time > 0.3) all.unshift('时间优先');
+      return {
+        source: 'rule',
+        priorities,
+        hard, soft, persona,
+        labels,
+        summary: all.length ? all.join('、') : '无特殊需求',
+      };
     }
 
     function mockPlanResult(val) {
       const parsed = parseRouteText(val);
+      const profile = mockProfile(val);
       const strategy = state.prefs.strategy || 'balanced';
       const walk = state.prefs.walk || 'normal';
       const crowd = state.prefs.crowd || 'normal';
@@ -1382,7 +1466,7 @@
 
       const riskPool = crowd === 'avoid' ? ['低', '低', '中'] : ['低', '中', '中-高'];
       const risk = riskPool[Math.floor(Math.random() * riskPool.length)];
-      return {
+      const route = {
         demo: true,
         origin_text: parsed.origin,
         destination_text: parsed.destination,
@@ -1391,21 +1475,27 @@
         segments: transfers,
         risk,
         details: ['离线演示模式：未连接后端服务，以上为演示数据。'],
-        tips: ['连接后端后可获得真实换乘规划与引导详情。']
+        tips: ['连接后端后可获得真实偏好感知换乘规划与站内经验引用。']
       };
+      const reply = (profile.summary !== '无特殊需求'
+        ? `已理解您的需求：${profile.summary}。\n`
+        : '好的，我来帮您规划换乘。\n') +
+        '（离线演示模式：后端不可用；连接后端后可获得偏好感知路线规划与站内换乘经验引用。）';
+      return { demo: true, profile, reply, route };
     }
 
     async function requestPlan(question) {
       const prefs = { ...state.prefs };
-      const response = await fetch('/api/plan', {
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, engine: 'amap', prefs })
+        body: JSON.stringify({ message: question, session_id: state.chatSessionId, prefs })
       });
       const payload = await response.json();
       if (!response.ok || payload.ok === false) {
         throw new Error(payload.error || `请求失败: ${response.status}`);
       }
+      state.chatSessionId = payload.data.session_id;
       return payload.data;
     }
 

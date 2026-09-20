@@ -226,6 +226,37 @@ def create_app(service: ZhiShuXingWebService | None = None) -> Flask:
         except Exception as exc:
             return fail(exc)
 
+    # ------------------------------------------------------------ 对话式换乘助手
+
+    @app.post("/api/chat")
+    def api_chat():
+        try:
+            payload = request.get_json(force=True, silent=True) or {}
+            message = (payload.get("message") or "").strip()
+            if not message:
+                return jsonify({"error": "缺少 message"}), 400
+            data = service.chat(
+                message=message,
+                session_id=payload.get("session_id"),
+                prefs=payload.get("prefs", {}),
+            )
+            return ok(data)
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+        except Exception as exc:
+            return fail(exc)
+
+    @app.post("/api/chat/reset")
+    def api_chat_reset():
+        try:
+            payload = request.get_json(force=True, silent=True) or {}
+            session_id = payload.get("session_id", "")
+            if not session_id:
+                return jsonify({"error": "缺少 session_id"}), 400
+            return ok(service.chat_reset(session_id))
+        except Exception as exc:
+            return fail(exc)
+
     return app
 
 

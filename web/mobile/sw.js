@@ -1,9 +1,14 @@
-const CACHE_NAME = "zhishuxing-mobile-v2";
+const CACHE_NAME = "zhishuxing-mobile-v4";
 const ASSETS = [
   "./mobile_app.html",
   "./manifest.webmanifest",
   "./地图.png",
-  "./VR.png",
+  "./icon-192.png",
+  "./icon-512.png",
+  "./icon-maskable-512.png",
+  "./apple-touch-icon.png",
+  "./logo-mark.svg",
+  "./favicon.svg",
 ];
 
 self.addEventListener("install", (event) => {

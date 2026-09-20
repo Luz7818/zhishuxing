@@ -1,0 +1,176 @@
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+  <!--
+    智枢星 UI 图标体系 · 24 网格 · 1.8px 圆头描边 · currentColor
+    母题:节点 + 动线 + 圆角。通过 <use href="/static/assets/icons.svg#i-xxx"/> 引用。
+  -->
+  <defs>
+  <!-- ===== 侧边导航 ===== -->
+  <symbol id="i-overview" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3.6 18.6a9 9 0 1 1 16.8 0"/><path d="M12 18.4l4.2-5.6"/><circle cx="12" cy="18.6" r="1.6"/>
+  </g></symbol>
+
+  <symbol id="i-assistant" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 4.5c4.6 0 8.3 2.9 8.3 6.5s-3.7 6.5-8.3 6.5c-1 0-1.9-.1-2.8-.4l-4.4 2.3 1.3-3.6c-1.5-1.2-2.4-2.9-2.4-4.8 0-3.6 3.7-6.5 8.3-6.5Z"/>
+    <path d="M12 8.1c.35 1.75 1.05 2.45 2.8 2.8-1.75.35-2.45 1.05-2.8 2.8-.35-1.75-1.05-2.45-2.8-2.8 1.75-.35 2.45-1.05 2.8-2.8Z" fill="currentColor" stroke="none"/>
+  </g></symbol>
+
+  <symbol id="i-plan" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="9.2" stroke-dasharray="2.2 3.6" stroke-opacity=".45"/><path d="M12 5.4 18.6 19 12 15.7 5.4 19Z"/>
+  </g></symbol>
+
+  <symbol id="i-hub" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="2.4"/><path d="M10.3 10.3 7.2 7.2M13.7 10.3l3.1-3.1M10.3 13.7l-3.1 3.1M13.7 13.7l3.1 3.1"/>
+    <circle cx="5.9" cy="5.9" r="1.6"/><circle cx="18.1" cy="5.9" r="1.6"/><circle cx="5.9" cy="18.1" r="1.6"/><circle cx="18.1" cy="18.1" r="1.6"/>
+    <path d="M12 2.6a9.4 9.4 0 0 1 9.4 9.4" stroke-opacity=".35" stroke-dasharray="2 3"/>
+  </g></symbol>
+
+  <symbol id="i-flow" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3.5 7.4c2.8-2.3 5.7-2.3 8.5 0s5.7 2.3 8.5 0"/>
+    <path d="M3.5 12.3c2.8-2.3 5.7-2.3 8.5 0s5.7 2.3 8.5 0" stroke-opacity=".55"/>
+    <path d="M3.5 17.2c2.8-2.3 5.7-2.3 8.5 0s5.7 2.3 8.5 0" stroke-opacity=".28"/>
+  </g></symbol>
+
+  <symbol id="i-rl" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="6.6" y="8" width="10.8" height="9.6" rx="2.6"/><path d="M12 5.6v2.4"/><circle cx="12" cy="4.4" r="1.05"/>
+    <circle cx="9.9" cy="12.1" r=".55" fill="currentColor" stroke="none"/><circle cx="14.1" cy="12.1" r=".55" fill="currentColor" stroke="none"/>
+    <path d="M9.9 15h4.2" stroke-opacity=".55"/><path d="M3.6 11.2h3M3.6 14.4h3M17.4 11.2h3M17.4 14.4h3"/>
+  </g></symbol>
+
+  <symbol id="i-reports" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7.2 3.6h6.6l4.8 4.8V19a1.7 1.7 0 0 1-1.7 1.7H7.2A1.7 1.7 0 0 1 5.5 19V5.3a1.7 1.7 0 0 1 1.7-1.7Z"/>
+    <path d="M13.6 3.8v4.8h4.8"/><path d="M9 16.6v-2.8M12 16.6v-5M15 16.6v-1.6"/>
+  </g></symbol>
+
+  <!-- ===== 通用 ===== -->
+  <symbol id="i-search" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="11" cy="11" r="6.3"/><path d="m15.7 15.7 4.1 4.1"/>
+  </g></symbol>
+
+  <symbol id="i-moon" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M19.6 13.3A7.9 7.9 0 0 1 10.7 4.4a7.9 7.9 0 1 0 8.9 8.9Z"/>
+  </g></symbol>
+
+  <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3.9"/><path d="M12 3.2v2M12 18.8v2M3.2 12h2M18.8 12h2M5.8 5.8l1.4 1.4M16.8 16.8l1.4 1.4M18.2 5.8l-1.4 1.4M7.2 16.8l-1.4 1.4"/>
+  </g></symbol>
+
+  <symbol id="i-close" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m6.4 6.4 11.2 11.2M17.6 6.4 6.4 17.6"/>
+  </g></symbol>
+
+  <symbol id="i-spark" viewBox="0 0 24 24">
+    <path d="M12 3.4c.6 3.9 2.1 5.4 6 6-3.9.6-5.4 2.1-6 6-.6-3.9-2.1-5.4-6-6 3.9-.6 5.4-2.1 6-6Z" fill="currentColor"/>
+  </symbol>
+
+  <!-- ===== 卡片标题 ===== -->
+  <symbol id="i-bolt" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.2 3.2 5.8 13.4h5.3l-.3 7.4 7.4-10.2h-5.3Z"/>
+  </g></symbol>
+
+  <symbol id="i-pulse" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M3.4 12.6h3.8l2.1-4.8 3.6 9 2.1-4.8h5.6"/>
+  </g></symbol>
+
+  <symbol id="i-gridmap" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.8" y="3.8" width="7" height="7" rx="1.8"/><rect x="13.2" y="13.2" width="7" height="7" rx="1.8"/>
+    <rect x="13.2" y="3.8" width="7" height="7" rx="1.8" stroke-opacity=".4"/><rect x="3.8" y="13.2" width="7" height="7" rx="1.8" stroke-opacity=".4"/>
+    <path d="M7.3 10.8v1.4a2.4 2.4 0 0 0 2.4 2.4h3.1"/>
+  </g></symbol>
+
+  <symbol id="i-sliders" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.5 7.2h3.7M12.6 7.2h6.9M4.5 16.8h6.8M16 16.8h3.5M4.5 12h9.9M19 12h.5"/>
+    <circle cx="10.1" cy="7.2" r="1.9"/><circle cx="13.4" cy="16.8" r="1.9"/><circle cx="16.6" cy="12" r="1.9"/>
+  </g></symbol>
+
+  <symbol id="i-check" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.4"/><path d="m8.3 12.4 2.5 2.5 5-5.4"/>
+  </g></symbol>
+
+  <symbol id="i-chart" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.4 4.4v14.4a.9.9 0 0 0 .9.9h14.3" stroke-opacity=".55"/><path d="m7.6 14.6 3.3-3.7 2.7 2.1 4.6-5.5"/><path d="M14.9 7.5h3.3v3.3"/>
+  </g></symbol>
+
+  <symbol id="i-target" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.3"/><circle cx="12" cy="12" r="4.3"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>
+  </g></symbol>
+
+  <symbol id="i-sim" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.4"/><path d="M10.2 8.9l4.9 3.1-4.9 3.1Z"/>
+  </g></symbol>
+
+  <symbol id="i-users" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="9.2" cy="8.8" r="3.1"/><path d="M4 19.2a5.2 5.2 0 0 1 10.4 0"/><path d="M15.5 6a3.1 3.1 0 0 1 0 5.6"/><path d="M16.8 14.5a5.2 5.2 0 0 1 3.4 4.7"/>
+  </g></symbol>
+
+  <symbol id="i-image" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.8" y="5" width="16.4" height="14" rx="2.3"/><circle cx="9.1" cy="10" r="1.7"/>
+    <path d="m6 16.9 3.6-3.6a1.3 1.3 0 0 1 1.9 0l5.9 5.7" stroke-opacity=".8"/>
+  </g></symbol>
+
+  <symbol id="i-road" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8.8 4.4 5.4 19.6M15.2 4.4l3.4 15.2"/><path d="M12 4.6v2.4M12 10.6v2.4M12 16.6v2.4"/>
+  </g></symbol>
+
+  <symbol id="i-bulb" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1.3.5 2.6 1.5 3.5.8.8 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 21.5h4"/>
+  </g></symbol>
+
+  <symbol id="i-chat" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 4.6c4.6 0 8.4 2.9 8.4 6.6 0 3.7-3.8 6.6-8.4 6.6-1 0-1.9-.1-2.8-.4l-4.4 2.3 1.3-3.5c-1.6-1.2-2.5-2.9-2.5-4.7 0-3.7 3.8-6.9 8.4-6.9Z"/>
+    <path d="M8.7 11.4h.01M12.2 11.4h.01M15.7 11.4h.01"/>
+  </g></symbol>
+
+  <symbol id="i-cpu" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="7.2" y="7.2" width="9.6" height="9.6" rx="2"/><rect x="10.6" y="10.6" width="2.8" height="2.8" rx=".7"/>
+    <path d="M9.6 7.2V4.6M14.4 7.2V4.6M9.6 19.4v-2.6M14.4 19.4v-2.6M7.2 9.6H4.6M7.2 14.4H4.6M19.4 9.6h-2.6M19.4 14.4h-2.6"/>
+  </g></symbol>
+
+  <symbol id="i-flask" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9.8 3.6h4.4M10.6 3.6v5L5.7 17.5a2.1 2.1 0 0 0 1.9 3h8.8a2.1 2.1 0 0 0 1.9-3L13.4 8.6v-5"/><path d="M7.6 14.6h8.8"/>
+  </g></symbol>
+
+  <!-- ===== 首页三大能力 ===== -->
+  <symbol id="i-idcard" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.4" y="5.4" width="17.2" height="13.2" rx="2.3"/><circle cx="9" cy="10.8" r="1.9"/><path d="M5.9 16a3.3 3.3 0 0 1 6.2 0"/><path d="M14.8 9.4h3.6M14.8 12.8h3.6"/>
+  </g></symbol>
+
+  <symbol id="i-prefroute" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.6 19.2c5.4 0 4.2-6.8 8.9-7.6 3.2-.55 4.7-2.6 5.1-5.4"/>
+    <circle cx="4.6" cy="19.2" r="1.5"/>
+    <path d="M18.6 3.9c.25 1.55 1 2.3 2.55 2.55-1.55.25-2.3 1-2.55 2.55-.25-1.55-1-2.3-2.55-2.55 1.55-.25 2.3-1 2.55-2.55Z" fill="currentColor" stroke="none"/>
+  </g></symbol>
+
+  <symbol id="i-book" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 6.4C10.4 5.1 8.3 4.5 4.9 4.5v13.4c3.4 0 5.5.6 7.1 1.9 1.6-1.3 3.7-1.9 7.1-1.9V4.5c-3.4 0-5.5.6-7.1 1.9Z"/><path d="M12 6.4v13.2"/>
+  </g></symbol>
+
+  <!-- ===== 空状态 / 附加 ===== -->
+  <symbol id="i-pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 21.2s-6.8-5.6-6.8-10.7a6.8 6.8 0 1 1 13.6 0C18.8 15.6 12 21.2 12 21.2Z"/><circle cx="12" cy="10.3" r="2.4"/>
+  </g></symbol>
+
+  <symbol id="i-disk" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 4.4c-4.2 0-7.6 1.2-7.6 2.8s3.4 2.8 7.6 2.8 7.6-1.2 7.6-2.8-3.4-2.8-7.6-2.8Z"/>
+    <path d="M4.4 7.2v9.6c0 1.6 3.4 2.8 7.6 2.8s7.6-1.2 7.6-2.8V7.2"/><path d="M4.4 12c0 1.6 3.4 2.8 7.6 2.8s7.6-1.2 7.6-2.8"/>
+  </g></symbol>
+
+  <symbol id="i-radar" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8.4" stroke-opacity=".4"/><circle cx="12" cy="12" r="4.5" stroke-opacity=".6"/>
+    <path d="M12 12l5.6-5.6"/><circle cx="13.6" cy="15.6" r="1.2" fill="currentColor" stroke="none"/>
+  </g></symbol>
+
+  <symbol id="i-download" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 4.2v9.6M8.2 10.4l3.8 3.8 3.8-3.8M5 19.6h14"/>
+  </g></symbol>
+
+  <!-- 空状态插画:起终点 + 虚线换乘动线 + 直梯设施(48 网格) -->
+  <symbol id="art-route" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4" y="4" width="40" height="40" rx="10" stroke-opacity=".28"/>
+    <path d="M14 32.5c0-6.5 5.5-7 9.5-7s9-2.5 9-7.5" stroke-dasharray="3.2 4" stroke-opacity=".85"/>
+    <circle cx="14" cy="34" r="2.6"/><circle cx="14" cy="34" r="1" fill="currentColor" stroke="none"/>
+    <circle cx="32.5" cy="15.5" r="2.6" stroke-opacity=".9"/><circle cx="32.5" cy="15.5" r="1" fill="currentColor" stroke="none"/>
+    <rect x="29" y="27.5" width="9" height="9" rx="2.2" stroke-opacity=".55"/>
+    <path d="M31.6 33.9v-3.4M30.6 31.5l1-1 1 1M35.4 30.1v3.4M34.4 32.5l1 1 1-1" stroke-opacity=".55"/>
+  </g></symbol>
+  </defs>
+</svg>

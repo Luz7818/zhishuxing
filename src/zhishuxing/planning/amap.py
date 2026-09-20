@@ -32,26 +32,37 @@ WALK_MAP = {
 
 
 def extract_od_locally(question: str) -> Dict[str, str]:
-    """正则兜底 OD 提取（LLM 不可用时）。"""
+    """正则兜底 OD 提取（LLM 不可用时）。支持"从X到Y / 从X出发…去Y / 去Y"等口语结构。"""
     cleaned = question.strip().replace("乘坐地铁", "")
     cleaned = cleaned.replace("乘坐公交", "")
     origin = ""
     destination = ""
     city = ""
 
-    match = None
-    for pattern in (
-        r"从(.+?)到(.+?)(?:$|，|。|,)",
-        r"(.+?)到(.+?)(?:$|，|。|,)",
-    ):
-        match = re.search(pattern, cleaned)
-        if match:
-            origin = match.group(1).strip()
-            destination = match.group(2).strip()
-            break
+    match = re.search(r"从(.+?)到(.+?)(?:$|，|。|,)", cleaned)
+    if match:
+        origin = match.group(1).strip()
+        destination = match.group(2).strip()
+    else:
+        origin_match = re.search(r"从(.+?)(?:出发|，|。|,|$)", cleaned)
+        if origin_match:
+            origin = origin_match.group(1).strip()
+        destination_match = re.search(r"(?:去|到|前往)(.+?)(?:$|，|。|,|之前|前|然后|再|后)", cleaned)
+        if destination_match:
+            destination = destination_match.group(1).strip()
+        else:
+            transport_match = re.search(r"赶(高铁|火车|地铁|公交|飞机)", cleaned)
+            if transport_match:
+                destination = transport_match.group(1)
+        if not origin and not destination:
+            match = re.search(r"(.+?)到(.+?)(?:$|，|。|,)", cleaned)
+            if match:
+                origin = match.group(1).strip()
+                destination = match.group(2).strip()
 
-    if not origin or not destination:
+    if not origin:
         origin = "当前位置"
+    if not destination:
         destination = "目的地"
 
     if any(keyword in cleaned for keyword in ("深圳", "深圳北", "宝安机场", "前海湾", "五号线", "5号线", "11号线")):

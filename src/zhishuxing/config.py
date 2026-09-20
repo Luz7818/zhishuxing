@@ -92,6 +92,20 @@ class Paths:
     def training_config(self) -> Path:
         return self.configs / "training.json"
 
+    @property
+    def kb_dir(self) -> Path:
+        return self.data / "transfer_kb"
+
+    @property
+    def kb_corpus(self) -> Path:
+        """入库后的换乘经验语料(JSONL)。"""
+        return self.kb_dir / "corpus.jsonl"
+
+    @property
+    def kb_sources_dir(self) -> Path:
+        """手工整理的换乘经验源文档目录(txt/md/html,kb-ingest 的默认输入)。"""
+        return self.kb_dir / "shenzhen_north"
+
     def ensure_runtime_dirs(self) -> None:
         for directory in (self.outputs, self.model_dir, self.runs_dir):
             directory.mkdir(parents=True, exist_ok=True)

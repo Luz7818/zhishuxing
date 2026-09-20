@@ -3,21 +3,28 @@
   "short_name": "智枢星",
   "start_url": "./mobile_app.html",
   "display": "standalone",
-  "background_color": "#f4f1e8",
-  "theme_color": "#0b63d9",
+  "background_color": "#eef4ff",
+  "theme_color": "#4f46e5",
   "lang": "zh-CN",
   "description": "交通枢纽智慧换乘引导的移动端表层演示应用",
   "icons": [
     {
-      "src": "./图标.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "./图标.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

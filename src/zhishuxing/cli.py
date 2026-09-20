@@ -65,7 +65,13 @@ def _build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--debug", action="store_true")
     serve.add_argument("--production", action="store_true", help="使用 waitress 生产托管")
 
-    smoke = sub.add_parser("smoke", help="运行 Web API 冒烟检查")
+    sub.add_parser("smoke", help="运行 Web API 冒烟检查")
+
+    kb_ingest = sub.add_parser("kb-ingest", help="把换乘经验文档(txt/md/html)入库为 JSONL 语料")
+    kb_ingest.add_argument("--src", type=Path, default=None, help="源文档目录（默认 data/transfer_kb/shenzhen_north）")
+    kb_ingest.add_argument("--out", type=Path, default=None, help="输出语料（默认 data/transfer_kb/corpus.jsonl）")
+    kb_ingest.add_argument("--hub", type=str, default="shenzhen_north", help="枢纽标识（写入每条语料的 hub 字段）")
+    kb_ingest.add_argument("--query", type=str, default=None, help="入库后用该查询自检检索效果")
 
     return parser
 
@@ -232,6 +238,21 @@ def cmd_serve(args) -> int:
     return 0
 
 
+def cmd_kb_ingest(args) -> int:
+    from .llm.kb import TransferKB, ingest_directory
+
+    src = Path(args.src) if args.src else cfg.paths.kb_sources_dir
+    out = Path(args.out) if args.out else cfg.paths.kb_corpus
+    result = ingest_directory(src_dir=src, out_path=out, hub=args.hub)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    if args.query:
+        kb = TransferKB.load(out)
+        print(f"语料 {len(kb)} 条,检索自检「{args.query}」:")
+        for hit in kb.search(args.query, hub=args.hub, top_k=3):
+            print(f"  [{hit['score']:.3f}] {hit['doc']['title']} <- {hit['doc'].get('source', '')}")
+    return 0
+
+
 def cmd_smoke(_args) -> int:
     from .core.navigation import NavigationAdapter
     from .core.scenarios import resolve_groups
@@ -288,6 +309,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "animate": cmd_animate,
         "serve": cmd_serve,
         "smoke": cmd_smoke,
+        "kb-ingest": cmd_kb_ingest,
     }
     return handlers[args.command](args)
 

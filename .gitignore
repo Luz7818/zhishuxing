@@ -41,9 +41,14 @@ obj/
 .vscode/
 .idea/
 .zcode/
+.zcodeignore
 
 # 密钥与本地配置（一律走环境变量）
 .env
 .env.*
 config_direct.py
 config_local.py
+
+# 旧版品牌大图（已被 scripts/render_brand_assets.py 生成的图标替代，无引用）
+web/mobile/VR.png
+web/mobile/图标.png

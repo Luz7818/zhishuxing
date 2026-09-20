@@ -70,30 +70,55 @@ function setImage(imgId, frameId, url) {
   $(frameId).classList.add("show");
 }
 
-/* ---------------- 视图路由 ---------------- */
+/* ---------------- 视图与主题(仿 harness:欢迎页 → 应用壳,tab 切换) ---------------- */
 
-const VIEW_META = {
+const $$ = (sel, el = document) => [...el.querySelectorAll(sel)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+const TITLES = {
   overview: ["概览", "系统状态总览与快捷入口"],
-  navigation: ["枢纽导航", "网格可视化 · 点击选取起终点 · A* 路径规划"],
+  navigation: ["枢纽导航", "网格可视化 · 点击选取起终点 · 偏好感知 A* 路径规划"],
   rl: ["RL 智能体", "MADDPG 策略权重 · 推理 · 多智能体引导仿真"],
   flow: ["客流面板", "乘客分组 · 动态客流热力与引导路径"],
-  plan: ["路线规划", "自然语言诉求 → 真实换乘方案"],
-  llm: ["LLM 引擎", "模型加载 · 微调接口 · 指标报告"],
+  plan: ["路线规划", "自然语言诉求 + 个性化偏好 → 真实换乘方案"],
   reports: ["分析报告", "七类可视化报告一键生成"],
 };
 
-function switchView(name) {
-  document.querySelectorAll(".view").forEach((v) => v.classList.remove("active"));
-  $(`view-${name}`).classList.add("active");
-  document.querySelectorAll(".nav-item").forEach((n) => n.classList.toggle("active", n.dataset.view === name));
-  const meta = VIEW_META[name] || [name, ""];
-  $("viewTitle").textContent = meta[0];
-  $("viewSub").textContent = meta[1];
+function showView(name) {
+  $("view-welcome").classList.toggle("hidden", name !== "welcome");
+  $("app").classList.toggle("hidden", name !== "app");
 }
 
-document.querySelectorAll(".nav-item").forEach((item) => {
-  item.addEventListener("click", () => switchView(item.dataset.view));
-});
+function switchTab(tab) {
+  $$(".nav-item[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  $$("main section").forEach((s) => s.classList.toggle("active", s.id === "tab-" + tab));
+  const [t, sub] = TITLES[tab] || [tab, ""];
+  $("page-title").textContent = t;
+  $("page-sub").textContent = sub;
+  $("scroll-area").scrollTo({ top: 0 });
+}
+
+function enterApp() {
+  showView("app");
+  initAppOnce();
+}
+
+/* ---------------- 主题(明/暗,记忆偏好) ---------------- */
+
+function applyTheme(theme) {
+  document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem("zsx_theme", theme); } catch (_) { /* 隐私模式忽略 */ }
+  /* 日/月图标由 CSS 依 data-theme 切换,无需改按钮内容 */
+}
+
+function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem("zsx_theme"); } catch (_) { /* 忽略 */ }
+  applyTheme(saved || "light");
+  $("theme-toggle").addEventListener("click", () => {
+    applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
+  });
+}
 
 /* ---------------- Canvas 工具 ---------------- */
 
@@ -105,6 +130,12 @@ const LANDMARK_ALIAS = {
   metro_gate: "地铁闸机",
   rail_gate: "高铁闸机",
   bus_gate: "公交闸机",
+  restroom_a: "卫生间A",
+  restroom_b: "卫生间B",
+  elevator_a: "无障碍直梯",
+  stairs_passage: "楼梯通道",
+  escalator_passage: "扶梯通道",
+  nursing_room: "母婴室",
 };
 
 const lmName = (key) => LANDMARK_ALIAS[key] || key;
@@ -152,6 +183,23 @@ function drawGrid(canvas, grid, view) {
   grid.blocked.forEach(([bx, by]) => {
     roundRect(ctx, ox + bx * cell + 1, oy + by * cell + 1, cell - 2, cell - 2, 3);
     ctx.fill();
+  });
+
+  // 设施语义层（楼梯/扶梯/直梯/拥挤区）
+  const TAG_STYLE = {
+    stairs: "rgba(249,115,22,0.55)",
+    escalator: "rgba(251,191,36,0.5)",
+    elevator: "rgba(52,211,153,0.55)",
+    crowd: "rgba(248,113,113,0.28)",
+  };
+  Object.entries(grid.cell_tags || {}).forEach(([tag, cells]) => {
+    const color = TAG_STYLE[tag];
+    if (!color) return;
+    ctx.fillStyle = color;
+    cells.forEach(([tx, ty]) => {
+      roundRect(ctx, ox + tx * cell + 2, oy + ty * cell + 2, cell - 4, cell - 4, 4);
+      ctx.fill();
+    });
   });
 
   // 地标
@@ -445,34 +493,46 @@ async function renderAmapMap(polyline, labels) {
 
 const state = {
   nav: { grid: null, start: null, goal: null, via: new Set(), route: null, progress: 1 },
-  plan: { strategy: "balanced", walkShort: false, crowdAvoid: false },
+  plan: { strategy: "balanced", walkShort: false, crowdAvoid: false, preferElevator: false, needRestroom: false },
   llm: { preferReal: false },
+  chat: { sessionId: null, busy: false },
 };
 
-/* ---------------- 顶栏 ---------------- */
+/* ---------------- 顶栏 / 健康检查 ---------------- */
 
 async function refreshTopbar() {
   try {
-    await api.get("/health");
-    const pill = $("healthPill");
-    pill.classList.add("online");
-    pill.innerHTML = '<span class="dot"></span>服务在线';
+    const health = await api.get("/health");
+    $("health-dot").classList.remove("off");
+    $("health-text").textContent = "服务在线";
+    const navFile = (health && health.navigation ? health.navigation : "").split(/[\\/]/).pop();
+    $("health-chip").textContent = `导航图:${navFile || "已加载"}`;
+    const ws = $("welcome-stats");
+    if (ws && !ws.dataset.loaded) {
+      ws.dataset.loaded = "1";
+      ws.innerHTML = `
+        <div class="hstat"><b>🧠<span class="num">4 维</span></b>优先级 · 硬约束 · 软偏好 · 画像</div>
+        <div class="hstat"><b>🛗<span class="num">4 类</span></b>直梯/扶梯/楼梯/拥挤设施建模</div>
+        <div class="hstat"><b>📚<span class="num">22 篇</span></b>站内换乘经验语料</div>
+        <div class="hstat"><b>🤖<span class="num">2 引擎</span></b>枢纽偏好规划 + 高德真实路线</div>`;
+    }
   } catch (_) {
-    const pill = $("healthPill");
-    pill.classList.add("offline");
-    pill.innerHTML = '<span class="dot"></span>服务离线';
+    $("health-dot").classList.add("off");
+    $("health-text").textContent = "服务离线";
+    $("health-chip").textContent = "服务离线";
   }
 
   const status = await api.get("/api/rl/status").catch(() => null);
   if (status) {
     updatePolicyUI(status);
   }
+  // 侧栏 LLM 模式标注
+  const llmMode = state.llm.preferReal ? "真实适配器" : "Mock";
+  $("side-llm").textContent = `LLM:${llmMode}`;
 }
 
 function updatePolicyUI(status) {
-  const badge = $("policyBadge");
-  badge.className = `badge ${status.policy_loaded ? "ok" : "warn"}`;
-  badge.innerHTML = `<span class="dot"></span>策略：${status.policy_source}`;
+  $("policyChip").textContent = `策略:${status.policy_source}`;
 
   $("kpiPolicy").textContent = status.policy_source;
   $("kpiSteps").textContent = status.latest_step_k ? `${status.latest_step_k}k` : "—";
@@ -508,11 +568,11 @@ function updatePolicyUI(status) {
 
 function initOverview() {
   $("btnQuickSim").addEventListener("click", () => {
-    switchView("rl");
+    switchTab("rl");
     $("btnRLSim").click();
   });
   $("btnQuickPanel").addEventListener("click", () => {
-    switchView("flow");
+    switchTab("flow");
     $("btnPanel").click();
   });
   $("btnQuickPolicy").addEventListener("click", () =>
@@ -522,7 +582,7 @@ function initOverview() {
     })
   );
   $("btnQuickReports").addEventListener("click", () => {
-    switchView("reports");
+    switchTab("reports");
     $("btnReportsAll").click();
   });
 }
@@ -812,14 +872,16 @@ function initPlan() {
       state.plan.strategy = chip.dataset.v;
     });
   });
-  $("chipWalk").addEventListener("click", () => {
-    state.plan.walkShort = !state.plan.walkShort;
-    $("chipWalk").classList.toggle("active", state.plan.walkShort);
-  });
-  $("chipCrowd").addEventListener("click", () => {
-    state.plan.crowdAvoid = !state.plan.crowdAvoid;
-    $("chipCrowd").classList.toggle("active", state.plan.crowdAvoid);
-  });
+  const bindToggle = (id, key) => {
+    $(id).addEventListener("click", () => {
+      state.plan[key] = !state.plan[key];
+      $(id).classList.toggle("active", state.plan[key]);
+    });
+  };
+  bindToggle("chipWalk", "walkShort");
+  bindToggle("chipCrowd", "crowdAvoid");
+  bindToggle("chipElevator", "preferElevator");
+  bindToggle("chipRestroom", "needRestroom");
 
   $("btnRealPlan").addEventListener("click", () =>
     withBusy($("btnRealPlan"), " 规划中", async () => {
@@ -830,6 +892,8 @@ function initPlan() {
           strategy: state.plan.strategy,
           walk: state.plan.walkShort ? "short" : "normal",
           crowd: state.plan.crowdAvoid ? "avoid" : "normal",
+          prefer_elevator: state.plan.preferElevator || false,
+          need_restroom: state.plan.needRestroom || false,
         },
       });
       $("planEmpty").style.display = "none";
@@ -839,6 +903,7 @@ function initPlan() {
       $("planSeg").textContent = result.segments !== undefined ? `${result.segments} 次` : "—";
       $("planEngineUsed").textContent = `${result.engine === "amap" ? "高德" : "枢纽"} · ${result.od_source}`;
       $("planOD").textContent = `${result.origin_text} → ${result.destination_text}${result.city ? `（${result.city}）` : ""}`;
+      renderPlanProfile(result.profile);
 
       const details = result.details && result.details.length ? result.details : ["暂无分段详情"];
       $("planDetails").innerHTML = details.map((d) => `<li>${d}</li>`).join("");
@@ -877,6 +942,198 @@ function initPlan() {
   );
 }
 
+/* ---------------- 智能换乘助手 ---------------- */
+
+const PRIORITY_LABELS = { time: "时间优先", distance: "距离优先", comfort: "舒适优先", crowd: "少拥挤优先" };
+const PROFILE_BADGE = { hard: "danger", soft: "info", persona: "warn" };
+
+function profileChipHtml(profile) {
+  const bits = [];
+  const top = Object.entries(profile.priorities || {}).sort((a, b) => b[1] - a[1])[0];
+  if (top && top[1] > 0.3) {
+    bits.push(`<span class="badge info">${PRIORITY_LABELS[top[0]] || top[0]}</span>`);
+  }
+  ["hard", "soft", "persona"].forEach((cat) => {
+    (profile.labels && profile.labels[cat] || []).forEach((item) => {
+      bits.push(`<span class="badge ${PROFILE_BADGE[cat]}">${esc(item.label)}</span>`);
+    });
+  });
+  return bits;
+}
+
+function appendChatMessage(role, text, pending) {
+  const box = $("chatMessages");
+  const el = document.createElement("div");
+  el.className = `chat-msg ${role}${pending ? " pending" : ""}`;
+  el.textContent = text;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+  return el;
+}
+
+function renderProfileChips(profile) {
+  const row = $("chatProfileRow");
+  const host = $("chatProfileChips");
+  if (!profile) {
+    row.style.display = "none";
+    return;
+  }
+  const chips = profileChipHtml(profile);
+  if (!chips.length) {
+    row.style.display = "none";
+    return;
+  }
+  if (profile.source === "merged" || profile.source === "rule") {
+    chips.push(`<span class="badge">${profile.source === "merged" ? "多轮累积" : "规则解析"}</span>`);
+  }
+  host.innerHTML = chips.join(" ");
+  row.style.display = "";
+}
+
+function renderPlanProfile(profile) {
+  const host = $("planProfileChips");
+  if (!profile) {
+    host.style.display = "none";
+    return;
+  }
+  const chips = profileChipHtml(profile);
+  if (!chips.length) {
+    host.style.display = "none";
+    return;
+  }
+  chips.push(`<span class="badge">${profile.source === "llm" ? "LLM 解析" : "规则解析"}</span>`);
+  host.innerHTML = chips.join(" ");
+  host.style.display = "";
+}
+
+function renderChatAnalysis(data) {
+  const host = $("chatAnalysis");
+  const parts = [];
+
+  if (data.route_error) {
+    parts.push(`<div class="callout warn">路线获取失败：${data.route_error}</div>`);
+  }
+
+  if (data.route) {
+    const r = data.route;
+    const engineBadge =
+      r.engine === "hub"
+        ? `<span class="badge ok">枢纽内偏好规划</span>`
+        : `<span class="badge info">高德市际规划</span>`;
+    const needs = data.profile && data.profile.summary && data.profile.summary !== "无特殊需求"
+      ? `<span class="badge">需求：${data.profile.summary}</span>`
+      : "";
+    const kvBits = [];
+    if (r.duration_sec) kvBits.push(`<span class="item">预计用时<b>${Math.round(r.duration_sec / 60)} 分</b></span>`);
+    if (r.cost !== undefined && r.cost !== null) kvBits.push(`<span class="item">预计费用<b>${r.cost} 元</b></span>`);
+    if (r.segments !== undefined) kvBits.push(`<span class="item">换乘<b>${r.segments} 次</b></span>`);
+    if (r.meters !== undefined) kvBits.push(`<span class="item">步行距离<b>${r.meters} 米</b></span>`);
+    parts.push(`
+      <div class="card">
+        <div class="row" style="justify-content:space-between;margin-bottom:10px">
+          <div>${engineBadge} ${needs}</div>
+          <details class="raw"><summary>原始数据</summary><pre>${JSON.stringify(data, null, 2)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")}</pre></details>
+        </div>
+        ${kvBits.length ? `<div class="kv" style="margin-bottom:12px">${kvBits.join("")}</div>` : ""}
+        <div class="grid-2">
+          <div>
+            <h3 style="margin-top:0">🛣️ 路线方案</h3>
+            <ol class="list">${(r.details || ["暂无分段详情"]).map((d) => `<li>${d}</li>`).join("")}</ol>
+            ${r.engine === "hub" && Array.isArray(r.route) && r.route.length > 1 && state.nav.grid
+              ? `<div class="canvas-box"><canvas id="chatRouteCanvas" width="620" height="290"></canvas></div>`
+              : ""}
+          </div>
+          <div>
+            <h3 style="margin-top:0">💡 出行提醒</h3>
+            <ul class="list">${(r.tips || ["无"]).map((t) => `<li>${t}</li>`).join("")}</ul>
+            ${
+              data.kb_refs && data.kb_refs.length
+                ? `<h3 style="margin-top:16px">📚 站内换乘经验引用</h3><ul class="list">${data.kb_refs
+                    .map(
+                      (k) =>
+                        `<li>《${k.title}》<span style="color:var(--ink-3);font-size:12px"> · 相关度 ${k.score} · ${k.source}</span></li>`
+                    )
+                    .join("")}</ul>`
+                : ""
+            }
+          </div>
+        </div>
+      </div>`);
+  } else if (data.od_incomplete) {
+    parts.push(`<div class="callout">需要更多信息：告诉我<b>从哪儿出发、到哪儿去</b>(例如「从A口到地铁闸机」),我就能给出完整偏好路线。</div>`);
+  }
+
+  host.innerHTML = parts.join("");
+
+  const canvas = $("chatRouteCanvas");
+  if (canvas) {
+    drawGrid(canvas, state.nav.grid, {
+      route: data.route.route,
+      start: data.route.route[0],
+      goal: data.route.route[data.route.route.length - 1],
+      progress: 1,
+    });
+  }
+}
+
+async function sendChat(message) {
+  if (state.chat.busy) return;
+  const text = (message !== undefined ? message : $("chatInput").value).trim();
+  if (!text) return;
+  $("chatInput").value = "";
+  state.chat.busy = true;
+
+  appendChatMessage("user", text);
+  const pendingEl = appendChatMessage("assistant", "正在理解您的需求并规划路线…", true);
+
+  try {
+    const data = await api.post("/api/chat", {
+      message: text,
+      session_id: state.chat.sessionId,
+      prefs: {
+        strategy: state.plan.strategy,
+        walk: state.plan.walkShort ? "short" : "normal",
+        crowd: state.plan.crowdAvoid ? "avoid" : "normal",
+      },
+    });
+    pendingEl.remove();
+    state.chat.sessionId = data.session_id;
+    appendChatMessage("assistant", data.reply);
+    renderProfileChips(data.profile);
+    renderChatAnalysis(data);
+  } catch (error) {
+    pendingEl.remove();
+    appendChatMessage("assistant", `出错了:${error.message}`);
+  } finally {
+    state.chat.busy = false;
+  }
+}
+
+function initChat() {
+  $("btnChatSend").addEventListener("click", () => sendChat());
+  $("chatInput").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") sendChat();
+  });
+
+  document.querySelectorAll("#chatExamples .chip").forEach((chip) => {
+    chip.addEventListener("click", () => sendChat(chip.dataset.q));
+  });
+
+  $("btnChatReset").addEventListener("click", async () => {
+    if (state.chat.sessionId) {
+      await api.post("/api/chat/reset", { session_id: state.chat.sessionId }).catch(() => null);
+    }
+    state.chat.sessionId = null;
+    $("chatMessages").innerHTML =
+      '<div class="chat-msg assistant">已开启新会话。直接说出您的换乘需求即可,例如:<b>「带老人行李多,优先直梯,去地铁前先上趟卫生间,从A口出发」</b>。</div>';
+    $("chatProfileRow").style.display = "none";
+    $("chatAnalysis").innerHTML = "";
+    toast("已开启新会话");
+  });
+}
+
 /* ---------------- LLM 引擎 ---------------- */
 
 function initLLM() {
@@ -892,10 +1149,17 @@ function initLLM() {
         prefer_real: state.llm.preferReal,
       });
       const realError = result.real_adapter_error;
-      $("llmLoadResult").innerHTML = `<div class="callout ${realError ? "warn" : ""}">模型 <b>${result.model_id}</b> 已就绪（${
-        realError ? "Mock 回退：" + realError : state.llm.preferReal ? "真实适配器" : "Mock 适配器"
+      $("llmLoadResult").innerHTML = `<div class="callout ${realError ? "warn" : "ok"}">模型 <b>${esc(result.model_id)}</b> 已就绪（${
+        realError ? "Mock 回退：" + esc(realError) : state.llm.preferReal ? "真实适配器" : "Mock 适配器"
       }）</div>`;
       $("stLLM").textContent = result.model_id;
+      const modeChip = $("ai-mode-chip");
+      if (modeChip) {
+        const real = state.llm.preferReal && !realError;
+        modeChip.className = `badge ${real ? "ok" : ""}`;
+        modeChip.textContent = real ? "真实端点" : "离线 Mock";
+      }
+      $("side-llm").textContent = `LLM:${realError ? "Mock" : state.llm.preferReal ? result.model_id : "Mock"}`;
       toast(realError ? "真实适配器不可用，已回退 Mock" : "模型已加载", realError ? "err" : "ok");
     })
   );
@@ -991,26 +1255,199 @@ function initReports() {
   );
 }
 
-/* ---------------- 启动 ---------------- */
+/* ---------------- 右侧 AI 助手面板(仿 harness,记忆开合偏好) ---------------- */
 
-async function boot() {
-  switchView("overview");
+function setAiOpen(open) {
+  const panel = $("aipanel");
+  const willOpen = open === undefined ? !panel.classList.contains("open") : !!open;
+  panel.classList.toggle("open", willOpen);
+  $("ai-rail").classList.toggle("on", willOpen);
+  $("app").classList.toggle("ai-open", willOpen);
+  const nav = $("nav-assistant");
+  if (nav) nav.classList.toggle("active", willOpen);
+  try { localStorage.setItem("zsx_ai_open", willOpen ? "1" : "0"); } catch (_) { /* 忽略 */ }
+}
+
+function initAiPanel() {
+  let pref = null;
+  try { pref = localStorage.getItem("zsx_ai_open"); } catch (_) { /* 忽略 */ }
+  setAiOpen(pref === null ? window.innerWidth >= 1440 : pref === "1");
+  $("ai-rail").addEventListener("click", () => setAiOpen());
+}
+
+/* ---------------- 命令面板(Ctrl/⌘+K) ---------------- */
+
+let cmdkItems = [];
+let cmdkSel = 0;
+
+async function cmdkActions() {
+  const navs = [
+    ["overview", "概览", "📊"],
+    ["plan", "路线规划", "🧭"],
+    ["navigation", "枢纽导航", "🗺️"],
+    ["flow", "客流面板", "🌡️"],
+    ["rl", "RL 智能体", "🤖"],
+    ["reports", "分析报告", "📑"],
+  ].map(([tab, label, ico]) => ({
+    ico, label, cat: "页面",
+    run: () => { if ($("app").classList.contains("hidden")) enterApp(); switchTab(tab); },
+  }));
+  const cmds = [
+    { ico: "💬", label: "智能换乘助手面板", cat: "命令",
+      run: () => { if ($("app").classList.contains("hidden")) enterApp(); setAiOpen(true); } },
+    { ico: "☾", label: "切换明暗主题", cat: "命令",
+      run: () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark") },
+    { ico: "⤓", label: "加载最新策略权重", cat: "命令",
+      run: () => { if ($("app").classList.contains("hidden")) enterApp(); switchTab("rl"); setTimeout(() => $("btnRLPolicy").click(), 250); } },
+    { ico: "📑", label: "运行全部报告", cat: "命令",
+      run: () => { if ($("app").classList.contains("hidden")) enterApp(); switchTab("reports"); setTimeout(() => $("btnReportsAll").click(), 250); } },
+    { ico: "📱", label: "打开移动端 PWA", cat: "命令", run: () => window.open("/mobile", "_blank") },
+  ];
+  return [...navs, ...cmds];
+}
+
+function renderCmdk(q = "") {
+  const kw = q.trim().toLowerCase();
+  const list = cmdkItems.filter((it) => !kw
+    || it.label.toLowerCase().includes(kw) || it.cat.toLowerCase().includes(kw));
+  cmdkSel = 0;
+  const host = $("cmdk-list");
+  host._filtered = list;
+  host.innerHTML = list.length ? list.map((it, i) => `
+    <div class="cmdk-item ${i === cmdkSel ? "sel" : ""}" data-i="${cmdkItems.indexOf(it)}">
+      <span class="ck-ico">${it.ico}</span>${esc(it.label)}<small>${esc(it.cat)}</small>
+    </div>`).join("") : `<div class="cmdk-empty">没有匹配项</div>`;
+  $$(".cmdk-item", host).forEach((el) =>
+    el.addEventListener("click", () => runCmdkItem(Number(el.dataset.i))));
+}
+
+function runCmdkItem(i) {
+  const item = cmdkItems[i];
+  if (!item) return;
+  closeCmdk();
+  item.run();
+}
+
+function openCmdk() {
+  $("cmdk-mask").classList.remove("hidden");
+  const input = $("cmdk-input");
+  input.value = "";
+  cmdkActions().then((items) => {
+    cmdkItems = items;
+    renderCmdk("");
+    input.focus();
+  });
+}
+
+function closeCmdk() {
+  $("cmdk-mask").classList.add("hidden");
+}
+
+function initCmdk() {
+  $("cmdk-input").addEventListener("input", (e) => renderCmdk(e.target.value));
+  $("cmdk-input").addEventListener("keydown", (e) => {
+    const host = $("cmdk-list");
+    const list = host._filtered || cmdkItems;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (!list.length) return;
+      cmdkSel = (cmdkSel + (e.key === "ArrowDown" ? 1 : list.length - 1)) % list.length;
+      const items = $$(".cmdk-item", host);
+      items.forEach((el, i) => el.classList.toggle("sel", i === cmdkSel));
+      if (items[cmdkSel]) items[cmdkSel].scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      const item = list[cmdkSel];
+      if (item) { closeCmdk(); item.run(); }
+    } else if (e.key === "Escape") {
+      closeCmdk();
+    }
+  });
+  $("cmdk-mask").addEventListener("click", (e) => {
+    if (e.target === $("cmdk-mask")) closeCmdk();
+  });
+  document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      if ($("cmdk-mask").classList.contains("hidden")) openCmdk();
+      else closeCmdk();
+    }
+  });
+}
+
+/* ---------------- 面板宽度拖拽(侧栏 / AI 面板) ---------------- */
+
+function initPaneResize() {
+  $$(".pane-resizer").forEach((handle) => {
+    const kind = handle.dataset.resize;
+    const varName = kind === "side" ? "--pane-side" : "--pane-ai";
+    const currentWidth = () => (kind === "side"
+      ? document.querySelector(".sidebar").getBoundingClientRect().width
+      : $("aipanel").getBoundingClientRect().width);
+
+    handle.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+      handle.classList.add("dragging");
+      document.body.classList.add("col-resizing");
+      const startX = event.clientX;
+      const startW = currentWidth();
+      const onMove = (e) => {
+        const delta = kind === "side" ? e.clientX - startX : startX - e.clientX;
+        const w = Math.min(560, Math.max(210, Math.round(startW + delta)));
+        document.documentElement.style.setProperty(varName, `${w}px`);
+      };
+      const onUp = () => {
+        handle.classList.remove("dragging");
+        document.body.classList.remove("col-resizing");
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup", onUp);
+      };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+    });
+    handle.addEventListener("dblclick", () => {
+      document.documentElement.style.removeProperty(varName);
+    });
+  });
+}
+
+/* ---------------- 启动:欢迎页 → 应用壳 ---------------- */
+
+let appInited = false;
+
+function initAppOnce() {
+  if (appInited) return;
+  appInited = true;
   initOverview();
   initNavigation();
   initRL();
   initFlow();
   initPlan();
+  initChat();
   initLLM();
   initReports();
+  initAiPanel();
+  initCmdk();
+  initPaneResize();
+  switchTab("overview");
 
-  try {
-    await Promise.all([refreshTopbar(), loadGrid()]);
-    flowGroups = await api.get("/api/scenarios");
-    renderGroupRows();
-    await refreshRewards();
-  } catch (error) {
-    toast(`初始化失败：${error.message}`, "err");
-  }
+  (async () => {
+    try {
+      await Promise.all([refreshTopbar(), loadGrid()]);
+      flowGroups = await api.get("/api/scenarios");
+      renderGroupRows();
+      await refreshRewards();
+    } catch (error) {
+      toast(`初始化失败：${error.message}`, "err");
+    }
+  })();
+}
+
+function boot() {
+  initTheme();
+  $$(".nav-item[data-tab]").forEach((item) =>
+    item.addEventListener("click", () => switchTab(item.dataset.tab)));
+  showView("welcome");
+  refreshTopbar(); // 欢迎页统计与服务状态(应用壳元素隐藏但已存在)
 }
 
 document.addEventListener("DOMContentLoaded", boot);

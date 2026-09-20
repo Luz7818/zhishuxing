@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <!-- 智枢星 欢迎页背景 · 枢纽线路网母题 -->
+  <defs>
+    <linearGradient id="hb-base" x1="0" y1="0" x2="0.65" y2="1">
+      <stop offset="0" stop-color="#0b101e"/>
+      <stop offset=".52" stop-color="#111a35"/>
+      <stop offset="1" stop-color="#0c1226"/>
+    </linearGradient>
+    <radialGradient id="hb-glow-indigo" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(430 170) scale(620)">
+      <stop offset="0" stop-color="#6366f1" stop-opacity=".2"/>
+      <stop offset="1" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hb-glow-cyan" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1270 720) scale(680)">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity=".13"/>
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hb-glow-violet" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1560 60) scale(520)">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="hb-grid" width="80" height="80" patternUnits="userSpaceOnUse">
+      <path d="M80 0H0v80" fill="none" stroke="#94a3b8" stroke-opacity=".055" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="hb-vignette" cx=".5" cy=".42" r=".75">
+      <stop offset=".55" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#05070f" stop-opacity=".55"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#hb-base)"/>
+  <rect width="1600" height="900" fill="url(#hb-grid)"/>
+  <rect width="1600" height="900" fill="url(#hb-glow-indigo)"/>
+  <rect width="1600" height="900" fill="url(#hb-glow-cyan)"/>
+  <rect width="1600" height="900" fill="url(#hb-glow-violet)"/>
+
+  <!-- 换乘线路 1 · 靛蓝主干线 -->
+  <path d="M-40 632 H 292 Q 340 632 340 584 V 396 Q 340 348 388 348 H 856 Q 904 348 904 300 V 148 Q 904 100 952 100 H 1660"
+        fill="none" stroke="#818cf8" stroke-opacity=".22" stroke-width="3.5" stroke-linecap="round"/>
+  <g fill="#0b101e" stroke="#818cf8" stroke-opacity=".5" stroke-width="2.4">
+    <circle cx="340" cy="470" r="5.5"/><circle cx="620" cy="348" r="5.5"/><circle cx="904" cy="220" r="5.5"/>
+  </g>
+
+  <!-- 换乘线路 2 · 青色支线 -->
+  <path d="M1660 748 H 1196 Q 1148 748 1148 700 V 566 Q 1148 518 1100 518 H 588 Q 540 518 540 470 V 262 Q 540 214 492 214 H -40"
+        fill="none" stroke="#22d3ee" stroke-opacity=".15" stroke-width="3" stroke-linecap="round"/>
+  <g fill="#0b101e" stroke="#22d3ee" stroke-opacity=".4" stroke-width="2.2">
+    <circle cx="1148" cy="636" r="5"/><circle cx="830" cy="518" r="5"/><circle cx="540" cy="340" r="5"/>
+  </g>
+
+  <!-- 换乘线路 3 · 琥珀短支线 -->
+  <path d="M212 940 V 700 Q 212 660 252 660 H 470 Q 510 660 510 620 V 560"
+        fill="none" stroke="#fbbf24" stroke-opacity=".1" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 14"/>
+
+  <!-- 左下雷达环 -->
+  <g fill="none" stroke="#818cf8" stroke-opacity=".09" stroke-width="1.6">
+    <circle cx="128" cy="772" r="96"/><circle cx="128" cy="772" r="164"/><circle cx="128" cy="772" r="238"/>
+  </g>
+  <circle cx="128" cy="772" r="4.5" fill="#818cf8" fill-opacity=".4"/>
+
+  <!-- 右上引导星 -->
+  <g fill="none" stroke="#a5f3fc" stroke-opacity=".16" stroke-width="2.4" stroke-linejoin="round">
+    <path d="M1372 84 C 1376.5 108 1386 117.5 1410 122 C 1386 126.5 1376.5 136 1372 160 C 1367.5 136 1358 126.5 1334 122 C 1358 117.5 1367.5 108 1372 84 Z"/>
+  </g>
+  <circle cx="1305" cy="208" r="3" fill="#a5f3fc" fill-opacity=".35"/>
+  <circle cx="1452" cy="252" r="2.2" fill="#c7d2fe" fill-opacity=".3"/>
+
+  <!-- 散布站点微光 -->
+  <g fill="#c7d2fe">
+    <circle cx="240" cy="120" r="2.4" fill-opacity=".28"/><circle cx="700" cy="700" r="2.2" fill-opacity=".22"/>
+    <circle cx="1080" cy="120" r="2.4" fill-opacity=".24"/><circle cx="1430" cy="620" r="2.4" fill-opacity=".26"/>
+  </g>
+
+  <rect width="1600" height="900" fill="url(#hb-vignette)"/>
+</svg>

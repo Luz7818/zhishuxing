@@ -24,10 +24,31 @@ class LLMAdapter(Protocol):
     def infer(self, prompt: str, context: Optional[Dict] = None) -> str:
         ...
 
+    def chat(
+        self,
+        messages: list,
+        *,
+        json_mode: bool = False,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        """多轮对话补全:messages 为 [{role, content}] 列表。
+
+        json_mode=True 时要求模型输出 JSON 对象(OpenAI response_format)。
+        Mock 实现返回确定性占位文本,保证离线链路可运行。
+        """
+        ...
+
 
 @dataclass
 class MockLLMAdapter:
-    """接口占位实现，可替换为 LoRA/QLoRA/PEFT 实际微调流程。"""
+    """接口占位实现，可替换为 LoRA/QLoRA/PEFT 实际微调流程。
+
+    mock=True 供上层判断:依赖模型智能的环节(需求解析/对话合成)在 Mock 下
+    走确定性模板,保证无密钥时全链路离线可演示。
+    """
+
+    mock = True
 
     model_id: str = ""
     model_path: Optional[str] = None
@@ -78,6 +99,23 @@ class MockLLMAdapter:
             f"当前排队等级={queue_level}，拥堵指数={congestion:.2f}。{suggestion}"
         )
 
+    def chat(
+        self,
+        messages: list,
+        *,
+        json_mode: bool = False,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        """确定性占位对话:回显最后一条用户消息要点,保证离线链路可运行。"""
+        last_user = ""
+        for message in reversed(messages or []):
+            if message.get("role") == "user":
+                last_user = str(message.get("content", ""))
+                break
+        suffix = "（要求 JSON 输出）" if json_mode else ""
+        return f"[Mock模型] 已收到消息{suffix}：{last_user[:120]}"
+
 
 @dataclass
 class SiliconFlowLLMAdapter:
@@ -85,6 +123,8 @@ class SiliconFlowLLMAdapter:
 
     未配置 API Key 时 load_model 会抛出 RuntimeError，由调用方决定降级到 Mock。
     """
+
+    mock = False
 
     model_id: str = ""
     model_path: Optional[str] = None
@@ -143,15 +183,34 @@ class SiliconFlowLLMAdapter:
             "包含分流建议、安检安排与乘客提示。"
         )
         user_prompt = f"{prompt}\n当前排队等级：{queue_level}；拥堵指数：{congestion:.2f}。"
-        response = self._client.chat.completions.create(
-            model=self.model_id,
-            messages=[
+        return self.chat(
+            [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
             temperature=self.temperature,
             max_tokens=self.max_tokens,
         )
+
+    def chat(
+        self,
+        messages: list,
+        *,
+        json_mode: bool = False,
+        temperature: Optional[float] = None,
+        max_tokens: Optional[int] = None,
+    ) -> str:
+        if self._client is None:
+            raise RuntimeError("模型未加载，请先调用 load_model。")
+        kwargs: Dict[str, Any] = {
+            "model": self.model_id,
+            "messages": messages,
+            "temperature": self.temperature if temperature is None else temperature,
+            "max_tokens": self.max_tokens if max_tokens is None else max_tokens,
+        }
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        response = self._client.chat.completions.create(**kwargs)
         return response.choices[0].message.content or ""
 
 

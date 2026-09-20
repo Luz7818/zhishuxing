@@ -20,7 +20,6 @@ from ..core.animation import make_animation
 from .io_utils import read_matrix_csv, read_summary_csv, write_csv_rows, write_summary_csv
 from .plotting import ensure_parent, min_max_normalize, moving_average, setup_chinese_font
 from .synthetic import (
-    build_time_slots,
     generate_congestion_matrices,
     generate_finetune_metrics,
     generate_security_queue,
@@ -143,7 +142,7 @@ def run_congestion_report(
     axes[0].set_title(f"{title_prefix} 训练前拥堵热力图")
     axes[0].set_xlabel("时间")
     axes[0].set_ylabel("站点区域")
-    im1 = axes[1].imshow(after, aspect="auto", cmap="YlOrRd", vmin=vmin, vmax=vmax)
+    axes[1].imshow(after, aspect="auto", cmap="YlOrRd", vmin=vmin, vmax=vmax)
     axes[1].set_title(f"{title_prefix} 训练后拥堵热力图")
     axes[1].set_xlabel("时间")
     vmax_delta = float(np.max(np.abs(delta)))

@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/Luz7818/zhishuxing/actions/workflows/ci.yml"><img src="https://github.com/Luz7818/zhishuxing/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-blue" alt="Python 3.10+" />
-  <img src="https://img.shields.io/badge/tests-82%20passed-brightgreen" alt="tests" />
+  <img src="https://img.shields.io/badge/tests-180%20passed-brightgreen" alt="tests" />
   <img src="https://img.shields.io/badge/license-Proprietary-red" alt="license" />
 </p>
 
@@ -61,7 +61,7 @@ zhishuxing analyze --report all   # 全部 7 类分析报告
 zhishuxing simulate               # MADDPG（无权重时启发式回退）引导仿真
 
 # 6) 运行测试
-pip install -e .[dev] && pytest   # 82 项
+pip install -e .[dev] && pytest   # 180 项
 ```
 
 > 无任何密钥时系统**全链路可用**：LLM 走 Mock 确定性降级、地图回退 Canvas 折线示意、规划走内置枢纽引擎——离线即可完整演示。
@@ -90,7 +90,7 @@ pip install -e .[dev] && pytest   # 82 项
                                │ fetch / JSON
 ┌──────────────────────────────▼──────────────────────────────────────┐
 │                     Flask 应用 (webapp/app.py)                       │
-│         路由 / 校验 / SSE 态势推送 … 服务层编排 (webapp/service.py)    │
+│         路由 / 校验 / 运行时配置 … 服务层编排 (webapp/service.py)    │
 └───┬──────────────┬───────────────┬──────────────┬───────────────────┘
     │              │               │              │
 ┌───▼───┐   ┌──────▼─────┐   ┌─────▼─────┐  ┌─────▼──────────┐
@@ -185,6 +185,7 @@ zhishuxing/
 │
 ├─ src/zhishuxing/              # 核心 Python 包
 │  ├─ config.py                 #   路径推导 + 环境变量密钥（.env 自动加载）
+│  ├─ settings.py               #   运行时配置：掩码回读 + 原子写回 .env
 │  ├─ cli.py                    #   统一 CLI：demo/train/analyze/simulate/…
 │  ├─ core/                     #   领域内核：导航/客流/仿真/编排/动图
 │  ├─ rl/                       #   强化学习：算法/环境/训练/运行时
@@ -196,7 +197,7 @@ zhishuxing/
 ├─ web/mobile/                  # 移动端 PWA（HTML/清单/SW/图标）
 ├─ unity/                       # Unity 智能体模板
 ├─ scripts/                     # 工具脚本（品牌资产生成）
-├─ tests/                       # pytest 套件（82 项，覆盖 API/导航/档案/KB/RL/CLI）
+├─ tests/                       # pytest 套件（180 项，覆盖 API/导航/档案/KB/RL/CLI）
 ├─ code_optimization/           # 性能基准与优化报告
 └─ legacy/ui/                   # 历史 Streamlit 原型归档
 ```
@@ -235,6 +236,7 @@ zhishuxing/
 | `POST /api/dashboard/run` | 客流热力 + 引导路径面板 |
 | `POST /api/plan` | 真实路线规划（engine=amap 高德 / engine=hub 枢纽内偏好规划；prefs 支持 note 自由文本需求） |
 | `POST /api/features/run_existing` | 运行全部 7 类分析报告（结构化结果） |
+| `GET /api/settings` / `POST /api/settings` | 运行时配置查看（密钥只回掩码）/ 保存写回 `.env`（写接口仅限本机，生产非 loopback 自动禁用） |
 | `GET /mobile` | 移动端 PWA |
 
 ## 统一 CLI
@@ -247,6 +249,7 @@ zhishuxing simulate    # MADDPG（或启发式回退）引导仿真
 zhishuxing animate     # 生成枢纽换乘环境动图
 zhishuxing serve       # 启动 Web 控制台（--production 走 waitress）
 zhishuxing smoke       # Web API 冒烟检查
+zhishuxing doctor      # 环境与密钥自检（--strict 把可选项缺失也计入非零退出）
 zhishuxing kb-ingest   # 换乘经验文档(txt/md/html)入库为 JSONL 语料
 ```
 
@@ -264,7 +267,7 @@ zhishuxing train \
 
 ## 测试与质量保障
 
-- **pytest 82 项**：覆盖 Web API（含新旧两代高德响应结构）、导航偏好规划、需求档案、知识库检索、RL 运行时、合成数据、CLI
+- **pytest 180 项**：覆盖 Web API（含新旧两代高德响应结构）、导航偏好规划、需求档案、知识库检索、RL 运行时、合成数据、CLI
 - **静态检查**：`python -m pyflakes src/ scripts/ tests/` 零告警（CI 同步执行）
 - **CI**：GitHub Actions（[.github/workflows/ci.yml](.github/workflows/ci.yml)）——pyflakes + pytest（torch 走 CPU 轮子）
 - **失败分支实测**：无 Key、断网、加载失败等降级路径均有对应用例或演示说明

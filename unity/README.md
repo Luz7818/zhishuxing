@@ -1,6 +1,6 @@
 # Unity 接入模板（综合交通枢纽快速换乘）
 
-该模板用于对接当前 Python 侧 `MADDPG/MADDPG_main.py`。
+该模板用于对接当前 Python 侧的 RL 运行时（`src/zhishuxing/rl/runner.py`，训练入口为 `zhishuxing train`）。
 
 ## 1. 场景挂载
 

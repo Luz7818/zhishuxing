@@ -14,7 +14,7 @@ from .core import (
 from .llm import LLMAdapter, MockLLMAdapter, SiliconFlowLLMAdapter
 from .rl import MADDPGRuntime
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 __all__ = [
     "NavigationAdapter",

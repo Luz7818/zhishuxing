@@ -3,6 +3,7 @@
 端点契约与历史版本一致（含 RL 端点），新增：
 - POST /api/plan：真实路线规划（engine=amap 高德 / engine=hub 枢纽内 A*+RL）
 - GET  /mobile 与 /mobile_static/<path>：同源服务移动端 PWA（免 CORS、便于 SW 注册）
+- GET/POST /api/settings：查看与保存本地 .env 密钥配置（写接口仅限本机）
 """
 
 from __future__ import annotations
@@ -13,10 +14,15 @@ from pathlib import Path
 from flask import Flask, jsonify, render_template, request, send_from_directory
 
 from .. import config as cfg
+from .. import settings as settings_store
 from .service import ZhiShuXingWebService
 
 
-def create_app(service: ZhiShuXingWebService | None = None) -> Flask:
+def create_app(
+    service: ZhiShuXingWebService | None = None,
+    settings_writable: bool = True,
+) -> Flask:
+    """settings_writable=False 用于「生产模式且监听非 loopback」：禁用写接口，只留只读状态。"""
     service = service or ZhiShuXingWebService()
     webapp_dir = Path(__file__).resolve().parent
 
@@ -32,6 +38,9 @@ def create_app(service: ZhiShuXingWebService | None = None) -> Flask:
     def fail(exc: Exception, status: int = 500):
         return jsonify({"ok": False, "error": str(exc), "trace": traceback.format_exc()}), status
 
+    def deny(message: str, detail: str, status: int = 403):
+        return jsonify({"ok": False, "error": message, "detail": detail}), status
+
     # ------------------------------------------------------------ 页面
 
     @app.get("/")
@@ -41,6 +50,7 @@ def create_app(service: ZhiShuXingWebService | None = None) -> Flask:
             "index.html",
             amap_js_key=amap_conf["js_key"] or "",
             amap_security_code=amap_conf["security_code"] or "",
+            settings_writable=settings_writable,
         )
 
     @app.get("/health")
@@ -254,6 +264,41 @@ def create_app(service: ZhiShuXingWebService | None = None) -> Flask:
             if not session_id:
                 return jsonify({"error": "缺少 session_id"}), 400
             return ok(service.chat_reset(session_id))
+        except Exception as exc:
+            return fail(exc)
+
+    # ------------------------------------------------------------ 密钥配置（本地 .env）
+
+    @app.get("/api/settings")
+    def api_get_settings():
+        """只读状态：所有值一律掩码，故对局域网内的移动端 PWA 也开放。"""
+        try:
+            return ok(settings_store.read_state())
+        except Exception as exc:
+            return fail(exc)
+
+    @app.post("/api/settings")
+    def api_save_settings():
+        """写入 workspace 根 .env 并热重载；仅接受本机（loopback）请求。"""
+        if not settings_store.is_loopback(request.remote_addr):
+            return deny(
+                "密钥配置仅允许本机修改",
+                f"请求来源 {request.remote_addr or '未知'} 不是 loopback；"
+                "请在本机浏览器操作，或直接在 .env 中填写后重启服务。",
+            )
+        if not settings_writable:
+            return deny(
+                "生产模式下已禁用密钥写入",
+                "服务以 waitress + 非 loopback 地址监听，写入接口默认关闭；"
+                "请改用环境变量或 workspace 根目录 .env 配置后重启服务。",
+            )
+        payload = request.get_json(force=True, silent=True)
+        if not isinstance(payload, dict):
+            return jsonify({"ok": False, "error": "请求体应为 {配置项: 值} 形式的 JSON 对象"}), 400
+        try:
+            return ok(settings_store.save_settings(payload))
+        except settings_store.SettingError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
         except Exception as exc:
             return fail(exc)
 

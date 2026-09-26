@@ -396,6 +396,17 @@ details.raw pre { margin: 8px 0 0; padding: 12px 14px; background: var(--chip-bg
 .cmdk-item.sel { background: var(--primary-soft); color: var(--t1); }
 .cmdk-empty { text-align: center; color: var(--t3); padding: 26px 10px; font-size: 13px; }
 
+/* ================= 设置（本地 .env 密钥配置） ================= */
+.nav-item .nv-flag { margin-left: auto; flex: none; font-size: 10.5px; font-weight: 600;
+                     color: var(--warn); background: var(--warn-soft); border-radius: 999px; padding: 2px 8px; }
+.setting-row { border-top: 1px solid var(--row-line); padding: 14px 0; }
+.setting-row:first-child { border-top: 0; padding-top: 2px; }
+.setting-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; margin-bottom: 5px; }
+.setting-head b { font-size: 13.5px; }
+.setting-row .muted { margin: 2px 0; line-height: 1.65; }
+.setting-edit { display: flex; gap: 9px; align-items: center; margin-top: 9px; }
+.setting-edit input { flex: 1; min-width: 0; font: 12.5px/1.4 Consolas, monospace; }
+
 /* ================= 欢迎页 ================= */
 .hidden { display: none !important; }
 .fullscreen { position: fixed; inset: 0; overflow-y: auto; z-index: 40; }

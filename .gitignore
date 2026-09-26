@@ -45,7 +45,12 @@ obj/
 
 # 密钥与本地配置（一律走环境变量）
 .env
+.env.local
+.env.*.local
+# 以 .env 为前缀的其余本地凭据文件（.env.production / .env.bak 等）
 .env.*
+# 例外：配置模板必须入库，clone 后才知道要配哪些项
+!.env.example
 config_direct.py
 config_local.py
 

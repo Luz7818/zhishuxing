@@ -18,7 +18,9 @@ async function request(url, opts) {
     payload = null;
   }
   if (!response.ok || (payload && payload.ok === false)) {
-    throw new Error((payload && payload.error) || `请求失败: ${response.status}`);
+    const message = (payload && payload.error) || `请求失败: ${response.status}`;
+    // 403 等拒绝响应会带 detail 说明原因与替代做法，一并抛出便于用户理解
+    throw new Error(payload && payload.detail ? `${message}（${payload.detail}）` : message);
   }
   return payload ? payload.data : null;
 }
@@ -82,6 +84,7 @@ const TITLES = {
   flow: ["客流面板", "乘客分组 · 动态客流热力与引导路径"],
   plan: ["路线规划", "自然语言诉求 + 个性化偏好 → 真实换乘方案"],
   reports: ["分析报告", "七类可视化报告一键生成"],
+  settings: ["设置", "本地 .env 密钥配置 · 状态掩码 · 降级链路说明"],
 };
 
 function showView(name) {
@@ -96,6 +99,11 @@ function switchTab(tab) {
   $("page-title").textContent = t;
   $("page-sub").textContent = sub;
   $("scroll-area").scrollTo({ top: 0 });
+  try { localStorage.setItem("zsx_tab", tab); } catch (_) { /* 隐私模式忽略 */ }
+}
+
+function lastTab() {
+  try { return localStorage.getItem("zsx_tab"); } catch (_) { return null; }
 }
 
 function enterApp() {
@@ -1255,6 +1263,133 @@ function initReports() {
   );
 }
 
+/* ---------------- 设置：本地 .env 密钥配置（状态掩码 + 保存热重载） ---------------- */
+
+/* 密钥类配置项用 password 输入框遮蔽；是否允许本机保存由服务端注入的 ZSX_CONFIG 决定 */
+const isSecretKey = (key) => /_(KEY|SECRET|CODE|TOKEN)$/.test(key);
+
+function settingsWritable() {
+  return !!(window.ZSX_CONFIG && window.ZSX_CONFIG.settingsWritable !== false);
+}
+
+function settingsStatusBadge(state) {
+  const configured = state.items.filter((item) => item.configured).length;
+  const badge = $("settingsBadge");
+  badge.className = `badge ${state.ready ? "ok" : "warn"}`;
+  badge.textContent = `${configured}/${state.items.length} 项已配置`;
+  $("settingsFlag").classList.toggle("hidden", state.missing.length === 0);
+}
+
+function settingRowHtml(item) {
+  const badge = item.configured
+    ? `<span class="badge ok">已配置</span>`
+    : `<span class="badge ${item.required ? "warn" : ""}">未配置</span>`;
+  const reused = item.reused_from ? `<span class="badge info">复用 ${esc(item.reused_from)}</span>` : "";
+  const placeholder = item.configured
+    ? `当前 ${esc(item.value_masked)} · 留空表示不修改`
+    : item.default
+      ? `留空则用默认值 ${esc(item.default)}`
+      : "留空则该项走降级链路";
+  const clear = item.configured
+    ? `<button class="btn subtle sm" data-clear="${esc(item.key)}" title="清空并写入 .env（即时生效，无需重启）">清除</button>`
+    : "";
+  return `
+    <div class="setting-row">
+      <div class="setting-head">
+        <b>${esc(item.label)}</b><code>${esc(item.key)}</code>${badge}${reused}
+      </div>
+      <p class="muted">${esc(item.purpose)}</p>
+      <p class="muted"><b>申请：</b>${esc(item.apply_entry)}</p>
+      <p class="muted"><b>留空降级：</b>${esc(item.degrades_to)}</p>
+      <div class="setting-edit">
+        <input type="${isSecretKey(item.key) ? "password" : "text"}" data-key="${esc(item.key)}"
+               placeholder="${placeholder}" autocomplete="off" spellcheck="false" />
+        ${clear}
+      </div>
+    </div>`;
+}
+
+function fallbackRowHtml(label, ready, readyText, degradedText) {
+  const badge = ready ? `<span class="badge ok">在线</span>` : `<span class="badge warn">降级</span>`;
+  return `<tr><td>${label}</td><td>${badge} ${esc(ready ? readyText : degradedText)}</td></tr>`;
+}
+
+function renderSettings(state) {
+  $("settingsItems").innerHTML = state.items.map(settingRowHtml).join("");
+  $$("#settingsItems [data-clear]").forEach((btn) =>
+    btn.addEventListener("click", () => clearSetting(btn.dataset.clear))
+  );
+  $("settingsEnvFile").textContent =
+    `写入目标：${state.env_file}` + (state.env_file_exists ? "" : "（尚不存在，保存时自动创建）") + ` · 模板见 ${state.template_file}`;
+
+  const caps = state.capabilities;
+  $("settingsFallbackBody").innerHTML = [
+    fallbackRowHtml("LLM 对话 / 需求解析", caps.llm_real, "真实 OpenAI 兼容适配器", "Mock 确定性模板（规则解析仍生效）"),
+    fallbackRowHtml("地图底图", caps.amap_map, "高德 JS API 真实底图", "Canvas 离线折线示意"),
+    fallbackRowHtml("路线规划", caps.amap_plan, "高德真实路线 + 枢纽内规划", "内置枢纽引擎（偏好感知 A* + RL）"),
+  ].join("");
+
+  const notes = [];
+  if (state.missing.length) notes.push(`待配置：${state.missing.join("、")}`);
+  if (caps.amap_map_blocked_by_security_code) notes.push("已填 JS Key 但缺安全密钥，底图仍会回退 Canvas");
+  if (!settingsWritable()) notes.push("当前服务禁用了密钥写入，请改用环境变量或手工编辑 .env");
+  const warn = $("settingsWarn");
+  warn.classList.toggle("hidden", notes.length === 0);
+  warn.innerHTML = notes.map(esc).join("<br />");
+  settingsStatusBadge(state);
+}
+
+async function refreshSettings() {
+  try {
+    renderSettings(await api.get("/api/settings"));
+  } catch (error) {
+    toast(`读取配置失败：${error.message}`, "err");
+  }
+}
+
+async function postSettings(payload, successText) {
+  try {
+    const result = await api.post("/api/settings", payload);
+    renderSettings(result.state);
+    // JS Key 属前端注入项：服务端已热重载，浏览器要重新拉一次页面才拿到底图新配置
+    $("settingsReloadHint").classList.toggle("hidden", !result.client_config_stale);
+    toast(`${successText}已写入 ${result.env_file} 并热重载${result.backup_file ? "（旧值已备份）" : ""}`);
+  } catch (error) {
+    toast(`保存失败：${error.message}`, "err");
+  }
+}
+
+function collectSettingEdits() {
+  const payload = {};
+  $$("#settingsItems input[data-key]").forEach((input) => {
+    const value = input.value.trim();
+    if (value) payload[input.dataset.key] = value; // 留空表示不改动该项
+  });
+  return payload;
+}
+
+/* 清除某一项：写空值 → 热重载后对应能力立即回到降级链路 */
+function clearSetting(key) {
+  if (!window.confirm(`确认清空 ${key} ？该项会立即回退到降级行为（无需重启服务）。`)) return;
+  postSettings({ [key]: "" }, `${key} 已清空：`);
+}
+
+function initSettings() {
+  $("btnReloadSettings").addEventListener("click", refreshSettings);
+  $("btnReloadPage").addEventListener("click", () => location.reload());
+  $("btnSaveSettings").addEventListener("click", () =>
+    withBusy($("btnSaveSettings"), " 保存中", async () => {
+      const payload = collectSettingEdits();
+      if (!Object.keys(payload).length) {
+        toast("没有需要保存的改动（输入框留空即表示不修改）", "err");
+        return;
+      }
+      await postSettings(payload, "配置：");
+    })
+  );
+  refreshSettings();
+}
+
 /* ---------------- 右侧 AI 助手面板(仿 harness,记忆开合偏好) ---------------- */
 
 function setAiOpen(open) {
@@ -1288,6 +1423,7 @@ async function cmdkActions() {
     ["flow", "客流面板", "🌡️"],
     ["rl", "RL 智能体", "🤖"],
     ["reports", "分析报告", "📑"],
+    ["settings", "设置（密钥配置）", "🔧"],
   ].map(([tab, label, ico]) => ({
     ico, label, cat: "页面",
     run: () => { if ($("app").classList.contains("hidden")) enterApp(); switchTab(tab); },
@@ -1425,10 +1561,11 @@ function initAppOnce() {
   initChat();
   initLLM();
   initReports();
+  initSettings();
   initAiPanel();
   initCmdk();
   initPaneResize();
-  switchTab("overview");
+  switchTab(lastTab() || "overview");
 
   (async () => {
     try {

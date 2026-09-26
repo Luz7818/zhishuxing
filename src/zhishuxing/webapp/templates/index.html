@@ -12,7 +12,8 @@
     /* 服务端注入的运行配置：高德 JS Key 仅在配置了环境变量时存在 */
     window.ZSX_CONFIG = {
       amapJsKey: {{ amap_js_key | tojson }},
-      amapSecurityCode: {{ amap_security_code | tojson }}
+      amapSecurityCode: {{ amap_security_code | tojson }},
+      settingsWritable: {{ settings_writable | tojson }}
     };
   </script>
 </head>
@@ -86,6 +87,8 @@
       <button class="nav-item" data-tab="flow"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-flow"/></svg></span><span class="nv-txt">客流面板</span></button>
       <button class="nav-item" data-tab="rl"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-rl"/></svg></span><span class="nv-txt">RL 智能体</span></button>
       <button class="nav-item" data-tab="reports"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-reports"/></svg></span><span class="nv-txt">分析报告</span></button>
+      <div class="nav-label">系统</div>
+      <button class="nav-item" data-tab="settings"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg></span><span class="nv-txt">设置</span><span class="nv-flag hidden" id="settingsFlag" title="有配置项未填写">待配置</span></button>
     </div>
     <div class="side-foot">
       <div class="sys-status"><span class="dot" id="health-dot"></span><span id="health-text">连接中…</span></div>
@@ -376,6 +379,31 @@
           <p class="desc">运行后自动收录新产出图片。</p>
           <div class="empty" id="galleryEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-image"/></svg></span>暂无输出。点击「运行全部报告」生成。</div>
           <div class="grid-2" id="gallery" style="display:none"></div>
+        </div>
+      </section>
+
+      <!-- ================= 设置（密钥配置） ================= -->
+      <section class="page" id="tab-settings">
+        <div class="card">
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg>密钥与降级状态</h3>
+          <p class="desc">直接写入服务端本地 <code>.env</code> 并热重载，保存后无需重启服务。当前值一律掩码显示（只给前 2 字符与长度）；输入框留空表示不修改该项，清除请用各项的「清除」按钮。</p>
+          <div class="callout warn hidden" id="settingsWarn" style="margin-bottom:14px"></div>
+          <div class="callout hidden" id="settingsReloadHint" style="margin-bottom:14px">
+            <span>地图 JS 配置已写入并重载服务端；浏览器侧的底图参数随页面注入，重新载入页面即可生效（无需重启服务）。</span>
+            <button class="btn sm" id="btnReloadPage">重新载入页面</button>
+          </div>
+          <div id="settingsItems"><p class="muted">读取配置状态…</p></div>
+          <div class="row" style="margin-top:6px">
+            <button class="btn" id="btnSaveSettings">保存配置</button>
+            <button class="btn subtle" id="btnReloadSettings">⟳ 重新读取</button>
+            <span class="badge" id="settingsBadge">—</span>
+          </div>
+          <p class="muted" id="settingsEnvFile" style="margin-top:12px"></p>
+        </div>
+        <div class="card">
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-pulse"/></svg>降级链路</h3>
+          <p class="desc">未配置的项不会报错、不会白屏，只会按下面的兜底路径继续演示。</p>
+          <table class="table"><tbody id="settingsFallbackBody"></tbody></table>
         </div>
       </section>
     </main>

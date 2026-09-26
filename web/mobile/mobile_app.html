@@ -601,6 +601,48 @@
       color: var(--muted);
       margin-top: 3px;
     }
+    /* 服务端密钥状态：缺 key 时给出清晰引导，而不是静默降级 */
+    .state-tag {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 999px;
+      flex-shrink: 0;
+      background: rgba(100, 116, 139, 0.14);
+      color: var(--muted);
+    }
+    .state-tag.on {
+      background: rgba(16, 185, 129, 0.16);
+      color: #047857;
+    }
+    .state-tag.off {
+      background: rgba(245, 158, 11, 0.16);
+      color: #b45309;
+    }
+    :root.dark .state-tag.on { color: #6ee7b7; }
+    :root.dark .state-tag.off { color: #fcd34d; }
+    .notice-card {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+    .notice-card b {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+    .setting-desc code, .notice-card code, .setting-title code {
+      font-family: ui-monospace, Consolas, monospace;
+      background: rgba(100, 116, 139, 0.14);
+      border-radius: 5px;
+      padding: 0 4px;
+    }
     .switch {
       position: relative;
       width: 46px;
@@ -908,6 +950,7 @@
         <!-- quick-bar removed: 清空输入 按钮已删除 -->
         <button class="btn-primary" id="planBtn">规划路线</button>
       </div>
+      <div class="notice-card" id="keyNotice" role="status" style="display:none"></div>
     </div>
 
     <div class="page" id="routePage">
@@ -1112,6 +1155,24 @@
             <div class="setting-desc">降低夜间视觉疲劳</div>
           </div>
           <button class="switch" id="darkSwitch" aria-label="深色模式开关"></button>
+        </div>
+      </div>
+
+      <div class="settings-section-title">服务与密钥</div>
+      <div class="list-item">
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">后端配置状态</div>
+            <div class="setting-desc" id="keySummary">读取中…</div>
+          </div>
+          <button class="tiny-btn" id="refreshKeyBtn">刷新</button>
+        </div>
+        <div id="keyStatusList"></div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">怎么填密钥</div>
+            <div class="setting-desc">电脑端打开控制台 <code>/</code> 的「设置」视图保存（即时生效，无需重启），或在项目根目录 <code>.env</code> 中填写后重启服务；模板见 <code>.env.example</code>。全部留空也能正常演示：对话走 Mock、地图回退折线、规划走内置枢纽引擎。</div>
+          </div>
         </div>
       </div>
 
@@ -1586,6 +1647,65 @@
       localStorage.setItem('zsx_prefs', JSON.stringify(state.prefs));
     }
 
+    /* ---------- 服务端密钥状态：缺 key 时给出清晰引导，而不是静默降级 ---------- */
+    /* 值由服务端统一掩码，本页只展示状态与降级说明，绝不接触密钥明文 */
+    const CAPABILITY_LABELS = {
+      llm_real: '真实大模型对话',
+      amap_map: '高德真实地图底图',
+      amap_plan: '高德真实路线规划'
+    };
+
+    function degradedCapabilities(settings) {
+      const caps = settings.capabilities || {};
+      return Object.keys(CAPABILITY_LABELS).filter(name => !caps[name]);
+    }
+
+    function renderKeyStatus(settings) {
+      const items = Array.isArray(settings.items) ? settings.items : [];
+      $('keyStatusList').innerHTML = items.map(item => `
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">${item.label}<code>${item.key}</code></div>
+            <div class="setting-desc">${item.configured ? `当前 ${item.value_masked}` : item.degrades_to}</div>
+          </div>
+          <span class="state-tag ${item.configured ? 'on' : 'off'}">${item.configured ? '已配置' : '未配置'}</span>
+        </div>`).join('');
+
+      const missing = items.filter(item => !item.configured).length;
+      $('keySummary').textContent = missing
+        ? `${items.length - missing}/${items.length} 项已配置，其余按降级链路运行`
+        : `${items.length} 项全部已配置`;
+
+      const degraded = degradedCapabilities(settings);
+      const notice = $('keyNotice');
+      if (!degraded.length) {
+        notice.style.display = 'none';
+        return;
+      }
+      notice.innerHTML = `<b>当前为离线降级演示</b>${degraded.map(name => CAPABILITY_LABELS[name]).join('、')}未启用：`
+        + '路线仍按枢纽内偏好感知规划与站内经验给出，可正常使用。要开启完整体验，请在电脑上打开控制台「设置」视图填写密钥，'
+        + '或在项目根目录 <code>.env</code> 中填写后重启服务（模板见 <code>.env.example</code>，全部留空不影响演示）。';
+      notice.style.display = '';
+    }
+
+    async function loadKeyStatus() {
+      try {
+        const response = await fetch('/api/settings');
+        const payload = await response.json();
+        if (!response.ok || payload.ok === false) {
+          throw new Error(payload.error || `请求失败: ${response.status}`);
+        }
+        renderKeyStatus(payload.data);
+      } catch (error) {
+        $('keyStatusList').innerHTML = '';
+        $('keySummary').textContent = `读不到后端配置：${error.message}`;
+        const notice = $('keyNotice');
+        notice.innerHTML = '<b>未连接后端服务</b>当前展示的是本地演示数据。启动后端（<code>zhishuxing serve</code>）并用 '
+          + '<code>http://电脑IP:7860/mobile</code> 访问，即可获得真实规划与站内换乘经验引用。';
+        notice.style.display = '';
+      }
+    }
+
     function initSettings() {
       $('currentUser').textContent = state.user.account || '未登录';
       const notifyOn = state.prefs.notifyOn !== false;
@@ -1688,8 +1808,12 @@
       });
       $('logoutBtn').addEventListener('click', logout);
       $('secureBtn').addEventListener('click', () => toast('请在正式版中管理安全设置'));
-      $('openSettingsBtn').addEventListener('click', () => switchPage('settingsPage'));
+      $('openSettingsBtn').addEventListener('click', () => {
+        switchPage('settingsPage');
+        loadKeyStatus();
+      });
       $('settingsBackBtn').addEventListener('click', () => switchPage('profilePage'));
+      $('refreshKeyBtn').addEventListener('click', loadKeyStatus);
 
       $('notifySwitch').addEventListener('click', () => {
         const next = !$('notifySwitch').classList.contains('on');
@@ -1740,6 +1864,7 @@
       window.addEventListener('offline', () => $('netStatus').textContent = '离线');
 
       initSettings();
+      loadKeyStatus(); // 首页就要说清当前是不是降级演示，不能静默
       updateThemeToggleUI();
       switchMode(state.prefs.defaultMode || 'map');
       renderHistory();

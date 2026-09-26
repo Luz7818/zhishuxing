@@ -1,0 +1,20 @@
+# 不要求板块说明的目录（文档标准 check_docs.py 读取本文件）
+# 说明：检查器只把**一级**目录名与这里的行比对，因此只有 third_party/ 是生效项；
+# 其余条目写成路径是为了让"哪些目录是产物"在本仓内有一份可查的记录。
+
+# 第三方镜像（含 ml-agents 上游自带的大批 README，其相对链接不由本仓维护）
+third_party/
+
+# 打包时生成的分发元数据，改源头（pyproject.toml）后重装即覆盖
+src/zhishuxing.egg-info/
+
+# 运行时产物目录：首次运行由 config.Paths.ensure_runtime_dirs() 建出，全部 gitignore
+data/outputs/
+data/model/
+data/runs/
+
+# 缓存与 IDE 目录（检查器内置跳过，此处仅登记备查）
+.pytest_cache/
+.ruff_cache/
+.vscode/
+.zcode/

@@ -1,4 +1,4 @@
-const CACHE_NAME = "zhishuxing-mobile-v4";
+const CACHE_NAME = "zhishuxing-mobile-v5";
 const ASSETS = [
   "./mobile_app.html",
   "./manifest.webmanifest",
@@ -46,5 +46,6 @@ self.addEventListener("fetch", (event) => {
               return response;
             })
         )
-  ).catch(() => caches.match("./mobile_app.html"));
+    ).catch(() => caches.match("./mobile_app.html"))
+  );
 });

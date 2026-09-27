@@ -105,6 +105,8 @@ zhishuxing serve --host 127.0.0.1 --port 7860   # 控制台 http://127.0.0.1:786
 
 ## 目录怎么分
 
+不知道东西在哪个路径，先看 [目录说明.md](目录说明.md)：整棵目录树、每个目录的入口都在里面，它只做导航。谁负责什么以 `AGENTS.md` 的「仓库地图」为准。
+
 | 目录 | 负责 |
 |---|---|
 | `src/` | Python 包本体：`core` `rl` `llm` `planning` `analysis` `webapp` 六个子包 |

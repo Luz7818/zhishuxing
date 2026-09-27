@@ -8,10 +8,9 @@
 
 from __future__ import annotations
 
-import traceback
 from pathlib import Path
 
-from flask import Flask, jsonify, render_template, request, send_from_directory
+from flask import Flask, current_app, jsonify, render_template, request, send_from_directory
 
 from .. import config as cfg
 from .. import settings as settings_store
@@ -36,7 +35,9 @@ def create_app(
         return jsonify({"ok": True, "data": data})
 
     def fail(exc: Exception, status: int = 500):
-        return jsonify({"ok": False, "error": str(exc), "trace": traceback.format_exc()}), status
+        # 堆栈只进服务端日志：响应体给客户端回 traceback 会泄露源码路径与依赖版本
+        current_app.logger.exception("接口处理失败")
+        return jsonify({"ok": False, "error": str(exc)}), status
 
     def deny(message: str, detail: str, status: int = 403):
         return jsonify({"ok": False, "error": message, "detail": detail}), status

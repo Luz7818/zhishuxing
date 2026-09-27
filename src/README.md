@@ -8,7 +8,12 @@
 `pyproject.toml` 的 `version` 各自写了一份，当前都是 `2.1.0`（复核：
 `python -c "import zhishuxing;print(zhishuxing.__version__)"`）。
 
-## 顶层文件
+## 文件清单
+
+`src/` 根下只有 `README.md`、包目录 `zhishuxing/`，以及生成物 `zhishuxing.egg-info/`。
+下表是包顶层那 4 个 `.py`。包内共 33 个 `.py` 且全部入库（复核：
+`find src/zhishuxing -name "*.py" -not -path "*__pycache__*" | wc -l` 与
+`git ls-files "src/**/*.py" | wc -l`，两条都输出 `33`）。
 
 | 文件 | 干什么 | 被谁调用 |
 |---|---|---|
@@ -16,6 +21,25 @@
 | `config.py` | 推导 workspace 根与全部产物路径；解析 `.env`；暴露 `amap_config()` / `siliconflow_config()` | 几乎每个模块（`import .. as cfg`） |
 | `settings.py` | 7 项托管配置的注册表、掩码回读、写入校验、`.env` 原子写与热重载、loopback 判定 | `webapp/app.py` 的 `/api/settings`、`cli.py` 的 `doctor` |
 | `cli.py` | 9 个子命令的 argparse 定义与派发，每个 `cmd_*` 内部才 import 重依赖 | 控制台脚本 `zhishuxing`；`tests/test_cli.py` |
+
+## 子目录
+
+`src/` 的二级目录只有 `zhishuxing/` 一个；再往下是它的 6 个子包，下钻说明写在本节。
+`__pycache__/` 是字节码缓存、`zhishuxing.egg-info/` 是 `pip install -e .` 的生成物，
+两者都被 `.gitignore` 挡着，不算内容（复核：`git check-ignore -v src/zhishuxing.egg-info`）。
+
+| 子目录 | 负责 |
+|---|---|
+| `zhishuxing/` | 整个 Python 包：4 个顶层模块 + 下面 6 个子包，入口是 `cli.py` |
+| `zhishuxing/core/` | 7 个 `.py`：A* 导航、场景解析、客流撒点、行人引导仿真、面板编排、GIF 动图。不依赖 torch，不依赖网络 |
+| `zhishuxing/rl/` | 7 个 `.py`：MADDPG/MATD3 算法、网络与回放池、Unity 环境封装、训练循环、推理运行时 |
+| `zhishuxing/llm/` | 5 个 `.py`：需求档案、BM25 经验检索、回答编排、适配器（Mock 与 SiliconFlow） |
+| `zhishuxing/analysis/` | 5 个 `.py`：7 类报告、合成数据、绘图与字体、CSV IO。全仓唯一一份实现 |
+| `zhishuxing/planning/` | 2 个 `.py`：`amap.py` 真实路线规划（OD 提取 → 地理编码 → 公交换乘） |
+| `zhishuxing/webapp/` | 3 个 `.py` + `templates/index.html` + `static/`：应用工厂、服务层、控制台前端 |
+
+复核每条计数：`find src/zhishuxing/<子包> -name "*.py" -not -path "*__pycache__*" | wc -l`
+（数字含各包的 `__init__.py`）。
 
 ## `zhishuxing/core/` —— 枢纽领域内核（不依赖 torch，不依赖网络）
 

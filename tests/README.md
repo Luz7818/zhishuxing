@@ -3,7 +3,12 @@
 > 用途：说明 180 个用例分别钉住哪条链路、哪些用例需要 torch、以及加用例时的隔离要求。
 > 复核口径：`python -m pytest -o addopts="" --collect-only -q` 计数，`python -m pytest` 跑。
 
-## 当前规模
+## 文件清单
+
+`tests/` 下 12 个 `.py`：1 个 `conftest.py` + 11 个 `test_*.py`，合计 180 个用例（复核：
+`python -m pytest -o addopts="" --collect-only -q` 末行 `180 tests collected`；
+`python -m pytest` 末行 `180 passed`，本机实测 18.66 s）。逐文件计数用
+`python -m pytest -o addopts="" --collect-only -q`，把输出的 `文件::用例` 按文件归类即可。
 
 | 文件 | 用例数 | 钉住什么 |
 |---|---|---|
@@ -18,6 +23,7 @@
 | `test_rl_runtime.py` | 6 | 权重扫描与命名解析、加载后 `act()` 输出维度、无权重时的启发式回退（**需要 torch**） |
 | `test_simulation.py` | 5 | 引导仿真：动作语义、到达统计、拥堵峰值、分组明细 |
 | `test_cli.py` | 3 | `analyze`、`simulate`、`demo` 三个子命令的真实退出码与产物 |
+| `conftest.py` | 不产出用例 | 三个 fixture：`navigation`（session 级，读 `configs/hub_default.json`）、`service`（session 级）、`client`（每用例新建 app）。详见下面「依赖边界」 |
 
 ## 依赖边界
 
@@ -46,7 +52,15 @@
 `test_cli.py` 的 `analyze` / `demo` 与 `test_api.py` 的报告用例会把图与 CSV 写进
 `data/outputs/`（未跟踪目录）。跑完 `git status` 仍然干净是正常现象，不要为此加断言。
 
-## 改这里之后要跑
+## 和谁打交道
+
+- **上游**：被测对象是 `src/zhishuxing/**`；输入借用 `configs/hub_default.json`（`conftest.py`
+  的 `navigation`）、`configs/scenarios.json`（`test_simulation.py` 的 `load_scenarios()`）、
+  `data/samples/` 的 3 个 npy（`test_rl_runtime.py` 把 `data_dir` 指过去）与项目 `corpus.jsonl`
+  （`test_kb.py` 的 `test_load_default_kb_from_project_corpus`）。
+- **下游**：CI 的两个矩阵格（`.github/workflows/ci.yml` 跑 `python -m pytest`）与人工门禁；
+  仓库根 `AGENTS.md` 的「测试」行以这里的收集数为口径，别在别处另写一套。
+- **改这里之后要跑**：
 
 ```bash
 python -m pytest
@@ -55,3 +69,19 @@ python -m pyflakes src/ scripts/ tests/
 
 `pyproject.toml` 的 `addopts = "-q"` 会让 `python -m pytest -q` 变成 `-qq`，
 末行统计会被吞掉；要看到 `180 passed` 就只写 `python -m pytest`。
+
+## 别动
+
+- `test_settings.py` 的两个 autouse 保险丝：第 119 行 `real_env_untouched`（比对真实 `.env` 与
+  `.env.bak` 的 sha256）、第 128 行 `restore_environment`（整份还原 `os.environ`）。
+  它们不产生用例、看着像样板代码，删掉后热重载写进进程的密钥会漏给同会话的 `test_api.py`
+  降级用例。复核：`grep -n "autouse=True" tests/test_settings.py`。
+- `conftest.py` 里 `navigation` 与 `service` 的 `scope="session"`：改成 function 级不会让套件变红，
+  只是每个用到它们的用例都重新解析一遍 `configs/hub_default.json`、重建一次服务层。复核：
+  `grep -n 'scope="session"' tests/conftest.py`。
+- `test_settings.py` 第 52 行的 `FAKE_SECRET` 常量：它在 34 行里被当成"明文探针"用
+  （复核：`grep -c "FAKE_SECRET" tests/test_settings.py`），`assert_no_plaintext()`（第 99 行）
+  同时检查整串与 `secret[2:]` 尾段是否出现在响应里。换成真密钥会违反本仓约定，缩短它则让掩码断言变松。
+- `test_navigation_prefs.py` 的 `test_legacy_schema_still_loads`：名字里的 legacy 指**旧格式导航图**，
+  跟 `legacy/` 目录毫无关系，不要跟着"清理 legacy"把它删了。
+- `tests/__pycache__/`：pytest 的字节码缓存，`.gitignore` 已挡，不用手工清也不要提交。

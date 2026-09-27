@@ -20,6 +20,17 @@
 | `logo-mark.svg`、`favicon.svg` | 矢量标识与标签页图标 | 手工维护，是上面 PNG 的设计来源 |
 | `地图.png` | 「地图导航」模式下的站内示意图 | 被 `mobile_app.html` 与 `sw.js` 的预缓存列表引用 |
 
+## 子目录
+
+| 子目录 | 负责 |
+|---|---|
+| `mobile/` | 移动端 PWA 的全部文件：页面本体、清单、ServiceWorker、图标与站内示意图。本目录的另一半 |
+
+`web/` 下只有 `mobile/` 这一个二级目录，没有构建产物目录（复核：
+`find web -mindepth 1 -maxdepth 1 -type d`）。磁盘上 `web/mobile/` 是 14 个文件，入库 11 个，
+差额就是下面「三个不入库的资源」那一节（复核：`ls web/mobile | wc -l` 与
+`git ls-files web/mobile | wc -l`）。
+
 ## 三个不入库的资源
 
 | 文件 | 状态 | 为什么 |
@@ -51,7 +62,15 @@ zhishuxing serve --host 127.0.0.1 --port 7860
 但 iOS/Android 的系统「添加到主屏」对非 HTTPS 地址会限制 ServiceWorker，
 真机验证以 Chrome + `http://<本机IP>:7860/mobile` 为准。
 
-## 改这里之后要跑
+## 和谁打交道
+
+- **上游**：Flask 用 `GET /mobile` 与 `GET /mobile/<path:filename>` 把本目录当静态根直接送出去，
+  根路径取自 `cfg.paths.mobile_dir`（复核：`grep -n "mobile" src/zhishuxing/webapp/app.py`）；
+  5 个图标 PNG 来自 `python scripts/render_brand_assets.py`。
+- **下游**：装了 PWA 的手机浏览器。页面只调两个接口 `POST /api/chat` 与 `GET /api/settings`
+  （复核：`grep -noE "'/api/[a-z/]*'" web/mobile/mobile_app.html` 只有这两行），
+  不读 `data/outputs/` 里的产物图（复核：`grep -c "outputs" web/mobile/mobile_app.html` 输出 `0`）。
+- **改这里之后要跑**：
 
 ```bash
 python -m pytest tests/test_api.py -k mobile -o addopts="" -q
@@ -59,3 +78,20 @@ python -m pytest tests/test_api.py -k mobile -o addopts="" -q
 
 该用例只断言 `/mobile` 与 `/mobile/<file>` 返回 200，页面内部行为没有自动化覆盖，
 需要手工在浏览器里过一遍对话与安装流程。
+
+## 别动
+
+- `地图.png` 这个中文文件名：`mobile_app.html` 第 971 行的 `<img>`、第 1290 行的 `navImage.src`
+  赋值，加上 `sw.js` 第 5 行的预缓存项，**三处**都写死了它。改英文名要同时改三处，
+  漏一处的表现是破图或 SW 缓存 miss。复核：`grep -n "地图.png" web/mobile/mobile_app.html web/mobile/sw.js`。
+- `sw.js` 第 1 行的 `CACHE_NAME = "zhishuxing-mobile-v5"`：增删静态资源不升这个版本号，
+  已经装到手机上的 PWA 会一直命中旧缓存，表现是"改了没生效"。复核：`sed -n '1p' web/mobile/sw.js`。
+- `AR.gif`：本机文件、不入库，却被第 1290 行当正常资源引用，靠 `onerror` 分支出占位说明。
+  删本机那个文件没影响，删 `onerror` 那段就是新克隆破图。复核：
+  `sed -n '1280,1291p' web/mobile/mobile_app.html`。
+- `tests/test_api.py` 第 260 行的 `assert "VR.png" not in sw_text`：`VR.png`、`图标.png`
+  这两张本机图唯一的"引用点"就是这条**反向**断言，防止它们被重新塞进预缓存清单。
+  别把它当冗余断言删掉。
+- 5 个图标 PNG 与 `logo-mark.svg`、`favicon.svg`：前者是脚本产物（别手改，改设计要回脚本），
+  后两者是手工维护的设计母版，删了 PNG 就失去对照物。复核：
+  `git ls-files web/mobile` 能看到它们都在跟踪列表里。

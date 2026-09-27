@@ -9,6 +9,8 @@ Python 侧的训练循环、算法与运行时都在 `src/zhishuxing/rl/`；Unit
 一个"能被 `mlagents_envs` 驱动的场景 + 智能体脚本"。本目录放的就是后者的模板：
 它定义观测向量怎么拼、动作两个维度怎么用、奖励由哪几项组成，Python 侧按同一套契约读写。
 
+## 文件清单
+
 | 文件 | 干什么 | 与 Python 侧的对应关系 |
 |---|---|---|
 | `HubTransferAgent.cs` | 挂在智能体 GameObject 上的 `Agent` 子类（133 行）：`CollectObservations()` 拼「目标相对位置 (dx, dz) + 自身速度 (vx, vz) + 邻近行人相对位置」；`OnActionReceived()` 把 `a[0]` 当前进/后退、`a[1]` 当转向；`Heuristic()` 供键盘演示 | 观测与动作语义对齐 `src/zhishuxing/rl/envs.py`；内置网格仿真的同一套契约见 `src/zhishuxing/core/simulation.py`（那里 `OBS_DIM = 4 + 2×3`） |
@@ -107,3 +109,30 @@ zhishuxing analyze --report reward
 
 看训练进度用 TensorBoard：`tensorboard --logdir data/runs`（`[train]` 依赖组里有 `tensorboard`）。
 训练完成后在 Web 控制台「RL 智能体」视图点「加载最新策略权重」，即可用真实策略跑引导仿真。
+
+## 和谁打交道
+
+- **上游**：`rl/envs.py` 用 `mlagents_envs` 读场景注册的 `Behavior Parameters`，行为名、观测长度、
+  动作长度都由 Unity 侧决定（复核：`grep -n "behavior_specs" src/zhishuxing/rl/envs.py`，55 与 60 行）。
+- **下游**：`rl/runner.py` 把 TensorBoard 日志写 `data/runs/`、评估奖励写 `data/outputs/*.npy`、
+  actor 权重写 `data/model/`；`rl/runtime.py` 再按文件名规则读回来喂 `core/simulation.py`
+  （复核：`grep -n "cfg.paths.runs_dir\|cfg.paths.outputs\|cfg.paths.model_dir" src/zhishuxing/rl/runner.py`）。
+- **改这里之后要跑**：本目录没有任何自动化（复核：仓库根 `grep -rn -i unity .github/` 无输出，退出码 1）。
+  手工核对两步：`python -m pyflakes src/zhishuxing/rl/envs.py` 确认 Python 侧没坏，
+  再按上面第 4 节真连一次 Unity 看观测维度打印。
+
+## 别动
+
+- `public List<Transform> nearbyCrowd`：观测长度是 `4 + 2 × nearbyCrowd.Count`，它必须等于
+  Behavior Parameters 里的 Space Size。清空列表不报错，但观测会从 10 维变 4 维，与内置仿真的
+  `OBS_DIM = 10`（`NEARBY_K = 3`）就对不上。复核：`sed -n '23,24p' src/zhishuxing/core/simulation.py`。
+- 场景里的 `Obstacle` 与 `Agent` 两个 Tag 名：`OnCollisionEnter` 用 `CompareTag` 判碰撞惩罚，
+  Tag 没打对的话 `collisionPenalty` 恒为 0，训练照样能跑只是少了一项奖励。复核：
+  `sed -n '126,132p' unity/HubTransferAgent.cs`。
+- `maxEpisodeSeconds = 120f` 与 `if (_episodeTimer >= maxEpisodeSeconds) EndEpisode()` 这一对：
+  没有策略学会到达时它靠这条兜底切断回合，删了会让训练卡在不结束的 episode 上。复核：
+  `sed -n '92,96p' unity/HubTransferAgent.cs`。
+- 本目录**没有** `.meta`、`Assets/`、`ProjectSettings/`：这不是漏交文件，而是刻意只放模板。
+  不要在这里造 Unity 工程文件来"让它能构建"，也不要为它写 CI。
+- 第 4 节那两条 `pip install ./third_party/...`：`third_party/` 是本机镜像、不入库，
+  新克隆的仓库里那两条会失败。它们是环境准备说明，不是可以删掉的死路径。

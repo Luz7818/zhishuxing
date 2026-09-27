@@ -3,6 +3,20 @@
 > 用途：说清哪些文件是入库的源数据、哪些是跑一次就变的产物，以及改动的正确顺序。
 > 本目录只有 `transfer_kb/` 与 `samples/` 入库；三个运行时目录首次运行才建出来。
 
+## 文件清单
+
+本目录根下只有 `README.md` 一份文件，其余入库文件全在 `transfer_kb/` 与 `samples/` 两个子目录里，
+逐份说明见下面两张表，这里只登记口径与命名规律。
+
+| 文件 | 干什么 | 备注 |
+|---|---|---|
+| `README.md` | 本说明 | 唯一的根级文件（复核：`find data -maxdepth 1 -type f`） |
+| `transfer_kb/` 的 23 个文件 | 22 篇语料 + 1 份入库语料 `corpus.jsonl` | 语料命名 `NN_主题.md`，一文件一篇；23 复核 `git ls-files data/transfer_kb \| wc -l` |
+| `samples/` 的 18 个文件 | 报告与演示的参考产物 | 带 `_simulated` 后缀的 6 个出自固定种子合成数据；18 复核 `git ls-files data/samples \| wc -l` |
+
+`data/` 下入库文件合计 42 个（复核：`git ls-files data` 计数）。`outputs/`、`model/`、`runs/`
+里的东西一个都没入库，所以不在计数内（复核：`git check-ignore -v data/outputs data/model data/runs`）。
+
 ## 子目录
 
 | 子目录 | 是否入库 | 负责 |
@@ -43,7 +57,16 @@
 `samples/` 里**没有** `transfer_time_distribution.png`：奖励曲线报告只依赖 `*_env_*.npy`
 这一种命名（复核：`ls data/samples/*_env_*.npy`）。
 
-## 改这里之后要跑
+## 和谁打交道
+
+- **上游**：`zhishuxing kb-ingest` 由 `data/transfer_kb/<hub>/` 的源文档写 `corpus.jsonl`；
+  `zhishuxing analyze` / `demo` / `simulate` / `animate` 与 `analysis/reports.py` 写 `outputs/`；
+  `zhishuxing train` 写 `model/` 与 `runs/`。本目录不吃外部输入。
+- **下游**：`outputs/` 经 Flask 的 `GET /outputs/<path:filename>` 同源暴露给前端
+  （复核：`grep -n 'outputs/<path' src/zhishuxing/webapp/app.py`）；`samples/` 是奖励曲线报告
+  的回退目录、`tests/test_cli.py` 的产物名断言来源、`docs/getting-started.md` 的离线样例；
+  `transfer_kb/corpus.jsonl` 由 `llm/kb.py` 建索引。
+- **改这里之后要跑**：
 
 ```bash
 python -m pytest -q
@@ -60,7 +83,15 @@ zhishuxing kb-ingest --query "带老人 优先直梯"
 
 ## 别动
 
-- `samples/` 下的 `png` 与 `gif`：仓库 README 的展示图直接引用它们，删掉就是破图；
-  要更新就重跑报告再拷贝回来。
+- `samples/` 下的 `png`、`csv` 与 `gif`：`docs/getting-started.md` 拿它们当离线样例，`reward`
+  报告没有训练产物时回退到这里取 `*_env_*.npy`。删了测试不会变红，但新克隆就出不了图；
+  要更新就重跑报告再拷回。复核：`sed -n '52,56p' src/zhishuxing/analysis/reports.py`。
 - `.gitignore` 中 `!data/samples/*.gif` 这一行是全局 `*.gif` 忽略的例外。删掉它，
   `transfer_env_demo.gif` 就不会再被跟踪，README 里的动图在 clone 之后是空的。
+- `transfer_kb/corpus.jsonl`：它是 `kb-ingest` 的产物却不是可弃的产物 —— `llm/kb.py` 只读 JSONL，
+  删掉它检索链路立刻空转，而重跑入库需要源文档仍在（复核：`zhishuxing kb-ingest --query "直梯"`
+  输出的 `"changed": 0`）。
+- `outputs/`、`model/`、`runs/` 三个运行时目录：里面没有任何入库文件（复核：
+  `git ls-files data/outputs data/model data/runs` 无输出），删掉内容后
+  `config.Paths.ensure_runtime_dirs()` 会在起服务时把目录重建。真正要当心的是往 `model/`
+  手工放权重 —— `rl/runtime.py` 按文件名里的 step 取最大那份来推理，假权重会被直接用掉。

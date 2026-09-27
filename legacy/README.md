@@ -18,6 +18,24 @@
 
 也就是说：`git ls-files legacy/` 只有 2 个 `.py`，另外三个只存在于本机。
 
+## 子目录
+
+| 子目录 | 负责 |
+|---|---|
+| `ui/` | 迁移前的 Streamlit 原型：两页 `jiaohu*.py`、它们共享的 `config_direct.py`、旧移动端整包 `mobile_app.zip`、一份参赛录屏 `.mp4`。后三者都不入库（见上表） |
+
+`legacy/` 下只有 `ui/` 这一个二级目录，没有第三层。复核：`find legacy -mindepth 1 -maxdepth 1 -type d`。
+
+## 和谁打交道
+
+- **上游**：没有。它是 2026-02 参赛时期的成品快照，之后不再接收改动，也没有脚本往里写。
+- **下游**：只被人读 —— `AGENTS.md` 的「迁移映射（旧 → 新）」表拿它当对照物。代码层面零依赖：
+  `grep -rn "streamlit" src tests scripts --include="*.py"` 无输出（退出码 1），
+  streamlit 也不在任何依赖组里（复核：`python -c "import importlib.metadata as m;print(m.requires('zhishuxing'))"`）。
+- **改这里之后要跑**：门禁里没有这里（`pyproject.toml` 写 `testpaths = ["tests"]`，pyflakes
+  参数是 `src/ scripts/ tests/`）。单独验一个文件就跑 `python -m pyflakes legacy/ui/jiaohu.py`
+  （当前 0 告警）或 `python -m pyflakes legacy/ui/jiaohu_sj.py`（当前 10 条）。
+
 ## 为什么它不参与测试
 
 1. **依赖没有声明**：这两个文件 `import streamlit`，而 streamlit 不在 `pyproject.toml`

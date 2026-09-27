@@ -9,12 +9,12 @@ third_party/
 src/zhishuxing.egg-info/
 
 # 运行时产物目录：首次运行由 config.Paths.ensure_runtime_dirs() 建出，全部 gitignore
-data/outputs/
-data/model/
-data/runs/
+data/outputs/             # 报告图/CSV/GIF/npy，跑 analyze 就变
+data/model/               # 训练权重 .pth，不入库
+data/runs/                # TensorBoard 日志，与产物命名同构但只本机看
 
 # 缓存与 IDE 目录（检查器内置跳过，此处仅登记备查）
-.pytest_cache/
-.ruff_cache/
-.vscode/
-.zcode/
+.pytest_cache/            # pytest 运行缓存
+.ruff_cache/              # ruff 运行缓存
+.vscode/                  # 本机编辑器配置，与项目内容无关
+.zcode/                   # 助手会话计划，本机遗留，不是交付物

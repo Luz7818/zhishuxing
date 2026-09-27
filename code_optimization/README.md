@@ -60,3 +60,19 @@ python code_optimization/benchmark_animation.py
 - **下游**：`analysis/reports.py` 的 `run_animation_report()` 与 `zhishuxing animate` 用移植后的实现。
 - 改了 `core/animation.py` 的力场、放行窗口或卡滞阈值（>18 帧）之后，这里的结果就过期了，
   要么重测要么在 `report.md` 里注明基线对应的实现版本。
+- **改这里之后要跑**：`python code_optimization/benchmark_animation.py`（仓库根执行，见上面「复测」）。
+
+## 别动
+
+- `benchmark_animation.py` 开头两行 `sys.path.insert`（16 行插本目录、19 行插 `src/`）：把对照组与
+  被测实现钉死在本仓库文件上。删掉 19 行后，环境里若有另一份非 editable 安装的 `zhishuxing`，
+  基准测的就是那份拷贝。复核：`sed -n '16,20p' code_optimization/benchmark_animation.py`。
+- `baseline_animation.py` 的慢是功能不是缺陷：它是历史实现的冻结副本，唯一价值就是当对照组。
+  删掉它 `benchmark_animation.py` 直接 ImportError，`benchmark_results.json` 里所有 `speedup_*`
+  与 `equivalence` 字段都失去来源。
+- `benchmark_results.json` 看着像该 gitignore 的产物，其实**是入库文件**，本目录「结果」表与
+  `report.md` 的数字都以它为准。复核：`git ls-files code_optimization`。
+- `__pycache__/` 出现在这里是跑基准的副产物，`.gitignore` 第 2 行已挡住，
+  不用手工清理、也不要提交。复核：`git check-ignore -v code_optimization/__pycache__`。
+- 本目录**不在** `python -m pyflakes src/ scripts/ tests/` 的参数里，改这里的 `.py` 不会有门禁替你
+  检查；唯一的验证就是上面那条重跑基准的命令能否跑到退出码 0。

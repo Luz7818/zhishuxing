@@ -46,3 +46,35 @@ python scripts/render_brand_assets.py
 CI（`.github/workflows/ci.yml`）只做 pyflakes + pytest。这个脚本改的是二进制资产，
 跑它等于让 CI 产生待提交的内容，不合适；它属于"人改完品牌再手动执行一次"的工具。
 静态检查覆盖它：门禁命令里的 `scripts/` 就是这一目录，脚本必须保持零告警。
+
+## 和谁打交道
+
+- **上游**：没有输入文件。星形与渐变是脚本里的硬编码常量，按 `web/mobile/logo-mark.svg`
+  复刻同一套几何（复核：`sed -n '1,7p' scripts/render_brand_assets.py` 的模块 docstring；
+  两份 `logo-mark.svg` 目前逐字节相同）。
+- **下游**：`web/mobile/` 的 5 个 PNG 被 `manifest.webmanifest` 的 3 个 `icons`、`sw.js` 的
+  `ASSETS` 表和页面本体引用；`src/zhishuxing/webapp/static/assets/favicon-32.png` 被
+  `templates/index.html` 引用（复核：`grep -n favicon src/zhishuxing/webapp/templates/index.html`）。
+- **改这里之后要跑**（仓库根执行）：
+
+```bash
+python scripts/render_brand_assets.py
+git status --porcelain web/mobile src/zhishuxing/webapp/static/assets
+python -m pyflakes src/ scripts/ tests/
+python -m pytest
+```
+
+第二条用来看脚本改写了哪些入库文件；跑之前先按「两个已知的坑」第 2 条确认工作区是干净的。
+后两条就是本仓门禁，脚本本身必须保持零告警。
+
+## 别动
+
+- `web/mobile/splash-logo.png` 与 `src/zhishuxing/webapp/static/assets/favicon-48.png`：全仓没有
+  任何页面引用它们，看着最像能删 —— 但删了下次跑脚本又生成。真要去掉得删脚本里那两行
+  `render_icon`（172、173）。复核（只命中这两行）：
+  `grep -rn "splash-logo\|favicon-48" --include="*.py" --include="*.html" --include="*.js" --include="*.webmanifest" web src/zhishuxing scripts`。
+- `render_icon(180, False, MOBILE / "apple-touch-icon.png")` 的 **180**：iOS 添加到主屏的尺寸约定，
+  不要"顺手对齐"成清单里的 192。复核：`sed -n '168,174p' scripts/render_brand_assets.py`。
+- 脚本顶部的 `SS = 4`（4 倍超采样）与 `LANCZOS` 缩放是一对：只降 `SS` 会让小尺寸图标的边缘起锯齿。
+- `.github/workflows/ci.yml` 里 `python -m pyflakes src/ scripts/ tests/` 的 `scripts/` 一项：
+  本目录只有一个文件，看着可以从门禁参数里删掉，删了它就没有任何东西再检查这个脚本能否 import。

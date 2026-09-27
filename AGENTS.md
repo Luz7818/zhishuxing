@@ -24,7 +24,7 @@
 | 7 类报告 | 全部 `OK`，退出码 0 | `zhishuxing analyze --report all` |
 | HTTP 路由 | 24 个注册 / 23 条不同路径（`/api/chat` 与 `/api/settings` 各含 GET+POST） | `grep -cE '@app\.(get\|post)\(' src/zhishuxing/webapp/app.py` |
 | CLI 子命令 | 9 个 | `grep -cE 'add_parser\("[a-z-]+"' src/zhishuxing/cli.py` |
-| CI | 定义在 `.github/workflows/ci.yml`：ubuntu-latest × Python `3.11` / `3.12`，装 `.[dev]` + CPU 版 torch，先 pyflakes 再 pytest（`MPLBACKEND=Agg`）。最近一次 = `completed success`（提交 `db2d5599`，复核于 2026-09-27）。本机没有 `gh`，但 Actions 接口对**公开仓免认证**，不必登录网页 | `python -c "import json,urllib.request as u;r=json.load(u.urlopen('https://api.github.com/repos/Luz7818/zhishuxing/actions/runs?per_page=1'))['workflow_runs'][0];print(r['head_commit']['id'][:7],r['status'],r['conclusion'])"` |
+| CI | 定义在 `.github/workflows/ci.yml`：ubuntu-latest × Python `3.11` / `3.12`，装 `.[dev]` + CPU 版 torch，先 pyflakes 再 pytest（`MPLBACKEND=Agg`）。**这里不写"最近一次是哪个提交"**——分支每推一次它就变，写进文档同一次提交里就作废了；当前分支 HEAD 的徽章为 `passing`（复核见右）。本机没有 `gh`，但徽章与 Actions 接口对**公开仓都免认证**；要提交号与耗时再用 `/actions/runs`（匿名限 60 次/小时/IP，别拿它轮询） | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/zhishuxing/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`；步骤读 `.github/workflows/ci.yml` |
 | 版本 | `2.1.0` | `python -c "import zhishuxing;print(zhishuxing.__version__)"`，另一份在 `pyproject.toml` |
 | Python 要求 | `>=3.10`（CI 只跑 3.11/3.12） | `pyproject.toml` 的 `requires-python` |
 | 许可证 | Proprietary，仓库内没有 LICENSE 文件 | `git ls-files` 里搜不到 license |
@@ -70,7 +70,7 @@
 | `configs/` | 导航网格、演示场景、训练超参、微调样例 | `hub_default.json` 改结构会让 smoke 直接失败 |
 | `data/transfer_kb/` | 换乘经验语料（22 篇源文档 + `corpus.jsonl`） | 源文档改了要重跑 `zhishuxing kb-ingest` |
 | `data/samples/` | 入库的参考产物，README 展示图与奖励 npy 来源 | 只由脚本重建，别手改 |
-| `data/outputs|model|runs/` | 运行时产物 | 全部 gitignore，首次运行自动建目录 |
+| `data/` 下 `outputs/`、`model/`、`runs/` | 运行时产物 | 全部 gitignore，首次运行自动建目录 |
 | `web/mobile/` | 移动端 PWA | 由 `/mobile` 同源托管；无构建步骤 |
 | `unity/` | Unity 侧智能体脚本与接入说明 | **不是可构建工程**，没有 Assets/ProjectSettings |
 | `scripts/` | 唯一的工具脚本：品牌 PNG 图标渲染 | 需要 Pillow，而 Pillow 未声明 |

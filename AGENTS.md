@@ -24,7 +24,7 @@
 | 7 类报告 | 全部 `OK`，退出码 0 | `zhishuxing analyze --report all` |
 | HTTP 路由 | 24 个注册 / 23 条不同路径（`/api/chat` 与 `/api/settings` 各含 GET+POST） | `grep -cE '@app\.(get\|post)\(' src/zhishuxing/webapp/app.py` |
 | CLI 子命令 | 9 个 | `grep -cE 'add_parser\("[a-z-]+"' src/zhishuxing/cli.py` |
-| CI | 定义在 `.github/workflows/ci.yml`：ubuntu-latest × Python `3.11` / `3.12`，装 `.[dev]` + CPU 版 torch，先 pyflakes 再 pytest（`MPLBACKEND=Agg`）。本机没有 `gh`，运行绿不绿要在 Actions 页面看 | `cat .github/workflows/ci.yml` |
+| CI | 定义在 `.github/workflows/ci.yml`：ubuntu-latest × Python `3.11` / `3.12`，装 `.[dev]` + CPU 版 torch，先 pyflakes 再 pytest（`MPLBACKEND=Agg`）。最近一次 = `completed success`（提交 `db2d5599`，复核于 2026-09-27）。本机没有 `gh`，但 Actions 接口对**公开仓免认证**，不必登录网页 | `python -c "import json,urllib.request as u;r=json.load(u.urlopen('https://api.github.com/repos/Luz7818/zhishuxing/actions/runs?per_page=1'))['workflow_runs'][0];print(r['head_commit']['id'][:7],r['status'],r['conclusion'])"` |
 | 版本 | `2.1.0` | `python -c "import zhishuxing;print(zhishuxing.__version__)"`，另一份在 `pyproject.toml` |
 | Python 要求 | `>=3.10`（CI 只跑 3.11/3.12） | `pyproject.toml` 的 `requires-python` |
 | 许可证 | Proprietary，仓库内没有 LICENSE 文件 | `git ls-files` 里搜不到 license |

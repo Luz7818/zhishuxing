@@ -221,7 +221,9 @@ v2 重构是把历史散装脚本平移进包，不是重写。找不到"以前�
   它已在 `.docsignore` 里，理由见上面的约定。
 - 不要放宽 `POST /api/settings` 的 loopback 判定，也不要改成读 `X-Forwarded-For` 来判断来源。
   `--allow-remote-settings` 是给生产模式监听内网时留的手动逃生门，不是默认值。
-- 不要在 `unity/` 里造 Unity 工程文件来"让它能构建"，也不要为它写 CI。
+- `unity/` 自 2.2.0 起是 UPM 本地包(`package.json` + asmdef),改动脚本后同步 bump 包版本;
+  但**不要**给它造 `.unity` 场景/ProjectSettings 等工程文件来假装可独立构建,也不要为它写 CI ——
+  可训练场景由使用者自建(路线 3.0 的录屏判据仍待真实环境验证)。
 - 不要把 `MADDPG` 的效果写进任何数字结论：默认没有权重，`policy_source` 就是「启发式回退」；
   `data/outputs/` 里的分析图默认来自固定种子合成数据,`data/real/` 有约定文件时
   heatmap/transfer/efficiency 自动改用真实数据并标注来源(`resolve_real_inputs`)。

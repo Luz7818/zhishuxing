@@ -45,6 +45,16 @@
   (真实 CSV 已进 `.gitignore` 不入库,防误提交敏感数据;模板入库)
 - `run_congestion_report` / `run_transfer_time_report` 新增 `source_note` 参数
 
+### Added(新增 · 3.0 起步与定位声明)
+
+- **`unity/` 成为 UPM 本地包**(`package.json` + `HubTransferAgent.asmdef`,
+  依赖 `com.unity.ml-agents@2.2.1-exp.1`):Package Manager → Add package from disk
+  即可导入,脚本不再手工拷贝;仍不是可独立打开的工程(场景需自建,边界写进 AGENTS)
+- **README「定位与边界」声明**:演示/教学工程 —— 会话仅内存、无账号、单实例、
+  默认启发式回退与合成数据;走向「可用」的前置是会话持久化与多实例方案
+- `render_reward_curve` 支持复用调用方已加载的奖励序列,`/api/rl/rewards`
+  从两次全量 npy 加载降为一次
+
 ### Fixed(修复)
 
 - `zhishuxing train` 在未装 `mlagents_envs` 的机器上给出带安装指引的报错

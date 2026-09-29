@@ -247,11 +247,13 @@ class MADDPGRuntime:
             )
         return {"data_dir": str(self.data_dir), "series": series}
 
-    def render_reward_curve(self, output_png: Optional[str] = None) -> Dict:
+    def render_reward_curve(self, output_png: Optional[str] = None,
+                            series_payload: Optional[Dict] = None) -> Dict:
         import matplotlib.pyplot as plt
 
         output_path = ensure_parent(output_png or (self.data_dir / "rl_reward_curve_web.png"))
-        payload = self.reward_series()
+        # 调用方已持有 reward_series() 结果时直接复用,避免把全部 npy 再加载一遍
+        payload = series_payload if series_payload is not None else self.reward_series()
         series = payload["series"]
         if not series:
             return {

@@ -1,0 +1,11 @@
+{
+  "name": "com.zhishuxing.hubagent",
+  "version": "2.2.0",
+  "displayName": "ZhiShuXing Hub Agent",
+  "description": "智枢星枢纽换乘引导智能体(Unity ML-Agents)。观测 = [目标dx,dy, 速度vx,vy, 邻近行人dx,dy×3](10 维),动作 = 连续 2 维 [前进, 转向],行为名 HubAgent —— 与 src/zhishuxing/rl 的训练/推理契约逐项对齐。作为本地包导入:Package Manager → Add package from disk。",
+  "unity": "2021.3",
+  "dependencies": {
+    "com.unity.ml-agents": "2.2.1-exp.1"
+  },
+  "keywords": ["ml-agents", "MADDPG", "traffic", "hub"]
+}

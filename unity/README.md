@@ -22,7 +22,16 @@ Python 侧的训练循环、算法与运行时都在 `src/zhishuxing/rl/`；Unit
 
 **本目录当前不可构建**：仓库里没有 `Assets/`、`ProjectSettings/` 等 Unity 工程文件，
 也没有 `.meta`，所以它不参与 CI，也没有任何 Python 测试引用它。要在真机上训练，
-需要把这些脚本拷进你自己的 ML-Agents 工程并按下面的参数配好。
+本目录自 2.2.0 起是一个 **UPM 本地包**（`package.json` + `HubTransferAgent.asmdef`），
+推荐直接以包形式导入你的 ML-Agents 工程（脚本不再需要手工拷贝）：
+
+1. Unity 编辑器 → `Window → Package Manager → + → Add package from disk...`
+2. 选择仓库里的 `unity/package.json`（依赖 `com.unity.ml-agents@2.2.1-exp.1`，即 release 18 分支；
+   与 `third_party/` 镜像同源，先装 Python 侧依赖再进 Unity）
+3. 导入后按下面「场景挂载」配好场景即可；注意本包**仍不是可独立打开的 Unity 工程** ——
+   工程文件（场景/ProjectSettings）依旧需要你自建，见 README「已知做不到什么」。
+
+不需要 UPM 时，也可以把 `HubTransferAgent.cs` 拷进你的 ML-Agents 工程并按下面的参数配好。
 
 该模板用于对接当前 Python 侧的 RL 运行时（`src/zhishuxing/rl/runner.py`，训练入口为 `zhishuxing train`）。
 

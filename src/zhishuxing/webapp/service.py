@@ -172,12 +172,12 @@ class ZhiShuXingWebService:
         return self.rl.act(observations)
 
     def rl_rewards(self) -> Dict[str, Any]:
-        rendered = self.rl.render_reward_curve()
-        # 图表需要完整 x/y 序列；render_reward_curve 只返回摘要，需从 reward_series 取全量
-        full_series = self.rl.reward_series()["series"]
+        # 全量序列只加载一次:reward_series 的结果同时喂给渲染与响应体
+        payload = self.rl.reward_series()
+        rendered = self.rl.render_reward_curve(series_payload=payload)
         result: Dict[str, Any] = {
             "series_count": rendered["series_count"],
-            "series": full_series,
+            "series": payload["series"],
         }
         if rendered.get("error"):
             result["error"] = rendered["error"]

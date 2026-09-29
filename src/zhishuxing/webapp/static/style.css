@@ -314,13 +314,6 @@ details.raw pre { margin: 8px 0 0; padding: 12px 14px; background: var(--chip-bg
 .toast.out { opacity: 0; transform: translateY(6px); }
 .toast.err { background: #4a1210; }
 
-/* ================= 智能助手引擎卡(dock 右列沿用 .ai-sec) ================= */
-/* ================= 右侧 AI 助手面板 ================= */
-.ai-sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
-          box-shadow: var(--shadow-xs); padding: 13px 14px 15px; margin-bottom: 12px; }
-.ai-sec > h4 { margin: 0 0 2px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
-.ai-sec > .desc { color: var(--t3); font-size: 11.5px; margin: 0 0 8px; line-height: 1.55; }
-
 /* ---- 对话区 ---- */
 .chat-box { display: flex; flex-direction: column; gap: 9px; max-height: 300px; min-height: 90px;
             overflow-y: auto; padding: 12px; background: var(--surface-2);
@@ -460,7 +453,6 @@ details.raw pre { margin: 8px 0 0; padding: 12px 14px; background: var(--chip-bg
    统一 24 网格 1.8px 圆头描边,stroke=currentColor,随主题/上下文着色 */
 .ic { width: 16px; height: 16px; display: inline-block; vertical-align: -3px; }
 .card > h3 .ic { width: 17px; height: 17px; color: var(--primary); margin-right: 8px; }
-.ai-sec > h4 .ic { width: 14px; height: 14px; color: var(--primary); }
 .feat .f-ico .ic { width: 22px; height: 22px; }
 .hero-chip .ic { width: 13px; height: 13px; color: #a5b4fc; }
 .topbar-cmdk .ic { width: 14px; height: 14px; }
@@ -612,30 +604,40 @@ input:hover:not(:focus):not([type="checkbox"]) { border-color: var(--t4); }
                            border: 1px solid var(--line-2); box-shadow: var(--shadow-xs); }
 
 .chat-dock-body { border-bottom: 1px solid var(--line); background: var(--bg);
-                  max-height: min(56vh, 520px); overflow-y: auto; }
-.dock-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 9px;
-             padding: 11px 18px; background: var(--surface); border-bottom: 1px solid var(--line); }
+                  height: var(--dock-h, 440px); max-height: 78vh; min-height: 240px;
+                  display: flex; flex-direction: column; }
+.dock-resizer { flex: none; height: 7px; cursor: row-resize; position: relative; }
+.dock-resizer::before { content: ""; position: absolute; left: 50%; top: 2px; transform: translateX(-50%);
+                        width: 46px; height: 3px; border-radius: 3px; background: var(--line-2);
+                        transition: background .15s, width .15s; }
+.dock-resizer:hover::before, .dock-resizer.dragging::before { background: var(--primary); width: 72px; }
+body.row-resizing { cursor: row-resize; user-select: none; }
+.dock-head { flex: none; display: flex; align-items: center; gap: 9px;
+             padding: 10px 18px; background: var(--surface); border-bottom: 1px solid var(--line); }
 .dock-head b { font-size: 13.5px; }
 .dock-head .h-ico { width: 26px; height: 26px; border-radius: 8px; flex: none; display: flex;
                     align-items: center; justify-content: center; background: var(--primary-soft);
                     color: var(--primary); font-size: 13px; }
 .dock-head .h-ico .ic { width: 14px; height: 14px; }
 .dock-head-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.dock-grid { display: grid; grid-template-columns: minmax(0, 58fr) minmax(0, 42fr); gap: 14px;
-             padding: 14px 18px 18px; max-width: 1160px; margin: 0 auto; }
-.dock-chat-col { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
-.dock-chat-col .chat-box { flex: 1; min-height: 150px; max-height: 32vh; }
-.dock-side-col { min-width: 0; }
-.dock-side-col .ai-sec { background: var(--surface); border: 1px solid var(--line);
-                         border-radius: var(--r-lg); box-shadow: var(--shadow-xs);
-                         padding: 13px 15px 15px; margin-bottom: 12px; }
-.dock-side-col .ai-sec:last-child { margin-bottom: 0; }
-.ai-sec > h4 { margin: 0 0 2px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
-.ai-sec > .desc { color: var(--t3); font-size: 11.5px; margin: 0 0 8px; line-height: 1.55; }
+.dock-body-inner { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px;
+                   padding: 13px 18px 15px; max-width: 1160px; width: 100%; margin: 0 auto; }
+.dock-body-inner .chat-box { flex: 1 1 auto; min-height: 110px; max-height: none; }
+.chat-analysis { max-height: 34%; overflow-y: auto; flex: none; }
+.dock-tools { margin-top: 2px; flex: none; }
+.dock-tools > summary { color: var(--t3); font-weight: 600; }
+.dock-tools > summary:hover { color: var(--primary); }
+.dock-tools[open] { border: 1px solid var(--line); border-radius: var(--r-md);
+                    padding: 10px 14px 14px; background: var(--surface); margin-top: 4px; }
+.dock-tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                   gap: 18px; margin-top: 12px; }
+.dock-tool h4 { margin: 0 0 6px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+.dock-tool h4 .ic { width: 14px; height: 14px; color: var(--primary); }
+.dock-tool .field textarea { height: 64px; font: 11.5px/1.5 Consolas, monospace; }
 @media (max-width: 960px) {
-  .dock-grid { grid-template-columns: 1fr; padding: 12px; }
   .chat-dock-bar { padding: 9px 12px; }
-  .chat-dock-body { max-height: 64vh; }
+  .chat-dock-body { height: 64vh; }
+  .dock-resizer { display: none; }
 }
 
 /* ---- 侧栏收起(图标栏形态) ---- */

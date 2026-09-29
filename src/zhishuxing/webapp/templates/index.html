@@ -417,6 +417,7 @@
   <!-- ===== 智能换乘助手:页面底部 Dock(仿主流大模型对话形态) ===== -->
   <div class="chat-dock" id="chatDock">
     <div class="chat-dock-body" id="chatDockBody" hidden>
+      <div class="dock-resizer" id="dockResizer" title="拖动调整面板高度 · 双击恢复默认"></div>
       <div class="dock-head">
         <span class="h-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-chat"/></svg></span>
         <b>智能换乘助手</b>
@@ -426,37 +427,35 @@
           <button class="icon-btn" id="btnChatCollapse" title="收起对话面板" aria-label="收起对话面板"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-close"/></svg></button>
         </span>
       </div>
-      <div class="dock-grid">
-        <div class="dock-chat-col">
-          <div class="chat-box" id="chatMessages">
-            <div class="chat-msg assistant">您好,我是智枢星换乘助手。直接说出您的需求即可,例如:<b>「带老人行李多,优先直梯,去地铁前先上趟卫生间,从A口出发」</b>。</div>
-          </div>
-          <div class="chips" id="chatExamples">
-            <button class="chip" data-q="带老人行李多,优先直梯,去地铁前先上趟卫生间,从A口出发">🧳 老人+行李+直梯+卫生间</button>
-            <button class="chip" data-q="我现在赶时间,从A口经主安检到高铁闸机,少走楼梯">⏱ 赶时间+少走楼梯</button>
-            <button class="chip" data-q="轮椅乘客从B口去公交站,怎么走方便?">♿ 轮椅无障碍</button>
-            <button class="chip" data-q="从深圳北站到宝安机场,赶时间">🚄 市际:深圳北→宝安机场</button>
-          </div>
-          <div class="chat-profile-row" id="chatProfileRow" style="display:none">
-            <span class="chat-profile-label">已理解需求</span>
-            <div class="chips" id="chatProfileChips"></div>
-          </div>
-          <div id="chatAnalysis" style="margin-top:10px"></div>
+      <div class="dock-body-inner">
+        <div class="chat-box" id="chatMessages">
+          <div class="chat-msg assistant">您好,我是智枢星换乘助手。直接说出您的需求即可,例如:<b>「带老人行李多,优先直梯,去地铁前先上趟卫生间,从A口出发」</b>。</div>
         </div>
-        <div class="dock-side-col">
-          <div class="ai-sec">
-            <h4><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-cpu"/></svg>对话引擎</h4>
-            <p class="desc">默认 Mock(离线可演示);配置 SILICONFLOW_API_KEY 后可加载真实 OpenAI 兼容模型。</p>
-            <div class="chips"><button class="chip" id="chipReal">使用真实适配器(需密钥)</button></div>
-            <div class="field"><label>模型 ID</label><input id="llmModel" value="DeepSeek-R1-Distill-Qwen-7B" /></div>
-            <button class="btn sm" id="btnLLMLoad">加载模型</button>
-            <div id="llmLoadResult" style="margin-top:12px"></div>
-          </div>
-          <div class="ai-sec">
-            <h4><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-flask"/></svg>模型微调(实验)</h4>
-            <details class="raw">
-              <summary>微调接口与指标报告</summary>
-              <div class="field" style="margin-top:12px"><label>训练配置(JSON)</label><textarea id="llmTuneConfig">{"method":"LoRA","epochs":2,"lr":0.0002,"rank":16}</textarea></div>
+        <div class="chips" id="chatExamples">
+          <button class="chip" data-q="带老人行李多,优先直梯,去地铁前先上趟卫生间,从A口出发">🧳 老人+行李+直梯+卫生间</button>
+          <button class="chip" data-q="我现在赶时间,从A口经主安检到高铁闸机,少走楼梯">⏱ 赶时间+少走楼梯</button>
+          <button class="chip" data-q="轮椅乘客从B口去公交站,怎么走方便?">♿ 轮椅无障碍</button>
+          <button class="chip" data-q="从深圳北站到宝安机场,赶时间">🚄 市际:深圳北→宝安机场</button>
+        </div>
+        <div class="chat-profile-row" id="chatProfileRow" style="display:none">
+          <span class="chat-profile-label">已理解需求</span>
+          <div class="chips" id="chatProfileChips"></div>
+        </div>
+        <div id="chatAnalysis" class="chat-analysis"></div>
+        <details class="raw dock-tools">
+          <summary>对话引擎 · 模型微调(实验)</summary>
+          <div class="dock-tools-grid">
+            <div class="dock-tool">
+              <h4><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-cpu"/></svg>对话引擎</h4>
+              <p class="muted">默认 Mock(离线可演示);配置 SILICONFLOW_API_KEY 后可加载真实 OpenAI 兼容模型。</p>
+              <div class="chips"><button class="chip" id="chipReal">使用真实适配器(需密钥)</button></div>
+              <div class="field"><label>模型 ID</label><input id="llmModel" value="DeepSeek-R1-Distill-Qwen-7B" /></div>
+              <button class="btn sm" id="btnLLMLoad">加载模型</button>
+              <div id="llmLoadResult" style="margin-top:12px"></div>
+            </div>
+            <div class="dock-tool">
+              <h4><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-flask"/></svg>模型微调(实验)</h4>
+              <div class="field" style="margin-top:10px"><label>训练配置(JSON)</label><textarea id="llmTuneConfig">{"method":"LoRA","epochs":2,"lr":0.0002,"rank":16}</textarea></div>
               <button class="btn sm ghost" id="btnLLMTune">执行微调接口</button>
               <div id="llmTuneResult" style="margin-top:10px"></div>
               <div class="field-row" style="margin-top:14px">
@@ -481,9 +480,9 @@
                   <span class="key"><span class="swatch" style="background:#b54708"></span>ROUGE-L</span>
                 </div>
               </div>
-            </details>
+            </div>
           </div>
-        </div>
+        </details>
       </div>
     </div>
     <div class="chat-dock-bar">

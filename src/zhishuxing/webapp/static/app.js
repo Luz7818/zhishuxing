@@ -1413,6 +1413,43 @@ function initChatDock() {
   $("btnChatDockToggle").addEventListener("click", () => setDockOpen());
   $("btnChatCollapse").addEventListener("click", () => setDockOpen(false));
   $("chatInput").addEventListener("focus", () => { if ($("chatDockBody").hidden) setDockOpen(true); });
+  initDockResize();
+}
+
+/* 面板高度拖拽:顶边手柄上下拖动,记忆到 localStorage,双击恢复默认 */
+function initDockResize() {
+  const handle = $("dockResizer");
+  const root = document.documentElement;
+  let saved = null;
+  try { saved = Number(localStorage.getItem("zsx_dock_h")); } catch (_) { /* 忽略 */ }
+  if (saved >= 240) root.style.setProperty("--dock-h", `${saved}px`);
+
+  handle.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+    handle.classList.add("dragging");
+    document.body.classList.add("row-resizing");
+    const startY = event.clientY;
+    const startH = $("chatDockBody").getBoundingClientRect().height;
+    const onMove = (e) => {
+      const h = Math.min(window.innerHeight * 0.78,
+                         Math.max(240, Math.round(startH + (startY - e.clientY))));
+      root.style.setProperty("--dock-h", `${h}px`);
+    };
+    const onUp = () => {
+      handle.classList.remove("dragging");
+      document.body.classList.remove("row-resizing");
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      const h = parseInt(root.style.getPropertyValue("--dock-h"), 10);
+      try { localStorage.setItem("zsx_dock_h", String(h)); } catch (_) { /* 忽略 */ }
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  });
+  handle.addEventListener("dblclick", () => {
+    root.style.removeProperty("--dock-h");
+    try { localStorage.removeItem("zsx_dock_h"); } catch (_) { /* 忽略 */ }
+  });
 }
 
 /* ---------------- 侧栏收起 / 展开(图标栏形态,记忆状态) ---------------- */

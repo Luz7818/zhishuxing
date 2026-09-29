@@ -1093,6 +1093,7 @@ async function sendChat(message) {
   $("chatInput").value = "";
   state.chat.busy = true;
 
+  setDockOpen(true);   // 底部 Dock 随发送自动展开,对话历史立即可见
   appendChatMessage("user", text);
   const pendingEl = appendChatMessage("assistant", "正在理解您的需求并规划路线…", true);
 
@@ -1390,24 +1391,43 @@ function initSettings() {
   refreshSettings();
 }
 
-/* ---------------- 右侧 AI 助手面板(仿 harness,记忆开合偏好) ---------------- */
+/* ---------------- 智能换乘助手:页面底部 Dock(记忆开合偏好) ---------------- */
 
-function setAiOpen(open) {
-  const panel = $("aipanel");
-  const willOpen = open === undefined ? !panel.classList.contains("open") : !!open;
-  panel.classList.toggle("open", willOpen);
-  $("ai-rail").classList.toggle("on", willOpen);
-  $("app").classList.toggle("ai-open", willOpen);
-  const nav = $("nav-assistant");
-  if (nav) nav.classList.toggle("active", willOpen);
+function setDockOpen(open) {
+  const body = $("chatDockBody");
+  const willOpen = open === undefined ? body.hidden : !!open;
+  body.hidden = !willOpen;
+  $("btnChatDockToggle").classList.toggle("on", willOpen);
+  $("app").classList.toggle("dock-open", willOpen);
   try { localStorage.setItem("zsx_ai_open", willOpen ? "1" : "0"); } catch (_) { /* 忽略 */ }
+  if (willOpen) {
+    const box = $("chatMessages");
+    if (box) box.scrollTop = box.scrollHeight;
+  }
 }
 
-function initAiPanel() {
+function initChatDock() {
   let pref = null;
   try { pref = localStorage.getItem("zsx_ai_open"); } catch (_) { /* 忽略 */ }
-  setAiOpen(pref === null ? window.innerWidth >= 1440 : pref === "1");
-  $("ai-rail").addEventListener("click", () => setAiOpen());
+  setDockOpen(pref === "1");                       // 默认收起:只留底部输入条
+  $("btnChatDockToggle").addEventListener("click", () => setDockOpen());
+  $("btnChatCollapse").addEventListener("click", () => setDockOpen(false));
+  $("chatInput").addEventListener("focus", () => { if ($("chatDockBody").hidden) setDockOpen(true); });
+}
+
+/* ---------------- 侧栏收起 / 展开(图标栏形态,记忆状态) ---------------- */
+
+function setSideCollapsed(collapsed) {
+  $("app").classList.toggle("side-collapsed", collapsed);
+  try { localStorage.setItem("zsx_side_collapsed", collapsed ? "1" : "0"); } catch (_) { /* 忽略 */ }
+}
+
+function initSideToggle() {
+  let pref = null;
+  try { pref = localStorage.getItem("zsx_side_collapsed"); } catch (_) { /* 忽略 */ }
+  setSideCollapsed(pref === "1");
+  $("side-toggle").addEventListener("click", () =>
+    setSideCollapsed(!$("app").classList.contains("side-collapsed")));
 }
 
 /* ---------------- 命令面板(Ctrl/⌘+K) ---------------- */
@@ -1429,8 +1449,8 @@ async function cmdkActions() {
     run: () => { if ($("app").classList.contains("hidden")) enterApp(); switchTab(tab); },
   }));
   const cmds = [
-    { ico: "💬", label: "智能换乘助手面板", cat: "命令",
-      run: () => { if ($("app").classList.contains("hidden")) enterApp(); setAiOpen(true); } },
+    { ico: "💬", label: "智能换乘助手(底部对话)", cat: "命令",
+      run: () => { if ($("app").classList.contains("hidden")) enterApp(); setDockOpen(true); $("chatInput").focus(); } },
     { ico: "☾", label: "切换明暗主题", cat: "命令",
       run: () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark") },
     { ico: "⤓", label: "加载最新策略权重", cat: "命令",
@@ -1514,11 +1534,9 @@ function initCmdk() {
 
 function initPaneResize() {
   $$(".pane-resizer").forEach((handle) => {
-    const kind = handle.dataset.resize;
-    const varName = kind === "side" ? "--pane-side" : "--pane-ai";
-    const currentWidth = () => (kind === "side"
-      ? document.querySelector(".sidebar").getBoundingClientRect().width
-      : $("aipanel").getBoundingClientRect().width);
+    const varName = "--pane-side";                    // AI 面板已改为底部 Dock,仅剩侧栏可拖宽
+    const currentWidth = () =>
+      document.querySelector(".sidebar").getBoundingClientRect().width;
 
     handle.addEventListener("mousedown", (event) => {
       event.preventDefault();
@@ -1527,7 +1545,7 @@ function initPaneResize() {
       const startX = event.clientX;
       const startW = currentWidth();
       const onMove = (e) => {
-        const delta = kind === "side" ? e.clientX - startX : startX - e.clientX;
+        const delta = e.clientX - startX;
         const w = Math.min(560, Math.max(210, Math.round(startW + delta)));
         document.documentElement.style.setProperty(varName, `${w}px`);
       };
@@ -1562,7 +1580,8 @@ function initAppOnce() {
   initLLM();
   initReports();
   initSettings();
-  initAiPanel();
+  initChatDock();
+  initSideToggle();
   initCmdk();
   initPaneResize();
   switchTab(lastTab() || "overview");

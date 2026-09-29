@@ -314,40 +314,12 @@ details.raw pre { margin: 8px 0 0; padding: 12px 14px; background: var(--chip-bg
 .toast.out { opacity: 0; transform: translateY(6px); }
 .toast.err { background: #4a1210; }
 
+/* ================= 智能助手引擎卡(dock 右列沿用 .ai-sec) ================= */
 /* ================= 右侧 AI 助手面板 ================= */
-#ai-rail { width: 36px; flex: none; height: 100vh; border: 0; border-left: 1px solid var(--line);
-           background: var(--surface); color: var(--t3); cursor: pointer; display: flex; flex-direction: column;
-           align-items: center; gap: 10px; padding: 15px 0; font: inherit; font-size: 12px; font-weight: 600;
-           transition: background .15s, color .15s; }
-#ai-rail .rail-ico { font-size: 15px; }
-#ai-rail:hover { background: var(--surface-2); color: var(--t1); }
-#ai-rail.on { background: var(--primary-soft); color: var(--primary); }
-#ai-rail .ai-rail-txt { writing-mode: vertical-rl; letter-spacing: .25em; }
-.aipanel { width: 0; flex: none; height: 100vh; background: var(--bg); border-left: 1px solid var(--line);
-           overflow: hidden; transition: width .22s cubic-bezier(.2,.8,.25,1); }
-.aipanel.open { width: var(--pane-ai, 420px); }
-.ai-inner { width: calc(var(--pane-ai, 420px) - 1px); height: 100vh; display: flex; flex-direction: column; }
-.ai-head { display: flex; align-items: center; gap: 9px; padding: 13px 14px 12px 16px;
-           border-bottom: 1px solid var(--line); background: var(--surface); }
-.ai-head b { font-size: 13.5px; flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
-.ai-head .h-ico { width: 26px; height: 26px; border-radius: 8px; flex: none; display: flex; align-items: center;
-                  justify-content: center; background: var(--primary-soft); color: var(--primary); font-size: 13px; }
-.ai-body { flex: 1; min-height: 0; overflow-y: auto; padding: 13px 13px 30px; }
 .ai-sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
           box-shadow: var(--shadow-xs); padding: 13px 14px 15px; margin-bottom: 12px; }
 .ai-sec > h4 { margin: 0 0 2px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
 .ai-sec > .desc { color: var(--t3); font-size: 11.5px; margin: 0 0 8px; line-height: 1.55; }
-.aipanel label { margin: 9px 0 4px; font-size: 11.5px; }
-.aipanel input, .aipanel select, .aipanel textarea { height: 34px; font-size: 12.5px; border-radius: 9px; }
-.aipanel textarea { height: auto; }
-.aipanel .btn { height: 34px; font-size: 12.5px; border-radius: 9px; }
-.aipanel .btn.sm { height: 28px; font-size: 11.5px; }
-.aipanel .chips { margin: 8px 0 4px; }
-.aipanel .badge { font-size: 11px; padding: 2.5px 9px; }
-.aipanel .card { padding: 14px 15px 16px; margin-bottom: 12px; box-shadow: none; }
-.aipanel .grid-2 { grid-template-columns: 1fr; gap: 14px; }
-.aipanel .canvas-box canvas { width: 100%; }
-.aipanel details.raw pre { max-height: 220px; }
 
 /* ---- 对话区 ---- */
 .chat-box { display: flex; flex-direction: column; gap: 9px; max-height: 300px; min-height: 90px;
@@ -494,8 +466,6 @@ details.raw pre { margin: 8px 0 0; padding: 12px 14px; background: var(--chip-bg
 .topbar-cmdk .ic { width: 14px; height: 14px; }
 .btn .ic { width: 15px; height: 15px; }
 .icon-btn .ic { width: 13px; height: 13px; }
-#ai-rail .rail-ico .ic { width: 16px; height: 16px; }
-.ai-head .h-ico .ic { width: 14px; height: 14px; }
 
 /* ================= 面板宽度拖拽 ================= */
 .pane-resizer { width: 6px; flex: none; cursor: col-resize; position: relative; z-index: 30;
@@ -504,8 +474,6 @@ details.raw pre { margin: 8px 0 0; padding: 12px 14px; background: var(--chip-bg
                         border-radius: 2px; background: transparent; transition: background .15s; }
 .pane-resizer:hover::before, .pane-resizer.dragging::before { background: var(--primary); opacity: .65; }
 body.col-resizing { cursor: col-resize; user-select: none; }
-body.col-resizing .aipanel { transition: none; }
-#app:not(.ai-open) .pane-resizer[data-resize="ai"] { display: none; }
 
 /* ================= 应用壳 ================= */
 .app-shell { display: flex; width: 100%; height: 100vh; }
@@ -530,12 +498,6 @@ body.col-resizing .aipanel { transition: none; }
   .hero-nav { padding: 14px 20px; }
   .hero h1 { font-size: 32px; }
   .pane-resizer { display: none; }
-  #ai-rail { position: fixed; right: 0; top: 42%; z-index: 46; height: auto; padding: 13px 0;
-             border: 1px solid var(--line); border-right: 0; border-radius: 10px 0 0 10px;
-             box-shadow: var(--shadow-sm); }
-  .aipanel, .aipanel.open { position: fixed; top: 0; right: 0; bottom: 0; z-index: 47; width: 0; }
-  .aipanel.open { width: min(420px, 94vw); }
-  .ai-inner { width: min(420px, 94vw); }
 }
 @media (max-width: 640px) {
   .topbar { padding-top: 11px; padding-bottom: 11px; }
@@ -618,3 +580,106 @@ input:hover:not(:focus):not([type="checkbox"]) { border-color: var(--t4); }
 /* 欢迎页 hstat 数字渐变,与 .kpi.accent 呼应 */
 .hstat b { background: linear-gradient(90deg, #a5b4fc, #67e8f9);
            -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ============================================================
+   v3.2 布局重构(2026-09-29):
+   智能换乘助手 → 页面底部 Dock(仿主流大模型对话形态)·
+   侧栏可收起为图标栏(记忆状态)· 主栏排版精修
+   ============================================================ */
+
+/* ---- 主列:内容滚动区 + 底部 Dock ---- */
+.main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; }
+.main-col .main { flex: 1; min-height: 0; height: auto; }
+@media (max-width: 960px) {
+  .main-col { height: auto; }
+}
+
+/* ---- 底部 Dock ---- */
+.chat-dock { flex: none; border-top: 1px solid var(--line); background: var(--surface);
+             box-shadow: 0 -8px 24px -18px rgba(16, 24, 40, .35); }
+.chat-dock-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px;
+                 max-width: 1160px; margin: 0 auto; width: 100%; }
+.chat-dock-bar input { flex: 1; height: 40px; border-radius: 11px; font-size: 13.5px; }
+.chat-dock-bar .btn { height: 40px; border-radius: 11px; }
+.dock-fab { width: 40px; height: 40px; flex: none; border-radius: 12px; border: 0; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; color: #fff;
+            background: var(--grad); box-shadow: var(--grad-glow);
+            transition: filter .15s, transform .12s; }
+.dock-fab:hover { filter: brightness(1.08); }
+.dock-fab:active { transform: scale(.95); }
+.dock-fab .ic { width: 18px; height: 18px; }
+#app.dock-open .dock-fab { background: var(--surface); color: var(--primary);
+                           border: 1px solid var(--line-2); box-shadow: var(--shadow-xs); }
+
+.chat-dock-body { border-bottom: 1px solid var(--line); background: var(--bg);
+                  max-height: min(56vh, 520px); overflow-y: auto; }
+.dock-head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 9px;
+             padding: 11px 18px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.dock-head b { font-size: 13.5px; }
+.dock-head .h-ico { width: 26px; height: 26px; border-radius: 8px; flex: none; display: flex;
+                    align-items: center; justify-content: center; background: var(--primary-soft);
+                    color: var(--primary); font-size: 13px; }
+.dock-head .h-ico .ic { width: 14px; height: 14px; }
+.dock-head-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.dock-grid { display: grid; grid-template-columns: minmax(0, 58fr) minmax(0, 42fr); gap: 14px;
+             padding: 14px 18px 18px; max-width: 1160px; margin: 0 auto; }
+.dock-chat-col { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.dock-chat-col .chat-box { flex: 1; min-height: 150px; max-height: 32vh; }
+.dock-side-col { min-width: 0; }
+.dock-side-col .ai-sec { background: var(--surface); border: 1px solid var(--line);
+                         border-radius: var(--r-lg); box-shadow: var(--shadow-xs);
+                         padding: 13px 15px 15px; margin-bottom: 12px; }
+.dock-side-col .ai-sec:last-child { margin-bottom: 0; }
+.ai-sec > h4 { margin: 0 0 2px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+.ai-sec > .desc { color: var(--t3); font-size: 11.5px; margin: 0 0 8px; line-height: 1.55; }
+@media (max-width: 960px) {
+  .dock-grid { grid-template-columns: 1fr; padding: 12px; }
+  .chat-dock-bar { padding: 9px 12px; }
+  .chat-dock-body { max-height: 64vh; }
+}
+
+/* ---- 侧栏收起(图标栏形态) ---- */
+#app.side-collapsed .sidebar { width: 64px; min-width: 64px; }
+#app.side-collapsed .brand { justify-content: center; padding: 18px 0 14px; }
+#app.side-collapsed .brand .bt { display: none; }
+#app.side-collapsed .nav-scroll { padding: 12px 8px; }
+#app.side-collapsed .nav-item { justify-content: center; padding: 9px 0; }
+#app.side-collapsed .nav-item .nv-txt,
+#app.side-collapsed .nav-item .nv-flag { display: none; }
+#app.side-collapsed .nav-item .nv-ico { width: 100%; }
+#app.side-collapsed .nav-label { text-align: center; padding: 10px 0 5px; font-size: 9px; }
+#app.side-collapsed .side-foot { padding: 12px 6px; }
+#app.side-collapsed .sys-status { justify-content: center; }
+#app.side-collapsed .sys-status span:not(.dot) { display: none; }
+#app.side-collapsed .meta-row { justify-content: center; margin-top: 8px; }
+#app.side-collapsed .meta-row span:not(.msep):not(#theme-toggle) { display: none; }
+#app.side-collapsed .meta-row .msep { display: none; }
+#app.side-collapsed .theme-btn { margin: 0; }
+@media (max-width: 960px) {
+  #app.side-collapsed .sidebar { width: 100%; min-width: 0; }
+  #app.side-collapsed .brand .bt { display: block; }
+  #app.side-collapsed .nav-item .nv-txt,
+  #app.side-collapsed .nav-item .nv-flag { display: inline; }
+  #app.side-collapsed .nav-label { display: none; }
+  #app.side-collapsed .sys-status span:not(.dot) { display: inline; }
+}
+
+/* ---- 顶栏:侧栏开合钮 ---- */
+.topbar-left { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+.side-toggle { width: 32px; height: 32px; flex: none; border: 1px solid var(--line-2); border-radius: 9px;
+               background: var(--surface); color: var(--t3); cursor: pointer; display: flex;
+               align-items: center; justify-content: center; transition: border-color .15s, color .15s; }
+.side-toggle:hover { border-color: var(--primary); color: var(--primary); }
+.side-toggle .ic { width: 15px; height: 15px; }
+
+/* ---- 主栏排版精修 ---- */
+.card > h3 .ic { width: 15px; height: 15px; padding: 4px; border-radius: 7px;
+                 background: var(--primary-soft); box-sizing: content-box; margin-right: 9px;
+                 vertical-align: -6px; }
+.card > h3 { display: flex; align-items: center; padding-bottom: 9px; margin-bottom: 12px;
+             border-bottom: 1px solid var(--row-line); }
+.card > .desc { margin-top: 0; }
+.grid-4 { margin-bottom: 4px; }
+.grid-2 { margin-top: 2px; }
+main > .card { margin-bottom: 18px; }
+main > .empty { margin-bottom: 18px; }

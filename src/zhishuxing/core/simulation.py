@@ -26,6 +26,27 @@ OBS_SCALE = 8.0
 HEADINGS: Tuple[Point, Point, Point, Point] = ((1, 0), (0, 1), (-1, 0), (0, -1))
 
 
+def heuristic_action(obs: Sequence[float]) -> List[float]:
+    """朝目标方向的启发式动作（输出语义与 MADDPG actor 一致:[forward, turn]）。
+
+    仿真回退(HeuristicPolicy)与 RL 运行时无权重降级(rl.runtime)共用这一份实现,
+    改朝向逻辑只许改这里 —— 两处各写一份曾导致改一漏一的风险。
+    """
+    import math
+
+    goal_dx = obs[0] if len(obs) > 0 else 0.0
+    goal_dy = obs[1] if len(obs) > 1 else 0.0
+    vel_x = obs[2] if len(obs) > 2 else 0.0
+    vel_y = obs[3] if len(obs) > 3 else 0.0
+    if abs(goal_dx) < 1e-6 and abs(goal_dy) < 1e-6:
+        return [0.0, 0.0]
+    desired = math.atan2(goal_dy, goal_dx)
+    current = math.atan2(vel_y, vel_x) if (abs(vel_x) + abs(vel_y)) > 1e-6 else desired
+    diff = (desired - current + math.pi) % (2 * math.pi) - math.pi
+    turn = float(np.clip(2.0 * diff / math.pi, -1.0, 1.0))
+    return [0.9, turn]
+
+
 class PolicyProtocol(Protocol):
     """仿真可调用的策略接口（MADDPGRuntime 或任何实现 act() 的对象）。"""
 
@@ -59,19 +80,7 @@ class HeuristicPolicy:
 
     @staticmethod
     def _one(obs: List[float]) -> List[float]:
-        goal_dx = obs[0] if len(obs) > 0 else 0.0
-        goal_dy = obs[1] if len(obs) > 1 else 0.0
-        vel_x = obs[2] if len(obs) > 2 else 0.0
-        vel_y = obs[3] if len(obs) > 3 else 0.0
-        if abs(goal_dx) < 1e-6 and abs(goal_dy) < 1e-6:
-            return [0.0, 0.0]
-        import math
-
-        desired = math.atan2(goal_dy, goal_dx)
-        current = math.atan2(vel_y, vel_x) if (abs(vel_x) + abs(vel_y)) > 1e-6 else desired
-        diff = (desired - current + math.pi) % (2 * math.pi) - math.pi
-        turn = float(np.clip(2.0 * diff / math.pi, -1.0, 1.0))
-        return [0.9, turn]
+        return heuristic_action(obs)
 
 
 def policy_source_label(policy: Any) -> str:

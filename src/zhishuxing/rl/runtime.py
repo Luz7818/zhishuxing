@@ -16,6 +16,7 @@ from .. import config as cfg
 from ..analysis.plotting import ensure_parent
 from ..core.navigation import NavigationAdapter
 from ..core.scenarios import PassengerGroup
+from ..core.simulation import heuristic_action
 from ..core.simulation import run_guided_simulation as _run_guided_simulation
 
 ENV_NAME = "integrated_hub_transfer"
@@ -216,19 +217,8 @@ class MADDPGRuntime:
 
     @staticmethod
     def _heuristic_action(obs: List[float]) -> List[float]:
-        import math
-
-        goal_dx = obs[0] if len(obs) > 0 else 0.0
-        goal_dy = obs[1] if len(obs) > 1 else 0.0
-        vel_x = obs[2] if len(obs) > 2 else 0.0
-        vel_y = obs[3] if len(obs) > 3 else 0.0
-        if abs(goal_dx) < 1e-6 and abs(goal_dy) < 1e-6:
-            return [0.0, 0.0]
-        desired = math.atan2(goal_dy, goal_dx)
-        current = math.atan2(vel_y, vel_x) if (abs(vel_x) + abs(vel_y)) > 1e-6 else desired
-        diff = (desired - current + math.pi) % (2 * math.pi) - math.pi
-        turn = float(np.clip(2.0 * diff / math.pi, -1.0, 1.0))
-        return [0.9, turn]
+        # 与仿真回退共用 core.simulation.heuristic_action —— 朝向逻辑只有这一份
+        return heuristic_action(obs)
 
     # ------------------------------------------------------------------ 奖励数据
 

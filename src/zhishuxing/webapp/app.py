@@ -306,4 +306,21 @@ def create_app(
     return app
 
 
-app = create_app()
+_APP_SINGLETON: "Flask | None" = None
+
+
+def __getattr__(name: str) -> "Flask":
+    """PEP 562 惰性模块属性:`webapp.app` 的 `app` 在首次访问时才构建。
+
+    构建应用要加载导航图、扫描模型目录、建 BM25 索引 —— 模块级直接
+    `app = create_app()` 会让任何 `import zhishuxing.webapp.app`(哪怕只为
+    拿一个工具函数)都付出全系统加载代价。现在只有真正以 `webapp.app:app`
+    作 WSGI 入口或显式访问 `app` 属性时才构建一次并缓存;`create_app()` /
+    `cmd_smoke` 等工厂用法不受影响,各自拿到独立实例。
+    """
+    global _APP_SINGLETON
+    if name == "app":
+        if _APP_SINGLETON is None:
+            _APP_SINGLETON = create_app()
+        return _APP_SINGLETON
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

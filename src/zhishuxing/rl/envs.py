@@ -9,8 +9,26 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from mlagents_envs.base_env import ActionTuple
-from mlagents_envs.environment import UnityEnvironment
+
+
+def _mlagents_imports():
+    """懒加载 mlagents_envs:PyPI 无对应版本,只能源码安装 third_party 镜像。
+
+    顶层 import 会让 `zhishuxing train` 在「没装 mlagents」的机器上抛裸
+    ImportError —— 现在给出可操作的安装指引。装好前其余功能(仿真/分析/对话)
+    完全不受影响。
+    """
+    try:
+        from mlagents_envs.base_env import ActionTuple
+        from mlagents_envs.environment import UnityEnvironment
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError(
+            "未安装 mlagents_envs:训练功能需要源码安装仓库自带的镜像 ——\n"
+            "  git clone https://github.com/Unity-Technologies/ml-agents (release/18 分支)\n"
+            "  pip install ./ml-agents/release_18/ml-agents-envs\n"
+            "(或参考 unity/README.md 的接入说明;没有 Unity 环境时训练功能不可用,其余功能不受影响)"
+        ) from exc
+    return ActionTuple, UnityEnvironment
 
 
 @dataclass
@@ -41,7 +59,9 @@ class Env:
         self.timeout_wait = timeout_wait
         self.worker_id = worker_id
 
-        self.unity_env = UnityEnvironment(
+        action_tuple_cls, unity_environment_cls = _mlagents_imports()
+        self._action_tuple_cls = action_tuple_cls
+        self.unity_env = unity_environment_cls(
             file_name=self.file_name,
             seed=self.seed,
             base_port=self.base_port,
@@ -122,7 +142,7 @@ class Env:
             action_array = np.asarray(action_array, dtype=np.float32)
             self.unity_env.set_actions(
                 self.behavior_name,
-                ActionTuple(continuous=action_array),
+                self._action_tuple_cls(continuous=action_array),
             )
 
         self.unity_env.step()

@@ -28,10 +28,10 @@ cd zhishuxing
 pip install -e .
 ```
 
-预期输出的末行（重装时会先出现 `Uninstalling zhishuxing-2.1.0`）：
+预期输出的末行（重装时会先出现 `Uninstalling zhishuxing-2.2.0`）：
 
 ```
-Successfully installed zhishuxing-2.1.0
+Successfully installed zhishuxing-2.2.0
 ```
 
 `-e` 是 editable（源码改了立刻生效，不用重装）。控制台脚本入口注册为 `zhishuxing`，
@@ -124,7 +124,7 @@ Press CTRL+C to quit
 RL 智能体、分析报告、设置；右侧「智能换乘助手」是可展开的对话面板。
 移动端 PWA 在 `http://127.0.0.1:7860/mobile`（同源托管，见第 7 节）。
 
-**没有 `--host` 时默认监听 `0.0.0.0`**（`cli.py` 的 serve 参数默认值），
+**没有 `--host` 时默认监听 `127.0.0.1`(2.2.0 起;此前为 `0.0.0.0`)**（`cli.py` 的 serve 参数默认值），
 即使开发模式打印的是 `127.0.0.1`。只想本机用请显式带上 `--host 127.0.0.1`。
 
 ### 3.4 直接问一句
@@ -346,7 +346,7 @@ ServiceWorker 的 scope 也正好覆盖页面。
 | 打开 `/mobile` 返回 404 | 设了 `ZHISHUXING_WORKSPACE` 指向别的目录，那边没有 `web/mobile/` | 回仓库根起服务，或把 `web/` 一并拷过去 |
 | 页面显示的路径/米数和想象差很多 | `cell_size_m = 30` 是示意换算系数，网格也是示意底图 | 换枢纽要同时改 `configs/hub_default.json` 的网格与地标，米数才有意义 |
 | `python -m pytest -q` 跑完不显示通过数 | `pyproject.toml` 已有 `addopts = "-q"`，再 `-q` 就成了 `-qq` | 用 `python -m pytest`（不带额外 `-q`） |
-| 起服务后局域网机器能访问 | `serve` 默认 `--host 0.0.0.0` | 显式 `--host 127.0.0.1`；写密钥接口本身还有一道 loopback 校验 |
+| 起服务后局域网机器能访问 | `serve` 默认 `--host 127.0.0.1`,局域网可访问需显式 `--host 0.0.0.0` | 显式 `--host 127.0.0.1`；写密钥接口本身还有一道 loopback 校验 |
 
 ## 9. 术语小词典
 

@@ -25,9 +25,9 @@
 | HTTP 路由 | 24 个注册 / 23 条不同路径（`/api/chat` 与 `/api/settings` 各含 GET+POST） | `grep -cE '@app\.(get\|post)\(' src/zhishuxing/webapp/app.py` |
 | CLI 子命令 | 9 个 | `grep -cE 'add_parser\("[a-z-]+"' src/zhishuxing/cli.py` |
 | CI | 定义在 `.github/workflows/ci.yml`：ubuntu-latest × Python `3.11` / `3.12`，装 `.[dev]` + CPU 版 torch，先 pyflakes 再 pytest（`MPLBACKEND=Agg`）。**这里不写"最近一次是哪个提交"**——分支每推一次它就变，写进文档同一次提交里就作废了；当前分支 HEAD 的徽章为 `passing`（复核见右）。本机没有 `gh`，但徽章与 Actions 接口对**公开仓都免认证**；要提交号与耗时再用 `/actions/runs`（匿名限 60 次/小时/IP，别拿它轮询） | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/zhishuxing/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`；步骤读 `.github/workflows/ci.yml` |
-| 版本 | `2.1.0` | `python -c "import zhishuxing;print(zhishuxing.__version__)"`，另一份在 `pyproject.toml` |
+| 版本 | `2.2.0` | `python -c "import zhishuxing;print(zhishuxing.__version__)"`，另一份在 `pyproject.toml` 的 `project.version` |
 | Python 要求 | `>=3.10`（CI 只跑 3.11/3.12） | `pyproject.toml` 的 `requires-python` |
-| 许可证 | Proprietary，仓库内没有 LICENSE 文件 | `git ls-files` 里搜不到 license |
+| 许可证 | Proprietary，全文在根目录 LICENSE（教学/科研内部使用，第三方需书面授权） | `git ls-files "*LICENSE*"` 恰好 1 行 |
 | 运行时依赖 | `numpy`、`matplotlib`、`flask`、`waitress`、`requests` | `pyproject.toml` 的 `dependencies` |
 | 可选依赖 | `[train]` → torch + tensorboard；`[llm]` → openai；`[dev]` → pytest。`mlagents_envs` 不在任何一格里 | `python -c "import importlib.metadata as m;print(m.requires('zhishuxing'))"` |
 
@@ -159,13 +159,13 @@
   `git check-ignore -v .env.example` 无输出）。谁把这两行调换顺序或删掉例外，
   `.env.example` 就会静默变成不入库，新 clone 的人不知道要配哪些项。
   同理 `.env.bak`（设置页写的备份）是被忽略的，属正常。
-- **`scripts/render_brand_assets.py` 需要未声明的 Pillow**：`pyproject.toml` 与 `requirements.txt`
-  都没有 pillow，干净环境跑它要先 `pip install pillow`。本机装了所以看不出来。
-- **`serve` 默认监听 `0.0.0.0`**，而开发模式打印的是 `http://127.0.0.1:<port>`。
-  密钥写接口在**开发模式下不受 `--production` 那道开关限制**（`settings_writable` 仍为 True），
-  挡在外面的只有每个请求的 loopback 校验。只想本机用就显式加 `--host 127.0.0.1`。
-- **`zhishuxing train` 不需要 Unity 也会立刻失败**：`rl/envs.py` 顶层 import `mlagents_envs`，
-  报 `ModuleNotFoundError: No module named 'mlagents_envs'`（退出码 1）。这不是配置问题，
+- **`scripts/render_brand_assets.py` 依赖 Pillow，已声明进 `dev` 依赖组**（2.2.0 起）：
+  `pip install -e .[dev]` 后可直接跑；只装运行时依赖时仍需单独补 Pillow。
+- **`serve` 默认监听 `127.0.0.1`**（2.2.0 起）：需要局域网/公网访问时显式传 `--host 0.0.0.0`。
+  密钥写接口按**监听地址**裁决（与开发/生产托管无关）：监听非回环地址时默认关闭，
+  须显式 `--allow-remote-settings` 才开放；请求侧的 loopback 校验仍保留，双层防线。
+- **`zhishuxing train` 需要 mlagents_envs（2.2.0 起懒加载）**：不再顶层 import，未安装时给出带安装指引的报错；
+  PyPI 无 1.x 版本，需源码安装 `third_party/` 镜像；其余功能（仿真/分析/对话）不受影响。
   PyPI 上没有 1.x 版本，只能从源码装（`third_party/` 有镜像）。
 - **测试与 smoke 会写 `data/outputs/`**：跑完 `git status` 仍是干净的是因为该目录未跟踪。
   不要为此加断言，也不要把某张图当"基线"提交进 `samples/`，除非 README 真要引用它。

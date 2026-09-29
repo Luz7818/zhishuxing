@@ -61,7 +61,8 @@ def _build_parser() -> argparse.ArgumentParser:
     animate.add_argument("--seed", type=int, default=42)
 
     serve = sub.add_parser("serve", help="启动 Web 控制台（Flask/waitress）")
-    serve.add_argument("--host", type=str, default="0.0.0.0")
+    serve.add_argument("--host", type=str, default="127.0.0.1",
+                       help="监听地址（默认仅本机；公网/局域网部署时显式传 0.0.0.0）")
     serve.add_argument("--port", type=int, default=7860)
     serve.add_argument("--debug", action="store_true")
     serve.add_argument("--production", action="store_true", help="使用 waitress 生产托管")
@@ -239,9 +240,10 @@ def cmd_serve(args) -> int:
     from . import settings as settings_store
     from .webapp.app import create_app
 
-    # 生产模式且监听非本机地址时，默认关闭密钥写入接口（仍可只读查看状态）
+    # 密钥写入接口按「监听地址」裁决,与开发/生产托管方式无关:
+    # 只有监听本机回环地址时默认可写;监听非本机地址时必须显式 --allow-remote-settings
     remote_bind = not settings_store.is_loopback(args.host)
-    settings_writable = args.allow_remote_settings or not (args.production and remote_bind)
+    settings_writable = (not remote_bind) or args.allow_remote_settings
     app = create_app(settings_writable=settings_writable)
     if args.production:
         from waitress import serve
@@ -251,7 +253,8 @@ def cmd_serve(args) -> int:
             print("密钥写入接口已禁用（监听非本机地址）：请改用环境变量或 .env 配置后重启服务")
         serve(app, host=args.host, port=args.port)
     else:
-        print(f"开发模式启动: http://127.0.0.1:{args.port}")
+        print(f"开发模式启动: http://{args.host}:{args.port}"
+              + ("" if settings_writable else "（密钥写入接口已禁用：监听非本机地址）"))
         app.run(host=args.host, port=args.port, debug=args.debug)
     return 0
 

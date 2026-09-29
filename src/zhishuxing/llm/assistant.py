@@ -110,6 +110,9 @@ class TransferAssistant:
             payload["od_incomplete"] = True
         elif route_payload:
             payload["route"] = route_payload
+        if session.get("real_adapter_error"):
+            # 与 load_llm 的 real_adapter_error 同口径:降级可用,但失败原因必须可见
+            payload["real_adapter_error"] = session["real_adapter_error"]
         return payload
 
     # ------------------------------------------------------------ 各环节实现
@@ -214,9 +217,10 @@ class TransferAssistant:
                     max_tokens=600,
                 )
                 if reply and reply.strip():
+                    session.pop("real_adapter_error", None)  # 本轮成功,清掉上一轮的失败记录
                     return reply.strip()
-            except Exception:
-                pass  # LLM 失败降级模板,不中断对话
+            except Exception as exc:  # 真实 LLM 失败:降级模板保证对话不中断,但失败必须可见
+                session["real_adapter_error"] = f"{type(exc).__name__}: {exc}"
         return self._template_reply(profile, route_payload, kb_refs)
 
     def _format_route_for_prompt(self, route_payload: Dict[str, Any]) -> str:

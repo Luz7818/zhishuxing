@@ -206,6 +206,7 @@
 
       <!-- ================= RL 智能体 ================= -->
       <section class="page" id="tab-rl">
+        <div class="grid-2">
         <div class="card">
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-rl"/></svg>策略状态</h3>
           <p class="desc">扫描训练产物并加载每个智能体最新 step 的 actor 权重；无权重时自动以启发式回退并如实标注。</p>
@@ -220,15 +221,6 @@
             <tbody id="rlCkptBody"></tbody>
           </table>
         </div>
-
-        <div class="grid-2">
-          <div class="card">
-            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-chart"/></svg>训练奖励曲线</h3>
-            <p class="desc">来自 data 目录的评估奖励序列（多 seed 叠加）。</p>
-            <div class="canvas-box"><canvas id="rewardCanvas" width="760" height="300"></canvas></div>
-            <div class="legend" id="rewardLegend"></div>
-            <div class="row" style="margin-top:12px"><button class="btn subtle sm" id="btnRLRewards">⟳ 刷新曲线</button></div>
-          </div>
           <div class="card">
             <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-target"/></svg>策略推理测试</h3>
             <p class="desc">观测向量 = [目标dx, dy, 速度vx, vy, 邻近行人dx, dy ×3]，动作 = [前进, 转向]。</p>
@@ -237,6 +229,14 @@
             <div id="rlActResult" style="margin-top:14px"></div>
           </div>
         </div>
+
+          <div class="card">
+            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-chart"/></svg>训练奖励曲线</h3>
+            <p class="desc">来自 data 目录的评估奖励序列（多 seed 叠加）。</p>
+            <div class="canvas-box"><canvas id="rewardCanvas" width="760" height="300"></canvas></div>
+            <div class="legend" id="rewardLegend"></div>
+            <div class="row" style="margin-top:12px"><button class="btn subtle sm" id="btnRLRewards">⟳ 刷新曲线</button></div>
+          </div>
 
         <div class="card">
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sim"/></svg>引导仿真</h3>
@@ -269,6 +269,7 @@
 
       <!-- ================= 客流面板 ================= -->
       <section class="page" id="tab-flow">
+        <div class="grid-2">
         <div class="card">
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-users"/></svg>乘客群组</h3>
           <p class="desc">默认三组场景（来自 configs/scenarios.json），可修改人数与释放时间后生成动态客流面板。</p>
@@ -292,6 +293,8 @@
               <figcaption id="panelMeta"></figcaption>
             </figure>
           </div>
+        </div>
+
         </div>
       </section>
 
@@ -328,7 +331,9 @@
           <button class="btn" id="btnRealPlan">发起规划</button>
         </div>
 
-        <div class="empty" id="planEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#art-route"/></svg></span>规划结果将在此展示：用时 / 费用 / 换乘 / 路线详情 / 出行提醒 / 需求档案。</div>
+        <div class="card">
+          <div class="empty" id="planEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#art-route"/></svg></span>规划结果将在此展示：用时 / 费用 / 换乘 / 路线详情 / 出行提醒 / 需求档案。</div>
+        </div>
         <div id="planResult" style="display:none">
           <div class="grid-4" style="margin-bottom:18px">
             <div class="kpi accent"><div class="kpi-label">预计用时</div><div class="kpi-value" id="planDur">—</div></div>
@@ -359,6 +364,7 @@
 
       <!-- ================= 分析报告 ================= -->
       <section class="page" id="tab-reports">
+        <div class="grid-2">
         <div class="card">
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-reports"/></svg>分析报告中心</h3>
           <p class="desc">七类报告一键生成（固定种子，可复现）；完成后输出到 data/outputs 并在下方画廊预览。</p>
@@ -385,10 +391,13 @@
           <div class="empty" id="galleryEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-image"/></svg></span>暂无输出。点击「运行全部报告」生成。</div>
           <div class="grid-2" id="gallery" style="display:none"></div>
         </div>
+
+        </div>
       </section>
 
       <!-- ================= 设置（密钥配置） ================= -->
       <section class="page" id="tab-settings">
+        <div class="grid-2">
         <div class="card">
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg>密钥与降级状态</h3>
           <p class="desc">直接写入服务端本地 <code>.env</code> 并热重载，保存后无需重启服务。当前值一律掩码显示（只给前 2 字符与长度）；输入框留空表示不修改该项，清除请用各项的「清除」按钮。</p>
@@ -409,6 +418,8 @@
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-pulse"/></svg>降级链路</h3>
           <p class="desc">未配置的项不会报错、不会白屏，只会按下面的兜底路径继续演示。</p>
           <table class="table"><tbody id="settingsFallbackBody"></tbody></table>
+        </div>
+
         </div>
       </section>
     </main>

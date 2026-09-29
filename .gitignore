@@ -15,6 +15,11 @@ venv/
 data/outputs/
 data/model/
 data/runs/
+
+# 真实客流数据(可能含敏感信息)不入库;格式模板(*.example.csv)入库
+data/real/*
+!data/real/README.md
+!data/real/*.example.csv
 runs/
 model/
 

@@ -182,9 +182,13 @@ zhishuxing analyze --report reward   # 只跑一类
 
 退出码：7 类都成功是 0，有失败是 1（失败行会打成 `[名字] FAILED: <原因>`）。
 
-**这些数据是合成数据**，除 `reward` 之外。`reward` 读的是真实训练产物 `*_env_*.npy`：
-先看 `data/outputs/`，没有就回退 `data/samples/`（那里留了 3 个种子各一份的样本）。
-其余 6 类由 `analysis/synthetic.py` 按固定种子生成，改种子等于改图，别把它当实测结论引用。
+**这些数据默认是合成数据**,除 `reward` 之外。`reward` 读的是真实训练产物 `*_env_*.npy`:
+先看 `data/outputs/`,没有就回退 `data/samples/`(那里留了 3 个种子各一份的样本)。
+其余 6 类由 `analysis/synthetic.py` 按固定种子生成,改种子等于改图,别把它当实测结论引用。
+
+**2.2.0 起可接真实数据**:把 CSV 按 [data/real/README.md](../data/real/README.md) 的约定放进
+`data/real/` 后重跑同一命令,`heatmap`/`transfer`/`efficiency` 自动改用真实文件,输出行与图题
+标注 `来源:真实数据:<文件名>`;文件缺失或行数不足时回退合成并在输出里如实标注。
 
 `zhishuxing demo` 是另一条链路：导航 → 客流面板 → 模拟微调 → 汇总 JSON，加 `--reports` 时顺带跑上面 7 类。
 `zhishuxing animate --frames 60 --fps 20 --n_agents 44` 单独出动图。

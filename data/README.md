@@ -11,6 +11,7 @@
 | 文件 | 干什么 | 备注 |
 |---|---|---|
 | `README.md` | 本说明 | 唯一的根级文件（复核：`find data -maxdepth 1 -type f`） |
+| `real/` | 真实客流数据约定目录(2.2.0):heatmap/transfer/efficiency 自动发现消费 | 格式与命名见 [real/README.md](real/README.md);真实 CSV 不入库,模板入库 |
 | `transfer_kb/` 的 23 个文件 | 22 篇语料 + 1 份入库语料 `corpus.jsonl` | 语料命名 `NN_主题.md`，一文件一篇；23 复核 `git ls-files data/transfer_kb \| wc -l` |
 | `samples/` 的 18 个文件 | 报告与演示的参考产物 | 带 `_simulated` 后缀的 6 个出自固定种子合成数据；18 复核 `git ls-files data/samples \| wc -l` |
 

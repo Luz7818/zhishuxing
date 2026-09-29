@@ -35,6 +35,16 @@
 - **主栏排版精修**:卡片标题图标改令牌化底色芯片并加分隔线、
   网格间距节奏统一、表格/空状态层次微调(纯 CSS 附加层,无新依赖)
 
+### Added(新增 · 2.2 真实数据通路)
+
+- **`data/real/` 真实客流数据约定目录**:`zhishuxing analyze` 自动发现 ——
+  `congestion_before/after.csv` 供 heatmap、`transfer_summary.csv`(≥30 行)供
+  transfer 与 efficiency;文件齐备即改用真实数据,输出行与图题标注
+  `来源:真实数据:<文件名>`,缺文件自动回退合成并标注 `来源:合成(固定种子)`
+- 格式模板与说明:`data/real/README.md` + 3 个 `*.example.csv`
+  (真实 CSV 已进 `.gitignore` 不入库,防误提交敏感数据;模板入库)
+- `run_congestion_report` / `run_transfer_time_report` 新增 `source_note` 参数
+
 ### Fixed(修复)
 
 - `zhishuxing train` 在未装 `mlagents_envs` 的机器上给出带安装指引的报错

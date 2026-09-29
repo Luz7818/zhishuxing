@@ -31,6 +31,40 @@ def _out(name: str) -> Path:
     return cfg.paths.outputs / name
 
 
+def real_data_dir() -> Path:
+    """真实客流数据约定目录:data/real/(文件命名约定见 data/real/README.md)。"""
+    return cfg.paths.data / "real"
+
+
+# 报告名 -> 该报告可消费的真实数据文件(全部齐备才启用,缺一即回退合成)
+REAL_INPUT_SPECS = {
+    "heatmap": ("congestion_before.csv", "congestion_after.csv"),
+    "transfer": ("transfer_summary.csv",),
+    "efficiency": ("transfer_summary.csv",),
+}
+
+
+def resolve_real_inputs(report: str) -> Dict:
+    """解析某报告的真实数据输入:data/real/ 下约定文件齐备 → 返回注入 runner 的
+    kwargs 与来源标注;缺失 → 返回合成标记(合成数据即无数据时的降级,不是错误)。
+    """
+    spec = REAL_INPUT_SPECS.get(report)
+    if not spec:
+        return {"kwargs": {}, "source": "合成(固定种子)"}
+    real_dir = real_data_dir()
+    files = [real_dir / name for name in spec]
+    if not all(f.is_file() for f in files):
+        return {"kwargs": {}, "source": "合成(固定种子)"}
+    names = "+".join(f.name for f in files)
+    if report == "heatmap":
+        kwargs = {"before_csv": files[0], "after_csv": files[1]}
+    elif report == "transfer":
+        kwargs = {"input_csv": files[0]}
+    else:  # efficiency:复用真实换乘分布
+        kwargs = {"transfer_csv": files[0]}
+    return {"kwargs": kwargs, "source": f"真实数据:{names}"}
+
+
 def _first_existing(*candidates: Path) -> Path:
     for candidate in candidates:
         if candidate.exists():
@@ -117,7 +151,10 @@ def run_congestion_report(
     rank_output: Optional[Path] = None,
     peak_output: Optional[Path] = None,
     title_prefix: str = "深圳北站综合枢纽",
+    source_note: str = "",
 ) -> Dict:
+    if source_note:
+        title_prefix = f"{title_prefix}({source_note})"
     if before_csv and after_csv:
         zones_b, times_b, before = read_matrix_csv(Path(before_csv))
         zones_a, times_a, after = read_matrix_csv(Path(after_csv))
@@ -232,6 +269,7 @@ def run_transfer_time_report(
     smooth_window: int = 12,
     output: Optional[Path] = None,
     save_sim_csv: Optional[Path] = None,
+    source_note: str = "",
 ) -> Dict:
     if input_csv:
         iterations, p50, p90, max_values = read_summary_csv(Path(input_csv))
@@ -255,7 +293,7 @@ def run_transfer_time_report(
     plt.plot(iterations, p50_s, color="#4C78A8", linewidth=2.4, label=f"P50（平滑窗口={win}）")
     plt.plot(iterations, p90_s, color="#F58518", linewidth=2.4, label=f"P90（平滑窗口={win}）")
     plt.plot(iterations, max_s, color="#E45756", linewidth=2.6, label=f"最大值（平滑窗口={win}）")
-    plt.title("换乘时间分布随训练迭代变化")
+    plt.title("换乘时间分布随训练迭代变化" + (f" · {source_note}" if source_note else ""))
     plt.xlabel("训练迭代")
     plt.ylabel("换乘时间（秒）")
     plt.grid(True, linestyle="--", alpha=0.35)

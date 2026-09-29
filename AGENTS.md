@@ -223,7 +223,8 @@ v2 重构是把历史散装脚本平移进包，不是重写。找不到"以前�
   `--allow-remote-settings` 是给生产模式监听内网时留的手动逃生门，不是默认值。
 - 不要在 `unity/` 里造 Unity 工程文件来"让它能构建"，也不要为它写 CI。
 - 不要把 `MADDPG` 的效果写进任何数字结论：默认没有权重，`policy_source` 就是「启发式回退」；
-  `data/outputs/` 里的分析图来自固定种子的合成数据。
-- 不要动 git 历史来清理已泄漏的密钥（`git show 93656291:UI/config_direct.py` 里能 grep 到 3 处
-  密钥形状字面量，历史未重写）。这属破坏性操作，且清史不能代替平台侧作废。
+  `data/outputs/` 里的分析图默认来自固定种子合成数据,`data/real/` 有约定文件时
+  heatmap/transfer/efficiency 自动改用真实数据并标注来源(`resolve_real_inputs`)。
+- ~~不要动 git 历史来清理已泄漏的密钥~~(2.2.0 已执行:DeepSeek Key 经平台侧实测 401 后
+  filter-repo 重写,全历史字节级 0 残留,.git 214MB→18MB;历史提交 SHA 已变,引用旧 SHA 的文档需复核)。
 - 不要在文档里另写一套测试数或端点清单，指回本文件的表格。

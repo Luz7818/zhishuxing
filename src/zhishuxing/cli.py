@@ -183,8 +183,12 @@ def cmd_analyze(args) -> int:
     failures = 0
     for name, runner in selected.items():
         try:
-            result = runner()
-            print(f"[{name}] OK -> {result.get('files')}")
+            resolved = reports.resolve_real_inputs(name)
+            kwargs = dict(resolved["kwargs"])
+            if name in ("heatmap", "transfer") and resolved["kwargs"]:
+                kwargs["source_note"] = resolved["source"]  # 图题标注真实数据来源
+            result = runner(**kwargs)
+            print(f"[{name}] OK(来源:{resolved['source']}) -> {result.get('files')}")
         except Exception as exc:
             failures += 1
             print(f"[{name}] FAILED: {exc}")

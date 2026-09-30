@@ -158,47 +158,46 @@
 
       <!-- ================= 枢纽导航 ================= -->
       <section class="page" id="tab-navigation">
-        <div class="layout-split">
+        <div class="card">
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-gridmap"/></svg>枢纽网格</h3>
+          <p class="desc">依次点击两格设定起点与终点（蓝色→绿色），规划路径将实时绘制；橙/黄/绿/红格为楼梯/扶梯/直梯/拥挤设施。</p>
+          <div class="canvas-box"><canvas id="navCanvas" width="930" height="496"></canvas></div>
+          <div class="legend">
+            <span class="key"><span class="swatch" style="background:#22d3ee"></span>起点</span>
+            <span class="key"><span class="swatch" style="background:#34d399"></span>终点</span>
+            <span class="key"><span class="swatch" style="background:#33477a"></span>阻挡区域</span>
+            <span class="key"><span class="swatch" style="background:rgba(249,115,22,.55)"></span>楼梯</span>
+            <span class="key"><span class="swatch" style="background:rgba(251,191,36,.5)"></span>扶梯</span>
+            <span class="key"><span class="swatch" style="background:rgba(52,211,153,.55)"></span>直梯</span>
+            <span class="key"><span class="swatch" style="background:rgba(248,113,113,.28)"></span>拥挤区</span>
+            <span class="key"><span class="swatch" style="background:#f59e0b"></span>地标</span>
+            <span class="key"><span class="swatch" style="background:#38bdf8"></span>规划路径</span>
+          </div>
+        </div>
+
+        <div class="grid-2">
           <div class="card">
-              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-gridmap"/></svg>枢纽网格</h3>
-            <p class="desc">依次点击两格设定起点与终点（蓝色→绿色），规划路径将实时绘制；橙/黄/绿/红格为楼梯/扶梯/直梯/拥挤设施。</p>
-            <div class="canvas-box"><canvas id="navCanvas" width="930" height="496"></canvas></div>
-            <div class="legend">
-              <span class="key"><span class="swatch" style="background:#22d3ee"></span>起点</span>
-              <span class="key"><span class="swatch" style="background:#34d399"></span>终点</span>
-              <span class="key"><span class="swatch" style="background:#33477a"></span>阻挡区域</span>
-              <span class="key"><span class="swatch" style="background:rgba(249,115,22,.55)"></span>楼梯</span>
-              <span class="key"><span class="swatch" style="background:rgba(251,191,36,.5)"></span>扶梯</span>
-              <span class="key"><span class="swatch" style="background:rgba(52,211,153,.55)"></span>直梯</span>
-              <span class="key"><span class="swatch" style="background:rgba(248,113,113,.28)"></span>拥挤区</span>
-              <span class="key"><span class="swatch" style="background:#f59e0b"></span>地标</span>
-              <span class="key"><span class="swatch" style="background:#38bdf8"></span>规划路径</span>
+            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg>规划参数</h3>
+            <p class="desc">可直接输入中文地标（A口 / 主安检 / 地铁…），或点击上方网格选取。</p>
+            <div class="field"><label>起点</label><select id="navStart"></select></div>
+            <div class="field"><label>终点</label><select id="navGoal"></select></div>
+            <div class="field"><label>途经地标（可多选）</label>
+              <div class="chips" id="viaChips"></div>
+            </div>
+            <div class="row">
+              <button class="btn" id="btnNavPlan">规划路径</button>
+              <button class="btn subtle" id="btnNavReload">⟳ 重新加载导航图</button>
             </div>
           </div>
-          <div>
-            <div class="card">
-              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg>规划参数</h3>
-              <p class="desc">可直接输入中文地标（A口 / 主安检 / 地铁…），或点击网格选取。</p>
-              <div class="field"><label>起点</label><select id="navStart"></select></div>
-              <div class="field"><label>终点</label><select id="navGoal"></select></div>
-              <div class="field"><label>途经地标（可多选）</label>
-                <div class="chips" id="viaChips"></div>
+          <div class="card">
+            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-check"/></svg>规划结果</h3>
+            <div class="empty" id="navResultEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#art-route"/></svg></span>设定起终点后点击「规划路径」。<br />支持"必经安检"等业务约束。</div>
+            <div id="navResult" style="display:none">
+              <div class="kv">
+                <span class="item">路径长度<b id="navLen">—</b></span>
+                <span class="item">途经点<b id="navVia">—</b></span>
               </div>
-              <div class="row">
-                <button class="btn" id="btnNavPlan">规划路径</button>
-                <button class="btn subtle" id="btnNavReload">⟳ 重新加载导航图</button>
-              </div>
-            </div>
-            <div class="card">
-              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-check"/></svg>规划结果</h3>
-              <div class="empty" id="navResultEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#art-route"/></svg></span>设定起终点后点击「规划路径」。<br />支持"必经安检"等业务约束。</div>
-              <div id="navResult" style="display:none">
-                <div class="kv">
-                  <span class="item">路径长度<b id="navLen">—</b></span>
-                  <span class="item">途经点<b id="navVia">—</b></span>
-                </div>
-                <details class="raw"><summary>查看完整路径坐标</summary><pre id="navRaw"></pre></details>
-              </div>
+              <details class="raw"><summary>查看完整路径坐标</summary><pre id="navRaw"></pre></details>
             </div>
           </div>
         </div>

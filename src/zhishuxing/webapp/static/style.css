@@ -121,6 +121,10 @@ html[data-theme="dark"] .theme-btn .t-moon { display: none; }
 html[data-theme="dark"] .theme-btn .t-sun { display: block; }
 .theme-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
 
+/* ---- 枢纽导航页:网格画布整幅居中,图例居中一行 ---- */
+#navCanvas { width: 100%; max-width: 930px; height: auto; }
+#tab-navigation .legend { justify-content: center; margin-top: 14px; }
+
 /* ================= 主区 ================= */
 .main { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; overflow-x: hidden;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='%234f46e5' fill-opacity='.05'/%3E%3C/svg%3E"); }
@@ -159,9 +163,8 @@ section.page.active { display: block; animation: fadeUp .3s ease both; }
           align-items: stretch; margin-bottom: 20px; }
 .grid-2 > .card { margin-bottom: 0; height: 100%; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
-.layout-split { display: grid; grid-template-columns: minmax(0, 58fr) minmax(0, 42fr); gap: 20px; align-items: start; }
 @media (max-width: 1100px) {
-  .grid-2, .grid-4, .layout-split { grid-template-columns: 1fr; }
+  .grid-2, .grid-4 { grid-template-columns: 1fr; }
 }
 @container (max-width: 640px) {
   .grid-2 { grid-template-columns: 1fr; }
@@ -688,5 +691,5 @@ body.row-resizing { cursor: row-resize; user-select: none; }
 .grid-2 { margin-top: 2px; }
 main > .card { margin-bottom: 18px; }
 main > .empty { margin-bottom: 18px; }
-main > .grid-2:last-child, main > .layout-split:last-child { margin-bottom: 0; }
+main > .grid-2:last-child { margin-bottom: 0; }
 .card .empty { margin: 6px 0; }

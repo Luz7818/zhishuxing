@@ -169,8 +169,8 @@
   PyPI 上没有 1.x 版本，只能从源码装（`third_party/` 有镜像）。
 - **测试与 smoke 会写 `data/outputs/`**：跑完 `git status` 仍是干净的是因为该目录未跟踪。
   不要为此加断言，也不要把某张图当"基线"提交进 `samples/`，除非 README 真要引用它。
-- **对话会话与需求档案只存内存**（`TransferAssistant._sessions`），重启服务即清空。
-  演示时别期待跨重启的多轮上下文。
+- **对话会话与需求档案已持久化**(2.3):内存仍是第一读写层,SQLite 写穿
+  到 `data/runs/sessions.db`,重启后按 session_id 惰性回填,30 天不活跃自动清理;
 - **全链路都是请求/响应，没有流式推送**：没有 SSE、没有 WebSocket，`/api/chat` 一次返回完整回答
   （复核：`src/zhishuxing/webapp/app.py` 全文无 `text/event-stream`，前端 `static/app.js` 无 `EventSource`）。
 

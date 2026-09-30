@@ -3,6 +3,12 @@
 本文件从 2.2.0 起向前记录(更早版本不追溯补写,历史见 git 提交记录)。
 版本遵循语义化版本:破坏契约 = 主版本,加能力 = 次版本,修缺陷 = 补丁。
 
+## [2.3.0] - 2026-09-29
+
+(本节收纳 2.2.0 tag 之后、本文件创建时点之前落在 main 的全部变更:
+LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图中心重排,以及下方 2.3 落地基建。
+更早内容见 [2.2.0] 节与 git 历史。)
+
 ## [2.2.0] - 2026-09-29
 
 ### Security(安全)
@@ -74,6 +80,18 @@
 - 前端 `sendChat` 按动作执行 `switchTab` 并 toast;移动端 PWA 因 payload
   新增可选字段天然兼容(profile 容错已具备)
 - 新增 9 个测试(动作协议 7 + API 快路径 2),全量 **193 passed**
+
+### Added(新增 · 2.3 落地基建)
+
+- **会话持久化(SQLite,零依赖)**:新增 `llm/session_store.py` —— 对话历史/需求档案
+  写穿到 `data/runs/sessions.db`,服务重启后按 session_id 惰性回填;30 天不活跃自动清理
+  (启动时 purge);档案序列化往返兼容、损坏记录按"无档案"处理;**持久化失败不阻断对话**
+  (save/load_missing/delete 三处兜底,失败仅打印警告)
+- **Docker 单容器部署**:`Dockerfile`(python:3.12-slim、非 root UID 1000、
+  `/health` HEALTHCHECK、waitress 生产托管)+ `docker-compose.yml`(三数据卷:
+  outputs/model/runs,端口只绑 127.0.0.1 交给反代)+ `.dockerignore`;
+  DEPLOY.md 重写为 Docker 优先路线(本机无 Docker,镜像内契约已做静态校验,
+  首次 `docker compose up --build` 请按 DEPLOY.md 验证)
 
 ### Fixed(修复 · LLM 自动挂载,同日追加)
 

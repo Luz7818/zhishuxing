@@ -1,0 +1,28 @@
+# 智枢星 · 单实例编排(AGENTS 部署边界:进程内锁不跨进程,勿扩副本)
+# 用法:cp .env.example .env(填密钥)→ docker compose up -d --build
+# 更新:git pull → docker compose up -d --build(数据在卷里,重建不丢)
+# 回滚:docker compose down → 改 compose 里 image tag → up -d
+services:
+  zhishuxing:
+    build: .
+    container_name: zhishuxing
+    ports:
+      - "127.0.0.1:7860:7860"     # 只交给本机反代(Nginx/Caddy 套 HTTPS 后对外)
+    env_file:
+      - .env                      # SILICONFLOW_*/AMAP_* 密钥;留空则全链路离线降级
+    volumes:
+      - zhishuxing_outputs:/app/data/outputs   # 分析报告图
+      - zhishuxing_model:/app/data/model       # RL 权重
+      - zhishuxing_runs:/app/data/runs         # 会话库 sessions.db(重启恢复的关键)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:7860/health',timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  zhishuxing_outputs:
+  zhishuxing_model:
+  zhishuxing_runs:

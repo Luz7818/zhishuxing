@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ..core.navigation import NavigationMap, TAG_LABELS, landmark_label, resolve_hub_landmark
@@ -38,15 +39,26 @@ SYNTHESIS_SYSTEM_PROMPT = (
 class TransferAssistant:
     """无状态服务类:依赖 service 提供导航适配器、LLM 适配器与高德规划。"""
 
-    def __init__(self, service: Any, kb: Optional[TransferKB] = None) -> None:
+    def __init__(self, service: Any, kb: Optional[TransferKB] = None,
+                 db_path: Optional[Path] = None) -> None:
         self._service = service
         self._kb = kb or TransferKB.empty()
         self._sessions: Dict[str, Dict[str, Any]] = {}
+        # 会话持久化:内存仍是第一读写层;SQLite 写穿,重启后惰性回填(见 session_store)
+        from .. import config as _cfg
+        from .session_store import SessionStore
+
+        self._store = SessionStore(db_path or _cfg.paths.runs_dir / "sessions.db")
 
     # ------------------------------------------------------------ 对外接口
 
     def reset(self, session_id: str) -> Dict[str, Any]:
-        self._sessions.pop(session_id or "", None)
+        sid = session_id or ""
+        self._sessions.pop(sid, None)
+        try:
+            self._store.delete(sid)
+        except Exception as exc:
+            print(f"[session] 会话删除失败:{type(exc).__name__}: {exc}")
         return {"session_id": session_id, "reset": True}
 
     def handle(
@@ -60,6 +72,11 @@ class TransferAssistant:
             raise ValueError("缺少 message")
 
         session_key = session_id or uuid.uuid4().hex[:12]
+        if session_key not in self._sessions and session_id:
+            try:
+                self._store.load_missing(self._sessions)   # 重启后首次访问:从库回填
+            except Exception as exc:
+                print(f"[session] 会话回填失败(仅影响重启恢复):{type(exc).__name__}: {exc}")
         session = self._sessions.setdefault(session_key, {"history": [], "profile": None})
 
         # 动作短路:"打开/切换 XX 板块"这类明确指令不经 LLM 直接下发动作
@@ -78,8 +95,23 @@ class TransferAssistant:
 
         adapter = self._llm_adapter()
         profile = profile_from_api_prefs(prefs, adapter, extra_text=message)
-        if session.get("profile") is not None:
-            profile = session["profile"].merge(profile)
+        stored_profile = session.get("profile")
+        if isinstance(stored_profile, PassengerProfile):
+            profile = stored_profile.merge(profile)
+        elif isinstance(stored_profile, dict):
+            # 从 SQLite 恢复的档案是序列化 dict:先转回对象再合并,解析失败按无档案处理
+            try:
+                stored = PassengerProfile(
+                    priorities=stored_profile.get("priorities") or {},
+                    hard=list(stored_profile.get("hard") or []),
+                    soft=list(stored_profile.get("soft") or []),
+                    persona=list(stored_profile.get("persona") or []),
+                    raw_text=str(stored_profile.get("raw_text") or ""),
+                    source=str(stored_profile.get("source") or "rule"),
+                ).normalize()
+                profile = stored.merge(profile)
+            except Exception:
+                pass
         session["profile"] = profile
 
         route_payload: Dict[str, Any] = {}
@@ -131,6 +163,10 @@ class TransferAssistant:
         pending = session.pop("pending_action", None)
         if pending:
             payload["action"] = pending   # MCP 式工具调用:前端按 type 执行(如 switch_tab)
+        try:
+            self._store.save(session_key, session)   # 写穿:重启后可恢复
+        except Exception as exc:                      # 持久化失败不阻断对话
+            print(f"[session] 会话落库失败(仅影响重启恢复):{type(exc).__name__}: {exc}")
         return payload
 
     # ------------------------------------------------------------ 各环节实现

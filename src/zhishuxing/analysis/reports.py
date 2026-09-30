@@ -565,7 +565,7 @@ def run_finetune_metrics_report(
     setup_chinese_font()
     x = metrics["epoch"]
     fig, axes = plt.subplots(2, 2, figsize=(12, 8))
-    fig.suptitle("DeepSeek-R1-Distill-Qwen-7B 微调效果（模拟数据）", fontsize=14)
+    fig.suptitle("LLM 微调效果（模拟数据）", fontsize=14)
 
     panels = [
         ("loss", "损失值（Loss）", "损失值", None, "#e76f51"),

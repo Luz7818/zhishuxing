@@ -91,9 +91,9 @@ SETTINGS: Tuple[SettingItem, ...] = (
         label="LLM 默认模型",
         purpose="未在前端指定模型 ID 时使用的默认模型。",
         apply_entry="填服务商侧有调用权限的模型 ID；控制台对话面板里手填的模型 ID 优先级更高。",
-        degrades_to="使用内置默认模型名（deepseek-ai/DeepSeek-R1-Distill-Qwen-7B）。",
+        degrades_to="使用内置默认模型名（qwen3.8-27b）。",
         required=False,
-        default="deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
+        default="qwen3.8-27b",
     ),
     SettingItem(
         key="AMAP_TIMEOUT",

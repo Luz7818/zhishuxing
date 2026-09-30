@@ -63,6 +63,13 @@
 - `render_reward_curve` 支持复用调用方已加载的奖励序列,`/api/rl/rewards`
   从两次全量 npy 加载降为一次
 
+### Fixed(修复 · LLM 默认值清理,同日追加)
+
+- 清理六处写死的 DeepSeek 旧默认:config 内置默认模型、设置页"留空降级"文案、
+  Dock 模型输入框预填值(改为留空 = 服务器默认 `SILICONFLOW_MODEL`)、
+  微调接口示例模型、微调模拟图标题、`.env.example` 注释 —— 全部统一为
+  服务器配置的 `qwen3.8-27b`;设置页当前值本就正确(掩码 qw***)。
+
 ### Fixed(修复)
 
 - `zhishuxing train` 在未装 `mlagents_envs` 的机器上给出带安装指引的报错

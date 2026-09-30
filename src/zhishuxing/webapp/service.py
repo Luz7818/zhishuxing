@@ -129,7 +129,7 @@ class ZhiShuXingWebService:
             monotonic=True,
         )
         return {
-            "model_id": "DeepSeek-R1-Distill-Qwen-7B",
+            "model_id": "qwen3.8-27b",
             "dataset": "爬取的小红书换乘语料（模拟）",
             "epochs": int(params.get("epochs", 30)),
             "seed": int(params.get("seed", 42)),

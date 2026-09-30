@@ -183,7 +183,7 @@ def siliconflow_config() -> Dict[str, Optional[str]]:
     return {
         "api_key": os.environ.get("SILICONFLOW_API_KEY") or None,
         "base_url": _env_or_default("SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1"),
-        "model": _env_or_default("SILICONFLOW_MODEL", "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B"),
+        "model": _env_or_default("SILICONFLOW_MODEL", "qwen3.8-27b"),
     }
 
 

@@ -134,13 +134,20 @@ html[data-theme="dark"] .theme-btn .t-sun { display: block; }
            transition: border-color .15s, color .15s; }
 .map-btn:hover { border-color: var(--primary); color: var(--primary); }
 .map-btn .ic { width: 13px; height: 13px; }
-.map-result { position: absolute; left: 10px; bottom: 10px; width: min(360px, calc(100% - 20px));
-              max-height: 46%; overflow-y: auto; z-index: 5;
-              background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
-              box-shadow: var(--shadow-md); padding: 11px 13px; backdrop-filter: blur(8px); }
-.map-result-head { font-size: 12.5px; margin-bottom: 6px; color: var(--t2); }
-.map-result .empty { padding: 10px 2px; text-align: left; font-size: 12px; }
-.map-result .empty .icon .ic { width: 26px; height: 26px; }
+.map-side { position: absolute; top: 10px; right: 10px; bottom: 10px; width: min(300px, 46%);
+            overflow-y: auto; z-index: 5;
+            background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+            box-shadow: var(--shadow-md); padding: 12px 14px; backdrop-filter: blur(8px);
+            animation: slideInRight .22s cubic-bezier(.2,.8,.25,1) both; }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+.map-side-head { font-size: 12.5px; font-weight: 700; margin-bottom: 8px; color: var(--t2);
+                 display: flex; align-items: center; gap: 7px; padding-bottom: 7px;
+                 border-bottom: 1px solid var(--row-line); }
+.map-side .empty { padding: 14px 2px; text-align: left; font-size: 12px; }
+.map-side .empty .icon .ic { width: 26px; height: 26px; }
+@media (max-width: 640px) {
+  .map-side { top: auto; left: 8px; right: 8px; bottom: 8px; width: auto; max-height: 42%; }
+}
 .plan-params-panel { width: min(460px, 92vw); background: var(--surface); border: 1px solid var(--line);
                      border-radius: 16px; box-shadow: var(--shadow-md); padding: 18px 20px 20px;
                      animation: popIn .18s cubic-bezier(.2,.9,.3,1.15) both; }
@@ -150,7 +157,6 @@ html[data-theme="dark"] .theme-btn .t-sun { display: block; }
 #plan-params-mask { align-items: center; padding-top: 0; }
 @media (max-width: 640px) {
   .map-toolbar { top: 8px; left: 8px; }
-  .map-result { left: 8px; bottom: 8px; max-height: 40%; }
 }
 
 /* ================= 主区 ================= */

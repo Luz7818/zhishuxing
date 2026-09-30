@@ -1120,6 +1120,12 @@ async function sendChat(message) {
     appendChatMessage("assistant", data.reply);
     renderProfileChips(data.profile);
     renderChatAnalysis(data);
+    if (data.action && data.action.type === "switch_tab") {
+      const labels = { overview: "概览", plan: "路线规划", navigation: "枢纽导航",
+                       flow: "客流面板", rl: "RL 智能体", reports: "分析报告", settings: "设置" };
+      switchTab(data.action.tab);
+      toast(`已为你打开「${labels[data.action.tab] || data.action.tab}」`);
+    }
   } catch (error) {
     pendingEl.remove();
     appendChatMessage("assistant", `出错了:${error.message}`);

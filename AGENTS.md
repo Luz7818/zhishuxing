@@ -65,7 +65,7 @@
 |---|---|---|
 | `src/zhishuxing/core/` | 枢纽领域内核：A* 导航、动态客流、行人级引导仿真、面板编排、GIF 动图 | 不依赖 torch 与网络；`PolicyProtocol` 是 core 与 rl 的唯一接缝 |
 | `src/zhishuxing/rl/` | MADDPG/MATD3 算法、Unity 环境封装、训练循环、推理运行时 | `runtime.py` 无 torch 可用；`envs.py` 顶层 import `mlagents_envs`，缺包即报错 |
-| `src/zhishuxing/llm/` | 对话式换乘助手：需求档案、BM25 经验检索、回答合成、LLM 适配器 | `assistant.py` 的五步链路每一步都有确定性降级 |
+| `src/zhishuxing/llm/` | 对话式换乘助手：需求档案、动作协议(`actions.py` 白名单+信封)、BM25 经验检索、回答合成、LLM 适配器 | `assistant.py` 的五步链路每一步都有确定性降级 |
 | `src/zhishuxing/planning/` | 真实路线规划：OD 提取 → 高德地理编码 → 公交换乘 | 只调 v3 的 `geocode` 与 `direction/transit/integrated` 两个接口 |
 | `src/zhishuxing/analysis/` | 7 类报告、合成数据、绘图与 CSV IO | 全仓唯一一份字体/滑窗平均/合成数据/CSV IO 实现 |
 | `src/zhishuxing/webapp/` | Flask 应用工厂、服务层、控制台前端 | 端点清单见 `app.py`，改契约要同步 `static/app.js` |

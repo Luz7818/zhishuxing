@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional
 from ..core.navigation import NavigationMap, TAG_LABELS, landmark_label, resolve_hub_landmark
 from ..planning.amap import extract_od_locally
 from .kb import TransferKB
+from .actions import action_envelope_instructions, match_tab_intent, parse_action_envelope
 from .profile import PassengerProfile, profile_from_api_prefs
 
 HISTORY_LIMIT = 12  # 会话保留的最近消息条数(一问一答各算一条)
@@ -60,6 +61,20 @@ class TransferAssistant:
 
         session_key = session_id or uuid.uuid4().hex[:12]
         session = self._sessions.setdefault(session_key, {"history": [], "profile": None})
+
+        # 动作短路:"打开/切换 XX 板块"这类明确指令不经 LLM 直接下发动作
+        # (离线确定性,与「LLM 只有增强、必须可降级」口径一致)
+        intent = match_tab_intent(message)
+        if intent:
+            tab, label = intent
+            return {
+                "session_id": session_key,
+                "reply": f"已为你打开「{label}」。",
+                "profile": None,
+                "engine": None,
+                "kb_refs": [],
+                "action": {"type": "switch_tab", "tab": tab},
+            }
 
         adapter = self._llm_adapter()
         profile = profile_from_api_prefs(prefs, adapter, extra_text=message)
@@ -113,6 +128,9 @@ class TransferAssistant:
         if session.get("real_adapter_error"):
             # 与 load_llm 的 real_adapter_error 同口径:降级可用,但失败原因必须可见
             payload["real_adapter_error"] = session["real_adapter_error"]
+        pending = session.pop("pending_action", None)
+        if pending:
+            payload["action"] = pending   # MCP 式工具调用:前端按 type 执行(如 switch_tab)
         return payload
 
     # ------------------------------------------------------------ 各环节实现
@@ -210,7 +228,8 @@ class TransferAssistant:
                 )
                 reply = adapter.chat(
                     [
-                        {"role": "system", "content": SYNTHESIS_SYSTEM_PROMPT},
+                        {"role": "system",
+                         "content": SYNTHESIS_SYSTEM_PROMPT + "\n" + action_envelope_instructions()},
                         {"role": "user", "content": user_prompt},
                     ],
                     temperature=0.5,
@@ -218,7 +237,10 @@ class TransferAssistant:
                 )
                 if reply and reply.strip():
                     session.pop("real_adapter_error", None)  # 本轮成功,清掉上一轮的失败记录
-                    return reply.strip()
+                    say, action = parse_action_envelope(reply.strip())
+                    if action:
+                        session["pending_action"] = action   # 交给 handle 组装 payload
+                    return say.strip() or reply.strip()
             except Exception as exc:  # 真实 LLM 失败:降级模板保证对话不中断,但失败必须可见
                 session["real_adapter_error"] = f"{type(exc).__name__}: {exc}"
         return self._template_reply(profile, route_payload, kb_refs)

@@ -274,3 +274,20 @@ def test_run_existing_reports(client):
     # 安检排队报告（含历史标签互换 bug 修复）应成功
     assert reports["security_queue_comparison"]["ok"] is True
     assert reports["congestion_heatmap"]["ok"] is True
+
+
+def test_chat_action_short_circuit(client):
+    """规则短路:「打开设置」不经 LLM 直接下发 switch_tab 动作,profile 为空。"""
+    resp = client.post("/api/chat", json={"message": "打开设置", "session_id": "act-1"})
+    assert resp.status_code == 200
+    body = resp.json["data"]
+    assert body["action"] == {"type": "switch_tab", "tab": "settings"}
+    assert "设置" in body["reply"]
+    assert body["profile"] is None
+
+
+def test_chat_normal_request_has_no_action(client):
+    """普通换乘诉求不触发动作。"""
+    resp = client.post("/api/chat", json={"message": "从A口到地铁闸机怎么走", "session_id": "act-2"})
+    assert resp.status_code == 200
+    assert "action" not in resp.json["data"]

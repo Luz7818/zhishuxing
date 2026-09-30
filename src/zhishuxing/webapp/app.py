@@ -30,6 +30,7 @@ def create_app(
         template_folder=str(webapp_dir / "templates"),
         static_folder=str(webapp_dir / "static"),
     )
+    app.extensions["service"] = service   # 供 cmd_serve 做 LLM 自动挂载等启动后置步骤使用
 
     def ok(data):
         return jsonify({"ok": True, "data": data})

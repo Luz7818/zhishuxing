@@ -249,6 +249,7 @@ def cmd_serve(args) -> int:
     remote_bind = not settings_store.is_loopback(args.host)
     settings_writable = (not remote_bind) or args.allow_remote_settings
     app = create_app(settings_writable=settings_writable)
+    app.extensions["service"]._autoload_real_llm()   # 密钥已配置即自动挂载真实 LLM(降级可见)
     if args.production:
         from waitress import serve
 

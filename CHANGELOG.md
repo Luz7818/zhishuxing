@@ -63,6 +63,21 @@
 - `render_reward_curve` 支持复用调用方已加载的奖励序列,`/api/rl/rewards`
   从两次全量 npy 加载降为一次
 
+### Fixed(修复 · LLM 自动挂载,同日追加)
+
+- **密钥已配置即自动挂载真实适配器**:`zhishuxing serve` 启动时检测
+  `SILICONFLOW_API_KEY` 并自动 `load_llm(prefer_real=True)`(模型留空回退
+  `SILICONFLOW_MODEL`),不再要求每次重启后手动到对话面板点「加载模型」——
+  此前密钥明明在、聊天却一直本地模板。自动挂载放在 serve 路径而非
+  `create_app`:保证测试与 smoke 全程离线确定性(真实 `.env` 密钥不会在
+  测试里发起网络调用)
+- **看板引导文案补降级路径**:`generate_guidance_text` 直接调 `llm.infer`
+  无任何兜底,真实适配器 + 网络抖动时看板直接 500 —— 现失败即降级为
+  确定性规则文案并打印原因(与 assistant 模板降级同口径,对齐
+  「LLM 只有增强、必须可降级」约定)
+- 模板回复尾注改写:两种 Mock 原因(未配置密钥 / 真实调用失败)都说清,
+  指向 `real_adapter_error`
+
 ### Fixed(修复 · LLM 默认值清理,同日追加)
 
 - 清理六处写死的 DeepSeek 旧默认:config 内置默认模型、设置页"留空降级"文案、

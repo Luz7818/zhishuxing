@@ -44,7 +44,15 @@ class ZhiShuXingSystem:
         congestion = float(flow_grid.mean() + flow_grid.max()) / 2.0
         queue_level = "高" if congestion > 0.75 else "中" if congestion > 0.45 else "低"
         prompt = "请根据实时客流，生成枢纽换乘引导策略。"
-        return self.llm.infer(prompt=prompt, context={"queue_level": queue_level, "congestion": congestion})
+        try:
+            return self.llm.infer(prompt=prompt, context={"queue_level": queue_level, "congestion": congestion})
+        except Exception as exc:
+            # LLM 是增强层:真实模型调用失败(网络/密钥/限流)时降级为确定性规则文案,
+            # 看板与报告不因此中断 —— 与 assistant 的模板降级同口径,失败原因可见
+            fallback = (f"当前排队等级「{queue_level}」、拥堵指数 {congestion:.2f}。"
+                        "建议:高峰时段增开安检通道,引导乘客分流至备用出入口与换乘通道,并加强现场广播。")
+            print(f"[llm] 引导文案生成失败,降级为规则文案:{type(exc).__name__}: {exc}")
+            return fallback
 
     def render_dashboard(
         self,

@@ -209,7 +209,7 @@ cp .env.example .env
 | `AMAP_REST_KEY` | 后端调高德地理编码与公交换乘，决定 `POST /api/plan`（`engine=amap`）与 `/api/chat` 的市际 OD 能否出真实路线 | `engine=amap` 返回 400 并说明原因；`/api/chat` 给出话术提示并自动改用内置枢纽引擎，演示不中断 |
 | `AMAP_JS_KEY` | 浏览器侧高德 JS API 的真实地图底图（前端注入项） | 回退 Canvas 离线折线示意，说明栏标注「未配置 AMAP_JS_KEY」 |
 | `AMAP_SECURITY_CODE` | 与上面 JS Key 配对的安全密钥，**必须一起填** | 2021-12 之后申请的 JS Key 缺它初始化不出来，表现是「高德地图初始化失败」再回退 Canvas——只填 JS Key 等于没填 |
-| `SILICONFLOW_API_KEY` | LLM 对话合成 / 需求档案解析 / OD 提取 | 走 `MockLLMAdapter` 确定性模板；规则关键词解析仍生效，全链路离线可演示 |
+| `SILICONFLOW_API_KEY` | LLM 对话合成 / 需求档案解析 / OD 提取(配置后服务启动即自动挂载真实适配器) | 走 `MockLLMAdapter` 确定性模板；规则关键词解析仍生效，全链路离线可演示 |
 | `SILICONFLOW_BASE_URL` | OpenAI 兼容端点地址，可指向自建 vLLM / Ollama | 用内置默认端点（SiliconFlow 官方 `/v1`） |
 | `SILICONFLOW_MODEL` | 默认模型 ID | 用内置默认模型名；控制台对话面板里手填的模型 ID 优先级更高 |
 | `AMAP_TIMEOUT` | 后端调高德的超时秒数 | 用默认 10 秒 |

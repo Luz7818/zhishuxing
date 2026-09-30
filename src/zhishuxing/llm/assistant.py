@@ -279,5 +279,5 @@ class TransferAssistant:
         if kb_refs:
             titles = "、".join(f"《{ref['title']}》" for ref in kb_refs)
             lines.append(f"参考站内经验:{titles}。")
-        lines.append("(当前为本地模板模式;配置 SILICONFLOW_API_KEY 后可获得更自然的对话回答。)")
+        lines.append("(当前为本地模板模式:未配置密钥,或真实模型本轮调用失败 —— 原因见对话引擎面板/响应 real_adapter_error。)")
         return "\n".join(lines)

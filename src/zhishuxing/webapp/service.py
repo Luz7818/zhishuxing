@@ -51,6 +51,26 @@ class ZhiShuXingWebService:
         self._ensure_ready()
         self.kb = TransferKB.load_default()
         self.assistant = TransferAssistant(self, kb=self.kb)
+        # 真实适配器的自动挂载由 cmd_serve 在真正起服务时调用(_autoload_real_llm);
+        # 放在 __init__ 会让测试/脚本里 create_app 就读到真实密钥并发起网络调用,
+        # 破坏「测试与 smoke 全程离线确定性」的约定。
+
+    def _autoload_real_llm(self) -> None:
+        """LLM 密钥已配置时自动挂载真实适配器 —— 不再要求每次重启后手动
+        到对话面板点「加载模型」(此前密钥明明在、聊天却一直 Mock)。
+        挂载失败(openai 未装/配置不完整)保持 Mock 并打印原因,降级可见。"""
+        try:
+            conf = cfg.siliconflow_config()
+            if not conf["api_key"]:
+                print("[llm] 未配置 SILICONFLOW_API_KEY,对话走 Mock 模板(配置密钥后重启即自动启用真实模型)")
+                return
+            result = self.load_llm(model_id="", prefer_real=True)  # 空模型 ID → 回退 SILICONFLOW_MODEL
+            if result.get("real_adapter_error"):
+                print(f"[llm] 真实适配器自动挂载失败,保持 Mock:{result['real_adapter_error']}")
+            else:
+                print(f"[llm] 已自动挂载真实适配器:{result.get('model_id')} @ {result.get('base_url')}")
+        except Exception as exc:  # 自动挂载绝不阻断服务启动
+            print(f"[llm] 真实适配器自动挂载异常,保持 Mock:{type(exc).__name__}: {exc}")
 
     def _ensure_ready(self) -> None:
         if not self.loaded_navigation:

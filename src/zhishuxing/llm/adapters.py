@@ -148,7 +148,14 @@ class SiliconFlowLLMAdapter:
             from openai import OpenAI
         except ImportError as exc:
             raise RuntimeError("使用 SiliconFlowLLMAdapter 需要安装 openai 包（pip install .[llm]）。") from exc
-        self._client = OpenAI(api_key=self.api_key, base_url=self.base_url)
+        # trust_env=False:忽略环境里的 HTTP(S)_PROXY —— 校园端点直连可达,
+        # 走系统代理出口反而会被网关按来源 IP 拦截(实测返回"请通过校园网/VPN访问"拦截页)。
+        # 进程启动时代理环境变量的快照因此不再影响 LLM 调用。
+        import httpx
+
+        self._http_client = httpx.Client(trust_env=False, timeout=60.0)
+        self._client = OpenAI(api_key=self.api_key, base_url=self.base_url,
+                              http_client=self._http_client)
         return {
             "status": "loaded",
             "model_id": self.model_id,
@@ -210,7 +217,17 @@ class SiliconFlowLLMAdapter:
         }
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
-        response = self._client.chat.completions.create(**kwargs)
+        try:
+            response = self._client.chat.completions.create(**kwargs)
+        except Exception:
+            # 网关拦截页/陈旧连接池:重建客户端后重试一次(每次调用最多一次重试)
+            import httpx
+
+            self._http_client = httpx.Client(trust_env=False, timeout=60.0)
+            from openai import OpenAI
+            self._client = OpenAI(api_key=self.api_key, base_url=self.base_url,
+                                  http_client=self._http_client)
+            response = self._client.chat.completions.create(**kwargs)
         return response.choices[0].message.content or ""
 
 

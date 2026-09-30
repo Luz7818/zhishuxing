@@ -162,12 +162,13 @@
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-gridmap"/></svg>枢纽网格</h3>
           <p class="desc">依次点击两格设定起点与终点（蓝色→绿色），规划路径将实时绘制；橙/黄/绿/红格为楼梯/扶梯/直梯/拥挤设施。</p>
           <div class="canvas-box map-stage">
-            <canvas id="navCanvas" width="930" height="496"></canvas>
             <div class="map-toolbar">
               <button class="map-btn" id="btnPlanParams"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg> 规划参数</button>
               <button class="map-btn" id="btnNavReload" title="重新加载导航图"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-pulse"/></svg> 重新加载</button>
             </div>
-            <div class="map-side" id="mapResultPanel">
+            <div class="map-row">
+              <canvas id="navCanvas" width="930" height="496"></canvas>
+              <div class="map-side" id="mapResultPanel">
               <div class="map-side-head"><b>规划结果</b></div>
               <div class="empty" id="navResultEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#art-route"/></svg></span>在地图上点两格，或点「规划参数」设定起终点。</div>
               <div id="navResult" style="display:none">
@@ -176,10 +177,10 @@
                   <span class="item">途经点<b id="navVia">—</b></span>
                 </div>
                 <details class="raw"><summary>查看完整路径坐标</summary><pre id="navRaw"></pre></details>
-              </div>
+              </div></div>
             </div>
           </div>
-          <div class="legend">
+<div class="legend">
             <span class="key"><span class="swatch" style="background:#22d3ee"></span>起点</span>
             <span class="key"><span class="swatch" style="background:#34d399"></span>终点</span>
             <span class="key"><span class="swatch" style="background:#33477a"></span>阻挡区域</span>

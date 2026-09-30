@@ -161,7 +161,24 @@
         <div class="card">
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-gridmap"/></svg>枢纽网格</h3>
           <p class="desc">依次点击两格设定起点与终点（蓝色→绿色），规划路径将实时绘制；橙/黄/绿/红格为楼梯/扶梯/直梯/拥挤设施。</p>
-          <div class="canvas-box"><canvas id="navCanvas" width="930" height="496"></canvas></div>
+          <div class="canvas-box map-stage">
+            <canvas id="navCanvas" width="930" height="496"></canvas>
+            <div class="map-toolbar">
+              <button class="map-btn" id="btnPlanParams"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg> 规划参数</button>
+              <button class="map-btn" id="btnNavReload" title="重新加载导航图"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-pulse"/></svg> 重新加载</button>
+            </div>
+            <div class="map-result" id="mapResultPanel">
+              <div class="map-result-head"><b>规划结果</b></div>
+              <div class="empty" id="navResultEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#art-route"/></svg></span>在地图上点两格，或点「规划参数」设定起终点。</div>
+              <div id="navResult" style="display:none">
+                <div class="kv">
+                  <span class="item">路径长度<b id="navLen">—</b></span>
+                  <span class="item">途经点<b id="navVia">—</b></span>
+                </div>
+                <details class="raw"><summary>查看完整路径坐标</summary><pre id="navRaw"></pre></details>
+              </div>
+            </div>
+          </div>
           <div class="legend">
             <span class="key"><span class="swatch" style="background:#22d3ee"></span>起点</span>
             <span class="key"><span class="swatch" style="background:#34d399"></span>终点</span>
@@ -175,29 +192,21 @@
           </div>
         </div>
 
-        <div class="grid-2">
-          <div class="card">
-            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg>规划参数</h3>
-            <p class="desc">可直接输入中文地标（A口 / 主安检 / 地铁…），或点击上方网格选取。</p>
+        <!-- 规划参数弹窗 -->
+        <div class="cmdk-mask hidden" id="plan-params-mask">
+          <div class="plan-params-panel">
+            <div class="plan-params-head">
+              <b><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg> 规划参数</b>
+              <button class="icon-btn" id="btnPlanParamsClose" aria-label="关闭"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-close"/></svg></button>
+            </div>
+            <p class="muted">可直接输入中文地标（A口 / 主安检 / 地铁…），或点击地图网格选取。</p>
             <div class="field"><label>起点</label><select id="navStart"></select></div>
             <div class="field"><label>终点</label><select id="navGoal"></select></div>
             <div class="field"><label>途经地标（可多选）</label>
               <div class="chips" id="viaChips"></div>
             </div>
-            <div class="row">
+            <div class="row" style="margin-top:6px">
               <button class="btn" id="btnNavPlan">规划路径</button>
-              <button class="btn subtle" id="btnNavReload">⟳ 重新加载导航图</button>
-            </div>
-          </div>
-          <div class="card">
-            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-check"/></svg>规划结果</h3>
-            <div class="empty" id="navResultEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#art-route"/></svg></span>设定起终点后点击「规划路径」。<br />支持"必经安检"等业务约束。</div>
-            <div id="navResult" style="display:none">
-              <div class="kv">
-                <span class="item">路径长度<b id="navLen">—</b></span>
-                <span class="item">途经点<b id="navVia">—</b></span>
-              </div>
-              <details class="raw"><summary>查看完整路径坐标</summary><pre id="navRaw"></pre></details>
             </div>
           </div>
         </div>

@@ -125,6 +125,34 @@ html[data-theme="dark"] .theme-btn .t-sun { display: block; }
 #navCanvas { width: 100%; max-width: 930px; height: auto; }
 #tab-navigation .legend { justify-content: center; margin-top: 14px; }
 
+.map-stage { position: relative; max-width: 930px; margin: 0 auto; }
+.map-toolbar { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; z-index: 5; }
+.map-btn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px;
+           border-radius: 9px; border: 1px solid var(--line-2); background: var(--surface);
+           color: var(--t2); font: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
+           box-shadow: var(--shadow-sm); backdrop-filter: blur(6px);
+           transition: border-color .15s, color .15s; }
+.map-btn:hover { border-color: var(--primary); color: var(--primary); }
+.map-btn .ic { width: 13px; height: 13px; }
+.map-result { position: absolute; left: 10px; bottom: 10px; width: min(360px, calc(100% - 20px));
+              max-height: 46%; overflow-y: auto; z-index: 5;
+              background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+              box-shadow: var(--shadow-md); padding: 11px 13px; backdrop-filter: blur(8px); }
+.map-result-head { font-size: 12.5px; margin-bottom: 6px; color: var(--t2); }
+.map-result .empty { padding: 10px 2px; text-align: left; font-size: 12px; }
+.map-result .empty .icon .ic { width: 26px; height: 26px; }
+.plan-params-panel { width: min(460px, 92vw); background: var(--surface); border: 1px solid var(--line);
+                     border-radius: 16px; box-shadow: var(--shadow-md); padding: 18px 20px 20px;
+                     animation: popIn .18s cubic-bezier(.2,.9,.3,1.15) both; }
+.plan-params-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.plan-params-head b { font-size: 14px; flex: 1; display: flex; align-items: center; gap: 8px; }
+.plan-params-head .ic { width: 14px; height: 14px; color: var(--primary); }
+#plan-params-mask { align-items: center; padding-top: 0; }
+@media (max-width: 640px) {
+  .map-toolbar { top: 8px; left: 8px; }
+  .map-result { left: 8px; bottom: 8px; max-height: 40%; }
+}
+
 /* ================= 主区 ================= */
 .main { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; overflow-x: hidden;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='%234f46e5' fill-opacity='.05'/%3E%3C/svg%3E"); }

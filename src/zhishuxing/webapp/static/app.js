@@ -706,6 +706,13 @@ function initNavigation() {
     })
   );
 
+  $("btnPlanParams").addEventListener("click", () =>
+    $("plan-params-mask").classList.remove("hidden"));
+  $("btnPlanParamsClose").addEventListener("click", () =>
+    $("plan-params-mask").classList.add("hidden"));
+  $("plan-params-mask").addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) $("plan-params-mask").classList.add("hidden");
+  });
   $("btnNavPlan").addEventListener("click", () =>
     withBusy($("btnNavPlan"), " 规划中", async () => {
       if (!state.nav.start || !state.nav.goal) {
@@ -725,6 +732,7 @@ function initNavigation() {
       $("navVia").textContent = state.nav.via.size ? [...state.nav.via].map(lmName).join("、") : "无";
       showRaw("navRaw", result.route);
       toast(`规划完成：路径长度 ${result.length} 格`);
+      $("plan-params-mask").classList.add("hidden");   // 规划成功即收起参数弹窗,结果看地图左下悬浮卡
     })
   );
 }

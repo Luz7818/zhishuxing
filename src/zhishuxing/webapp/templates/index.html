@@ -7,7 +7,8 @@
   <link rel="icon" type="image/svg+xml" href="/static/assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/favicon-32.png" />
   <link rel="apple-touch-icon" href="/static/assets/logo-mark.svg" />
-  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="stylesheet" href="/static/style.css?v=5.8" />
+  <script>document.documentElement.classList.add("js");</script>
   <script>
     /* 服务端注入的运行配置：高德 JS Key 仅在配置了环境变量时存在 */
     window.ZSX_CONFIG = {
@@ -30,7 +31,7 @@
   </div>
   <div class="hero">
     <div class="hero-inner">
-      <span class="hero-chip"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-spark"/></svg>真正懂乘客 · 需求档案 · 偏好感知规划 · 经验知识库</span>
+      <span class="hero-chip"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-spark"/></svg>真正懂乘客 · 需求档案 · 偏好感知规划 · 经验知识库</span>
       <h1>综合枢纽<em>智慧换乘</em>引导系统</h1>
       <p class="hero-slogan">乘客一句话表达需求 —— 赶时间、优先直梯、途经卫生间、带老人行李<br>
         智枢星解析<b>结构化需求档案</b> → 偏好感知规划最优路线 → 引用<b>站内换乘经验</b>解释"为什么这样走"<br>
@@ -40,15 +41,15 @@
         <a class="btn-hero ghost lg" href="/mobile" target="_blank" rel="noopener">乘客端演示</a>
       </div>
       <div class="hero-stats" id="welcome-stats"></div>
-      <div class="feature-row">
-        <div class="feat"><div class="f-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-idcard"/></svg></div><div class="f-t">需求档案理解</div>
+      <div class="feature-row reveal">
+        <div class="feat"><div class="f-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-idcard"/></svg></div><div class="f-t">需求档案理解</div>
           <p>规则关键词 + LLM 双通道把自然语言解析成结构化 PassengerProfile:优先级权重、硬约束、软偏好与乘客画像,多轮对话增量合并,"我现在有点赶时间"也能听懂。</p></div>
-        <div class="feat"><div class="f-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-prefroute"/></svg></div><div class="f-t">偏好感知规划</div>
+        <div class="feat"><div class="f-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-prefroute"/></svg></div><div class="f-t">偏好感知规划</div>
           <p>枢纽导航图建模直梯/扶梯/楼梯/拥挤区设施层,加权 A* 让"优先直梯"真实改变路径;"途经卫生间"作软必经点顺路纳入,轮椅楼梯禁行,不可行时自动降级并如实说明。</p></div>
-        <div class="feat"><div class="f-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-book"/></svg></div><div class="f-t">换乘经验知识库</div>
+        <div class="feat"><div class="f-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-book"/></svg></div><div class="f-t">换乘经验知识库</div>
           <p>整理公开攻略与站方指引沉淀为结构化语料,kb-ingest 持续收录任意网页文本,BM25 检索为每条路线附上"过来人经验"并注明来源。</p></div>
       </div>
-      <div class="cmp-card">
+      <div class="cmp-card reveal">
         <div class="cmp-head">
           <b>为什么不用"普通地图导航"?</b>
           <span>同一件事,两种做法的差距 —— 每一行都是本系统已落地的能力</span>
@@ -65,7 +66,7 @@
           </tbody>
         </table>
       </div>
-      <div class="hero-foot">全链路离线可演示<span class="sep">·</span>Mock 确定性降级<span class="sep">·</span>高德真实路线双引擎<span class="sep">·</span>PWA 乘客端</div>
+      <div class="hero-foot reveal">全链路离线可演示<span class="sep">·</span>Mock 确定性降级<span class="sep">·</span>高德真实路线双引擎<span class="sep">·</span>PWA 乘客端</div>
     </div>
   </div>
 </div>
@@ -76,36 +77,33 @@
     <div class="brand">
       <img class="logo" src="/static/assets/logo-mark.svg" alt="智枢星" />
       <div class="bt"><b>智枢星</b><span>综合枢纽智慧换乘引导系统</span></div>
+      <button id="side-toggle" class="side-toggle" title="收起 / 展开侧栏" aria-label="收起或展开侧栏"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-panel"/></svg></button>
     </div>
     <div class="nav-scroll">
       <div class="nav-label">工作台</div>
-      <button class="nav-item active" data-tab="overview"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-overview"/></svg></span><span class="nv-txt">概览</span></button>
-      <button class="nav-item" data-tab="plan"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-plan"/></svg></span><span class="nv-txt">路线规划</span></button>
+      <button class="nav-item active" data-tab="overview"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-overview"/></svg></span><span class="nv-txt">概览</span></button>
+      <button class="nav-item" data-tab="plan"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-plan"/></svg></span><span class="nv-txt">路线规划</span></button>
       <div class="nav-label">枢纽运营</div>
-      <button class="nav-item" data-tab="navigation"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-hub"/></svg></span><span class="nv-txt">枢纽导航</span></button>
-      <button class="nav-item" data-tab="flow"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-flow"/></svg></span><span class="nv-txt">客流面板</span></button>
-      <button class="nav-item" data-tab="rl"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-rl"/></svg></span><span class="nv-txt">RL 智能体</span></button>
-      <button class="nav-item" data-tab="reports"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-reports"/></svg></span><span class="nv-txt">分析报告</span></button>
+      <button class="nav-item" data-tab="navigation"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-hub"/></svg></span><span class="nv-txt">枢纽导航</span></button>
+      <button class="nav-item" data-tab="flow"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-flow"/></svg></span><span class="nv-txt">客流面板</span></button>
+      <button class="nav-item" data-tab="rl"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-rl"/></svg></span><span class="nv-txt">RL 智能体</span></button>
+      <button class="nav-item" data-tab="reports"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-reports"/></svg></span><span class="nv-txt">分析报告</span></button>
       <div class="nav-label">系统</div>
-      <button class="nav-item" data-tab="settings"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg></span><span class="nv-txt">设置</span><span class="nv-flag hidden" id="settingsFlag" title="有配置项未填写">待配置</span></button>
+      <button class="nav-item" data-tab="settings"><span class="nv-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-sliders"/></svg></span><span class="nv-txt">设置</span><span class="nv-flag hidden" id="settingsFlag" title="有配置项未填写">待配置</span></button>
     </div>
     <div class="side-foot">
       <div class="sys-status"><span class="dot" id="health-dot"></span><span id="health-text">连接中…</span></div>
       <div class="meta-row">
         <span id="side-ver">v2.1</span><span class="msep">·</span><span id="side-llm" title="LLM 适配器模式">LLM:—</span>
-        <button id="theme-toggle" class="theme-btn" title="切换明暗主题" aria-label="切换明暗主题"><svg class="ic t-moon" aria-hidden="true"><use href="/static/assets/icons.svg#i-moon"/></svg><svg class="ic t-sun" aria-hidden="true"><use href="/static/assets/icons.svg#i-sun"/></svg></button>
+        <button id="theme-toggle" class="theme-btn" title="切换明暗主题" aria-label="切换明暗主题"><svg class="ic t-moon" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-moon"/></svg><svg class="ic t-sun" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-sun"/></svg></button>
       </div>
     </div>
   </aside>
-  <div class="pane-resizer" data-resize="side" title="拖动调整宽度 · 双击恢复默认"></div>
 
   <div class="main-col">
   <div class="main" id="scroll-area">
     <header class="topbar">
       <div class="topbar-left">
-        <button class="side-toggle" id="side-toggle" title="收起 / 展开侧栏" aria-label="收起或展开侧栏">
-          <svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg>
-        </button>
         <div>
           <h2 id="page-title">概览</h2>
           <div class="sub" id="page-sub">系统状态总览与快捷入口</div>
@@ -113,7 +111,7 @@
       </div>
       <div class="chipbar">
         <button class="topbar-cmdk" onclick="openCmdk()" title="命令面板(Ctrl/⌘+K)">
-          <svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-search"/></svg> 搜索 / 命令 <span class="kbd">Ctrl K</span>
+          <svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-search"/></svg> 搜索 / 命令 <span class="kbd">Ctrl K</span>
         </button>
         <span class="chip" id="policyChip">策略:—</span>
         <span class="chip" id="health-chip">—</span>
@@ -131,18 +129,18 @@
 
         <div class="grid-2" style="margin-top:18px">
           <div class="card">
-              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-bolt"/></svg>快捷操作</h3>
+              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-bolt"/></svg>快捷操作</h3>
             <p class="desc">常用链路一键直达，执行后自动跳转到对应视图。</p>
             <div class="row">
-              <button class="btn" id="btnQuickSim"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sim"/></svg>运行引导仿真</button>
-              <button class="btn subtle" id="btnQuickPanel"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-flow"/></svg>生成客流面板</button>
-              <button class="btn subtle" id="btnQuickPolicy"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-download"/></svg>加载最新权重</button>
-              <button class="btn subtle" id="btnQuickReports"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-reports"/></svg>运行全部报告</button>
+              <button class="btn" id="btnQuickSim"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-sim"/></svg>运行引导仿真</button>
+              <button class="btn subtle" id="btnQuickPanel"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-flow"/></svg>生成客流面板</button>
+              <button class="btn subtle" id="btnQuickPolicy"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-download"/></svg>加载最新权重</button>
+              <button class="btn subtle" id="btnQuickReports"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-reports"/></svg>运行全部报告</button>
             </div>
             <div class="callout" id="overviewGuidance" style="margin-top:16px;display:none"></div>
           </div>
           <div class="card">
-              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-pulse"/></svg>系统状态</h3>
+              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-pulse"/></svg>系统状态</h3>
             <p class="desc">运行环境与关键组件实时状态。</p>
             <table class="table">
               <tbody>
@@ -154,23 +152,38 @@
             </table>
           </div>
         </div>
+
+        <div class="card steps-card">
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-prefroute"/></svg>四步上手</h3>
+          <p class="desc">从一句话需求到可视化报告的完整演示链路，每一步都可以从左侧导航随时回访。</p>
+          <ol class="steps">
+            <li class="step"><span class="s-dot num">1</span>
+              <div class="s-body"><b class="s-t">说出需求</b><p>在底部对话栏用一句话描述「赶时间 / 带老人 / 优先直梯」，智能助手解析成结构化需求档案并直接给出路线。</p></div></li>
+            <li class="step"><span class="s-dot num">2</span>
+              <div class="s-body"><b class="s-t">规划路线</b><p>枢纽导航页点选两格设定起终点，或在路线规划页选择引擎与偏好，方案实时绘出。</p></div></li>
+            <li class="step"><span class="s-dot num">3</span>
+              <div class="s-body"><b class="s-t">运行仿真</b><p>RL 智能体页一键仿真多智能体引导通行，查看到达率、拥堵峰值与轨迹快照。</p></div></li>
+            <li class="step"><span class="s-dot num">4</span>
+              <div class="s-body"><b class="s-t">生成报告</b><p>分析报告页七类图表一键产出，结果输出到 data/outputs 并在画廊预览。</p></div></li>
+          </ol>
+        </div>
       </section>
 
       <!-- ================= 枢纽导航 ================= -->
       <section class="page" id="tab-navigation">
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-gridmap"/></svg>枢纽网格</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-gridmap"/></svg>枢纽网格</h3>
           <p class="desc">依次点击两格设定起点与终点（蓝色→绿色），规划路径将实时绘制；橙/黄/绿/红格为楼梯/扶梯/直梯/拥挤设施。</p>
           <div class="canvas-box map-stage">
             <div class="map-toolbar">
-              <button class="map-btn" id="btnPlanParams"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg> 规划参数</button>
-              <button class="map-btn" id="btnNavReload" title="重新加载导航图"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-pulse"/></svg> 重新加载</button>
+              <button class="map-btn" id="btnPlanParams"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-sliders"/></svg> 规划参数</button>
+              <button class="map-btn" id="btnNavReload" title="重新加载导航图"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-pulse"/></svg> 重新加载</button>
             </div>
             <div class="map-row">
               <canvas id="navCanvas" width="930" height="496"></canvas>
               <div class="map-side" id="mapResultPanel">
               <div class="map-side-head"><b>规划结果</b></div>
-              <div class="empty" id="navResultEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#art-route"/></svg></span>在地图上点两格，或点「规划参数」设定起终点。</div>
+              <div class="empty" id="navResultEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#art-route"/></svg></span>在地图上点两格，或点「规划参数」设定起终点。</div>
               <div id="navResult" style="display:none">
                 <div class="kv">
                   <span class="item">路径长度<b id="navLen">—</b></span>
@@ -197,8 +210,8 @@
         <div class="cmdk-mask hidden" id="plan-params-mask">
           <div class="plan-params-panel">
             <div class="plan-params-head">
-              <b><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg> 规划参数</b>
-              <button class="icon-btn" id="btnPlanParamsClose" aria-label="关闭"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-close"/></svg></button>
+              <b><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-sliders"/></svg> 规划参数</b>
+              <button class="icon-btn" id="btnPlanParamsClose" aria-label="关闭"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-close"/></svg></button>
             </div>
             <p class="muted">可直接输入中文地标（A口 / 主安检 / 地铁…），或点击地图网格选取。</p>
             <div class="field"><label>起点</label><select id="navStart"></select></div>
@@ -217,21 +230,21 @@
       <section class="page" id="tab-rl">
         <div class="grid-2">
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-rl"/></svg>策略状态</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-rl"/></svg>策略状态</h3>
           <p class="desc">扫描训练产物并加载每个智能体最新 step 的 actor 权重；无权重时自动以启发式回退并如实标注。</p>
           <div class="row" style="margin-bottom:14px">
-            <button class="btn" id="btnRLPolicy"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-download"/></svg>加载最新策略权重</button>
+            <button class="btn" id="btnRLPolicy"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-download"/></svg>加载最新策略权重</button>
             <button class="btn subtle" id="btnRLRefresh">⟳ 刷新状态</button>
             <span class="badge" id="rlSourceBadge">—</span>
           </div>
-          <div class="empty" id="rlCkptEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-disk"/></svg></span>model/ 目录暂无 actor 权重。<br />运行 <code>zhishuxing train</code> 后此处将展示检查点列表。</div>
+          <div class="empty" id="rlCkptEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-disk"/></svg></span>model/ 目录暂无 actor 权重。<br />运行 <code>zhishuxing train</code> 后此处将展示检查点列表。</div>
           <table class="table" id="rlCkptTable" style="display:none">
             <thead><tr><th>Agent</th><th>算法</th><th>训练步数</th><th>权重文件</th></tr></thead>
             <tbody id="rlCkptBody"></tbody>
           </table>
         </div>
           <div class="card">
-            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-target"/></svg>策略推理测试</h3>
+            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-target"/></svg>策略推理测试</h3>
             <p class="desc">观测向量 = [目标dx, dy, 速度vx, vy, 邻近行人dx, dy ×3]，动作 = [前进, 转向]。</p>
             <div class="field"><label>观测（JSON 二维数组）</label><textarea id="rlObs">[[0.5, 0.25, 1.0, 0.0, 0.2, 0.1, -0.3, 0.4, 0.0, -0.2]]</textarea></div>
             <button class="btn ghost" id="btnRLAct">推理（观测 → 动作）</button>
@@ -240,7 +253,7 @@
         </div>
 
           <div class="card">
-            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-chart"/></svg>训练奖励曲线</h3>
+            <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-chart"/></svg>训练奖励曲线</h3>
             <p class="desc">来自 data 目录的评估奖励序列（多 seed 叠加）。</p>
             <div class="canvas-box"><canvas id="rewardCanvas" width="760" height="300"></canvas></div>
             <div class="legend" id="rewardLegend"></div>
@@ -248,15 +261,15 @@
           </div>
 
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sim"/></svg>引导仿真</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-sim"/></svg>引导仿真</h3>
           <p class="desc">多智能体在枢纽网格内按当前策略引导通行：输出换乘时间、拥堵与轨迹快照。</p>
           <div class="field-row">
             <div class="field"><label>最大步数</label><input id="simSteps" type="number" value="240" min="10" max="1000" /></div>
             <div class="field"><label>每组智能体数</label><input id="simAgents" type="number" value="6" min="1" max="20" /></div>
             <div class="field"><label>随机种子</label><input id="simSeed" type="number" value="42" /></div>
-            <div class="field" style="align-self:flex-end"><button class="btn" id="btnRLSim"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sim"/></svg>运行仿真</button></div>
+            <div class="field" style="align-self:flex-end"><button class="btn" id="btnRLSim"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-sim"/></svg>运行仿真</button></div>
           </div>
-          <div class="empty" id="simEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-radar"/></svg></span>点击「运行仿真」查看策略在枢纽中的实际表现。</div>
+          <div class="empty" id="simEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-radar"/></svg></span>点击「运行仿真」查看策略在枢纽中的实际表现。</div>
           <div id="simResult" style="display:none">
             <div class="grid-4" style="margin-bottom:14px">
               <div class="kpi ok"><div class="kpi-label">到达率</div><div class="kpi-value" id="simArrive">—</div></div>
@@ -280,21 +293,21 @@
       <section class="page" id="tab-flow">
         <div class="grid-2">
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-users"/></svg>乘客群组</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-users"/></svg>乘客群组</h3>
           <p class="desc">默认三组场景（来自 configs/scenarios.json），可修改人数与释放时间后生成动态客流面板。</p>
           <table class="table">
             <thead><tr><th>群组</th><th>路径</th><th>释放时刻</th><th>人数</th></tr></thead>
             <tbody id="groupBody"></tbody>
           </table>
           <div class="row" style="margin-top:14px">
-            <button class="btn" id="btnPanel"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-flow"/></svg>生成可视化面板</button>
+            <button class="btn" id="btnPanel"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-flow"/></svg>生成可视化面板</button>
             <button class="btn subtle" id="btnGroupReset">⟳ 恢复默认场景</button>
           </div>
         </div>
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-image"/></svg>输出面板</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-image"/></svg>输出面板</h3>
           <p class="desc">左：动态客流热力；右：各组引导路径。</p>
-          <div class="empty" id="panelEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-image"/></svg></span>生成后在此预览，并给出 LLM 引导文案。</div>
+          <div class="empty" id="panelEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-image"/></svg></span>生成后在此预览，并给出 LLM 引导文案。</div>
           <div id="panelResult" style="display:none">
             <div class="callout" id="panelGuidance" style="margin-bottom:14px"></div>
             <figure class="output-frame show">
@@ -310,7 +323,7 @@
       <!-- ================= 路线规划 ================= -->
       <section class="page" id="tab-plan">
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-plan"/></svg>真实路线规划</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-plan"/></svg>真实路线规划</h3>
           <p class="desc">高德引擎需配置 AMAP_REST_KEY 环境变量；枢纽引擎离线可用（偏好感知 A* + RL 引导仿真）。个性化需求可直接写进诉求或下方偏好。</p>
           <div class="field"><label>出行诉求（自然语言）</label>
             <input id="planQuestion" value="从深圳北站到宝安机场" placeholder="例如：从深圳北站A20出站口到五号线" />
@@ -341,7 +354,7 @@
         </div>
 
         <div class="card">
-          <div class="empty" id="planEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#art-route"/></svg></span>规划结果将在此展示：用时 / 费用 / 换乘 / 路线详情 / 出行提醒 / 需求档案。</div>
+          <div class="empty" id="planEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#art-route"/></svg></span>规划结果将在此展示：用时 / 费用 / 换乘 / 路线详情 / 出行提醒 / 需求档案。</div>
         </div>
         <div id="planResult" style="display:none">
           <div class="grid-4" style="margin-bottom:18px">
@@ -352,7 +365,7 @@
           </div>
           <div class="grid-2">
             <div class="card">
-              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-road"/></svg>路线详情</h3>
+              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-road"/></svg>路线详情</h3>
               <p class="desc" id="planOD"></p>
               <div class="chips" id="planProfileChips" style="display:none"></div>
               <div class="canvas-box" id="planMapBox" style="display:none">
@@ -363,7 +376,7 @@
               <ol class="list" id="planDetails" style="margin-top:12px"></ol>
             </div>
             <div class="card">
-              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-bulb"/></svg>出行提醒</h3>
+              <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-bulb"/></svg>出行提醒</h3>
               <ul class="list" id="planTips"></ul>
               <details class="raw"><summary>查看原始规划数据</summary><pre id="planRaw"></pre></details>
             </div>
@@ -375,10 +388,10 @@
       <section class="page" id="tab-reports">
         <div class="grid-2">
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-reports"/></svg>分析报告中心</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-reports"/></svg>分析报告中心</h3>
           <p class="desc">七类报告一键生成（固定种子，可复现）；完成后输出到 data/outputs 并在下方画廊预览。</p>
           <div class="row">
-            <button class="btn" id="btnReportsAll"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sim"/></svg>运行全部报告</button>
+            <button class="btn" id="btnReportsAll"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-sim"/></svg>运行全部报告</button>
             <span class="badge" id="reportProgress"></span>
           </div>
           <table class="table" style="margin-top:14px">
@@ -395,9 +408,9 @@
           </table>
         </div>
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-image"/></svg>输出画廊</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-image"/></svg>输出画廊</h3>
           <p class="desc">运行后自动收录新产出图片。</p>
-          <div class="empty" id="galleryEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-image"/></svg></span>暂无输出。点击「运行全部报告」生成。</div>
+          <div class="empty" id="galleryEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-image"/></svg></span>暂无输出。点击「运行全部报告」生成。</div>
           <div class="grid-2" id="gallery" style="display:none"></div>
         </div>
 
@@ -408,7 +421,7 @@
       <section class="page" id="tab-settings">
         <div class="grid-2">
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-sliders"/></svg>密钥与降级状态</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-sliders"/></svg>密钥与降级状态</h3>
           <p class="desc">直接写入服务端本地 <code>.env</code> 并热重载，保存后无需重启服务。当前值一律掩码显示（只给前 2 字符与长度）；输入框留空表示不修改该项，清除请用各项的「清除」按钮。</p>
           <div class="callout warn hidden" id="settingsWarn" style="margin-bottom:14px"></div>
           <div class="callout hidden" id="settingsReloadHint" style="margin-bottom:14px">
@@ -424,7 +437,7 @@
           <p class="muted" id="settingsEnvFile" style="margin-top:12px"></p>
         </div>
         <div class="card">
-          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-pulse"/></svg>降级链路</h3>
+          <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-pulse"/></svg>降级链路</h3>
           <p class="desc">未配置的项不会报错、不会白屏，只会按下面的兜底路径继续演示。</p>
           <table class="table"><tbody id="settingsFallbackBody"></tbody></table>
         </div>
@@ -439,12 +452,13 @@
     <div class="chat-dock-body" id="chatDockBody" hidden>
       <div class="dock-resizer" id="dockResizer" title="拖动调整面板高度 · 双击恢复默认"></div>
       <div class="dock-head">
-        <span class="h-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-chat"/></svg></span>
+        <span class="h-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-chat"/></svg></span>
         <b>智能换乘助手</b>
         <span class="badge" id="ai-mode-chip">…</span>
         <span class="dock-head-actions">
           <button class="btn subtle sm" id="btnChatReset" title="开启新会话">⟳ 新会话</button>
-          <button class="icon-btn" id="btnChatCollapse" title="收起对话面板" aria-label="收起对话面板"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-close"/></svg></button>
+          <button class="icon-btn" id="btnChatRedock" title="变成悬浮球" aria-label="变成悬浮球"><svg class="ic ic-pop" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-popout"/></svg><svg class="ic ic-pin" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-pin"/></svg></button>
+          <button class="icon-btn" id="btnChatCollapse" title="收回为悬浮泡" aria-label="收回为悬浮泡"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-close"/></svg></button>
         </span>
       </div>
       <div class="dock-body-inner">
@@ -462,52 +476,14 @@
           <div class="chips" id="chatProfileChips"></div>
         </div>
         <div id="chatAnalysis" class="chat-analysis"></div>
-        <details class="raw dock-tools">
-          <summary>对话引擎 · 模型微调(实验)</summary>
-          <div class="dock-tools-grid">
-            <div class="dock-tool">
-              <h4><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-cpu"/></svg>对话引擎</h4>
-              <p class="muted">服务启动时密钥已配置即自动挂载真实 OpenAI 兼容模型;此处可手动重载、换模型或排查失败原因。</p>
-              <div class="chips"><button class="chip" id="chipReal">使用真实适配器(需密钥)</button></div>
-              <div class="field"><label>模型 ID</label><input id="llmModel" value="" placeholder="留空 = 服务器默认模型（SILICONFLOW_MODEL）" /></div>
-              <button class="btn sm" id="btnLLMLoad">加载模型</button>
-              <div id="llmLoadResult" style="margin-top:12px"></div>
-            </div>
-            <div class="dock-tool">
-              <h4><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-flask"/></svg>模型微调(实验)</h4>
-              <div class="field" style="margin-top:10px"><label>训练配置(JSON)</label><textarea id="llmTuneConfig">{"method":"LoRA","epochs":2,"lr":0.0002,"rank":16}</textarea></div>
-              <button class="btn sm ghost" id="btnLLMTune">执行微调接口</button>
-              <div id="llmTuneResult" style="margin-top:10px"></div>
-              <div class="field-row" style="margin-top:14px">
-                <div class="field"><label>Epochs</label><input id="ftEpochs" type="number" value="36" min="5" max="300" /></div>
-                <div class="field"><label>Seed</label><input id="ftSeed" type="number" value="42" /></div>
-              </div>
-              <button class="btn sm ghost" id="btnFT">生成指标报告</button>
-              <div id="ftEmpty" class="muted" style="margin-top:10px">生成后在此查看 Loss / BLEU / ROUGE 曲线。</div>
-              <div id="ftResult" style="display:none">
-                <div class="kv" style="margin:10px 0">
-                  <span class="item">Loss<b id="ftLoss">—</b></span>
-                  <span class="item">BLEU-4<b id="ftBleu">—</b></span>
-                  <span class="item">ROUGE-1<b id="ftR1">—</b></span>
-                  <span class="item">ROUGE-L<b id="ftRL">—</b></span>
-                </div>
-                <div class="canvas-box"><canvas id="ftLossCanvas" width="620" height="240"></canvas></div>
-                <div class="canvas-box" style="margin-top:10px"><canvas id="ftMetricCanvas" width="620" height="260"></canvas></div>
-                <div class="legend">
-                  <span class="key"><span class="swatch" style="background:#f87171"></span>Loss</span>
-                  <span class="key"><span class="swatch" style="background:#4f46e5"></span>BLEU-4</span>
-                  <span class="key"><span class="swatch" style="background:#079455"></span>ROUGE-1</span>
-                  <span class="key"><span class="swatch" style="background:#b54708"></span>ROUGE-L</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </details>
       </div>
     </div>
     <div class="chat-dock-bar">
       <button class="dock-fab" id="btnChatDockToggle" title="展开 / 收起智能换乘助手" aria-label="展开或收起智能换乘助手">
-        <svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg#i-chat"/></svg>
+        <svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-chat"/></svg>
+      </button>
+      <button class="dock-engine-btn" id="btnDockTools" title="对话引擎 · 模型微调(实验)" aria-label="打开对话引擎与模型微调面板">
+        <svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-cpu"/></svg>
       </button>
       <input id="chatInput" placeholder="向智能换乘助手说出需求:赶时间、优先直梯、途经卫生间…" />
       <button class="btn" id="btnChatSend">发送</button>
@@ -524,7 +500,63 @@
   </div>
 </div>
 
+<!-- ===== 对话引擎 / 模型微调 面板 ===== -->
+<div class="llm-panel-mask hidden" id="llm-panel-mask">
+  <div class="llm-panel" role="dialog" aria-label="对话引擎与模型微调">
+    <div class="llm-panel-head">
+      <b><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-cpu"/></svg>对话引擎 · 模型微调(实验)</b>
+      <button class="icon-btn" id="btnLLMPanelClose" aria-label="关闭面板"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-close"/></svg></button>
+    </div>
+    <div class="llm-panel-body">
+      <div class="dock-tools-grid">
+        <div class="dock-tool">
+          <h4><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-cpu"/></svg>对话引擎</h4>
+          <p class="muted">服务启动时密钥已配置即自动挂载真实 OpenAI 兼容模型;此处可手动重载、换模型或排查失败原因。</p>
+          <div class="chips"><button class="chip" id="chipReal">使用真实适配器(需密钥)</button></div>
+          <div class="field"><label>模型 ID</label><input id="llmModel" value="" placeholder="留空 = 服务器默认模型（SILICONFLOW_MODEL）" /></div>
+          <button class="btn sm" id="btnLLMLoad">加载模型</button>
+          <div id="llmLoadResult" style="margin-top:12px"></div>
+        </div>
+        <div class="dock-tool">
+          <h4><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-flask"/></svg>模型微调(实验)</h4>
+          <div class="field" style="margin-top:10px"><label>训练配置(JSON)</label><textarea id="llmTuneConfig">{"method":"LoRA","epochs":2,"lr":0.0002,"rank":16}</textarea></div>
+          <button class="btn sm ghost" id="btnLLMTune">执行微调接口</button>
+          <div id="llmTuneResult" style="margin-top:10px"></div>
+          <div class="field-row" style="margin-top:14px">
+            <div class="field"><label>Epochs</label><input id="ftEpochs" type="number" value="36" min="5" max="300" /></div>
+            <div class="field"><label>Seed</label><input id="ftSeed" type="number" value="42" /></div>
+          </div>
+          <button class="btn sm ghost" id="btnFT">生成指标报告</button>
+          <div id="ftEmpty" class="muted" style="margin-top:10px">生成后在此查看 Loss / BLEU / ROUGE 曲线。</div>
+          <div id="ftResult" style="display:none">
+            <div class="kv" style="margin:10px 0">
+              <span class="item">Loss<b id="ftLoss">—</b></span>
+              <span class="item">BLEU-4<b id="ftBleu">—</b></span>
+              <span class="item">ROUGE-1<b id="ftR1">—</b></span>
+              <span class="item">ROUGE-L<b id="ftRL">—</b></span>
+            </div>
+            <div class="canvas-box"><canvas id="ftLossCanvas" width="620" height="240"></canvas></div>
+            <div class="canvas-box" style="margin-top:10px"><canvas id="ftMetricCanvas" width="620" height="260"></canvas></div>
+            <div class="legend">
+              <span class="key"><span class="swatch" style="background:#f87171"></span>Loss</span>
+              <span class="key"><span class="swatch" style="background:#4f46e5"></span>BLEU-4</span>
+              <span class="key"><span class="swatch" style="background:#079455"></span>ROUGE-1</span>
+              <span class="key"><span class="swatch" style="background:#b54708"></span>ROUGE-L</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 磁性吸附占位(拖动悬浮球/面板靠近底部时显示) ===== -->
+<div id="dock-drop-hint" class="hidden">
+  <svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-chat"/></svg>
+  <span>松开吸附到底部对话板块</span>
+</div>
+
 <div id="toastHost"></div>
-<script src="/static/app.js"></script>
+<script src="/static/app.js?v=5.8"></script>
 </body>
 </html>

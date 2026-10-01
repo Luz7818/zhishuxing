@@ -41,7 +41,8 @@ function toast(message, type = "ok") {
   const host = $("toastHost");
   const el = document.createElement("div");
   el.className = `toast ${type}`;
-  el.innerHTML = `<span>${type === "err" ? "⚠️" : "✅"}</span><span></span>`;
+  const icon = type === "err" ? "i-alert" : "i-check";
+  el.innerHTML = `<span class="t-ico ${type === "err" ? "err" : "ok"}"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#${icon}"/></svg></span><span></span>`;
   el.lastElementChild.textContent = message;
   host.appendChild(el);
   setTimeout(() => {
@@ -88,8 +89,28 @@ const TITLES = {
 };
 
 function showView(name) {
-  $("view-welcome").classList.toggle("hidden", name !== "welcome");
-  $("app").classList.toggle("hidden", name !== "app");
+  const swap = () => {
+    $("view-welcome").classList.toggle("hidden", name !== "welcome");
+    $("app").classList.toggle("hidden", name !== "app");
+  };
+  if (name === "app" && document.startViewTransition && !reduceMotion()) {
+    /* 进入工作台:新视图自下方上浮淡入(View Transition 快照栈)。
+       initAppOnce 在交换前同步执行,交换完成后立即补定位(getBoundingClientRect 强制同步布局) */
+    const root = document.documentElement;
+    root.classList.add("vt-enter");
+    const transition = document.startViewTransition(() => {
+      swap();
+      moveNavPill(true);
+    });
+    transition.finished.then(
+      () => root.classList.remove("vt-enter"),
+      () => root.classList.remove("vt-enter")
+    );
+  } else {
+    swap();
+    /* 无 View Transition 的浏览器:给工作台一次轻入场作为回退(reduced-motion 下保持瞬时) */
+    if (name === "app" && !reduceMotion()) document.documentElement.classList.add("no-vt");
+  }
 }
 
 function switchTab(tab) {
@@ -98,8 +119,52 @@ function switchTab(tab) {
   const [t, sub] = TITLES[tab] || [tab, ""];
   $("page-title").textContent = t;
   $("page-sub").textContent = sub;
+  /* 标题随页面轻换位 + 侧栏高亮药丸滑动,给出空间连续性 */
+  const head = document.querySelector(".topbar-left > div");
+  if (head) { head.classList.remove("swap"); void head.offsetWidth; head.classList.add("swap"); }
+  moveNavPill();
   $("scroll-area").scrollTo({ top: 0 });
   try { localStorage.setItem("zsx_tab", tab); } catch (_) { /* 隐私模式忽略 */ }
+}
+
+/* ---------------- 侧栏滑动高亮:激活背景由独立药丸承载,随切换滑动 ---------------- */
+
+let navPill = null;
+
+function initNavPill() {
+  const nav = document.querySelector(".nav-scroll");
+  if (!nav || navPill) return;
+  navPill = document.createElement("span");
+  navPill.className = "nav-pill";
+  navPill.setAttribute("aria-hidden", "true");
+  nav.appendChild(navPill);
+  moveNavPill(true);
+  window.addEventListener("resize", () => moveNavPill(true));
+}
+
+function moveNavPill(instant) {
+  if (!navPill) return;
+  const nav = document.querySelector(".nav-scroll");
+  const item = document.querySelector(".nav-item[data-tab].active");
+  if (!nav || !item) {
+    navPill.style.opacity = "0";
+    return;
+  }
+  const ir = item.getBoundingClientRect();
+  if (!ir.width) {
+    /* 应用壳尚未显示(View Transition 交换前)不定位,showView 在交换完成后会补一次 */
+    navPill.style.opacity = "0";
+    return;
+  }
+  const nr = nav.getBoundingClientRect();
+  if (instant) navPill.style.transition = "none";
+  navPill.style.opacity = "1";
+  navPill.style.width = `${ir.width}px`;
+  navPill.style.height = `${ir.height}px`;
+  navPill.style.transform =
+    `translate(${ir.left - nr.left + nav.scrollLeft}px, ${ir.top - nr.top + nav.scrollTop}px)`;
+  /* 同步落地 instant 定位:强制重排后立即恢复过渡,不依赖 rAF(部分环境不触发帧回调) */
+  if (instant) { void navPill.offsetWidth; navPill.style.transition = ""; }
 }
 
 function lastTab() {
@@ -113,9 +178,22 @@ function enterApp() {
 
 /* ---------------- 主题(明/暗,记忆偏好) ---------------- */
 
+function reduceMotion() {
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
 function applyTheme(theme) {
+  /* 主题切换:无页面级动画(GitHub/Linear 同款)。
+     切换瞬间挂 theme-fading 类,让全站颜色以统一曲线滑入新配色,260ms 后移除;
+     reduced-motion 下全局规则会抑制过渡,表现为瞬时切换 */
   document.documentElement.dataset.theme = theme;
   try { localStorage.setItem("zsx_theme", theme); } catch (_) { /* 隐私模式忽略 */ }
+  if (!reduceMotion()) {
+    const root = document.documentElement;
+    root.classList.add("theme-fading");
+    clearTimeout(applyTheme._t);
+    applyTheme._t = setTimeout(() => root.classList.remove("theme-fading"), 260);
+  }
   /* 日/月图标由 CSS 依 data-theme 切换,无需改按钮内容 */
 }
 
@@ -513,21 +591,23 @@ async function refreshTopbar() {
     const health = await api.get("/health");
     $("health-dot").classList.remove("off");
     $("health-text").textContent = "服务在线";
+    $("health-chip").classList.remove("off");
     const navFile = (health && health.navigation ? health.navigation : "").split(/[\\/]/).pop();
     $("health-chip").textContent = `导航图:${navFile || "已加载"}`;
     const ws = $("welcome-stats");
     if (ws && !ws.dataset.loaded) {
       ws.dataset.loaded = "1";
       ws.innerHTML = `
-        <div class="hstat"><b>🧠<span class="num">4 维</span></b>优先级 · 硬约束 · 软偏好 · 画像</div>
-        <div class="hstat"><b>🛗<span class="num">4 类</span></b>直梯/扶梯/楼梯/拥挤设施建模</div>
-        <div class="hstat"><b>📚<span class="num">22 篇</span></b>站内换乘经验语料</div>
-        <div class="hstat"><b>🤖<span class="num">2 引擎</span></b>枢纽偏好规划 + 高德真实路线</div>`;
+        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-idcard"/></svg></span><div class="hs-txt"><b class="num">4 维</b><span>优先级 · 硬约束 · 软偏好 · 画像</span></div></div>
+        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-elevator"/></svg></span><div class="hs-txt"><b class="num">4 类</b><span>直梯/扶梯/楼梯/拥挤设施建模</span></div></div>
+        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-book"/></svg></span><div class="hs-txt"><b class="num">22 篇</b><span>站内换乘经验语料</span></div></div>
+        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-hub"/></svg></span><div class="hs-txt"><b class="num">2 引擎</b><span>枢纽偏好规划 + 高德真实路线</span></div></div>`;
     }
   } catch (_) {
     $("health-dot").classList.add("off");
     $("health-text").textContent = "服务离线";
     $("health-chip").textContent = "服务离线";
+    $("health-chip").classList.add("off");
   }
 
   const status = await api.get("/api/rl/status").catch(() => null);
@@ -1055,21 +1135,21 @@ function renderChatAnalysis(data) {
         ${kvBits.length ? `<div class="kv" style="margin-bottom:12px">${kvBits.join("")}</div>` : ""}
         <div class="grid-2">
           <div>
-            <h3 style="margin-top:0">🛣️ 路线方案</h3>
+            <h3 style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-road"/></svg>路线方案</h3>
             <ol class="list">${(r.details || ["暂无分段详情"]).map((d) => `<li>${d}</li>`).join("")}</ol>
             ${r.engine === "hub" && Array.isArray(r.route) && r.route.length > 1 && state.nav.grid
               ? `<div class="canvas-box"><canvas id="chatRouteCanvas" width="620" height="290"></canvas></div>`
               : ""}
           </div>
           <div>
-            <h3 style="margin-top:0">💡 出行提醒</h3>
+            <h3 style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-bulb"/></svg>出行提醒</h3>
             <ul class="list">${(r.tips || ["无"]).map((t) => `<li>${t}</li>`).join("")}</ul>
             ${
               data.kb_refs && data.kb_refs.length
-                ? `<h3 style="margin-top:16px">📚 站内换乘经验引用</h3><ul class="list">${data.kb_refs
+                ? `<h3 style="margin-top:16px"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-book"/></svg>站内换乘经验引用</h3><ul class="list">${data.kb_refs
                     .map(
                       (k) =>
-                        `<li>《${k.title}》<span style="color:var(--ink-3);font-size:12px"> · 相关度 ${k.score} · ${k.source}</span></li>`
+                        `<li>《${k.title}》<span style="color:var(--t3);font-size:12px"> · 相关度 ${k.score} · ${k.source}</span></li>`
                     )
                     .join("")}</ul>`
                 : ""
@@ -1154,6 +1234,23 @@ function initChat() {
     $("chatProfileRow").style.display = "none";
     $("chatAnalysis").innerHTML = "";
     toast("已开启新会话");
+  });
+}
+
+/* ---------------- 对话引擎 / 模型微调 面板(弹窗) ---------------- */
+
+function setLLMPanel(open) {
+  $("llm-panel-mask").classList.toggle("hidden", !open);
+}
+
+function initLLMPanel() {
+  $("btnDockTools").addEventListener("click", () => setLLMPanel(true));
+  $("btnLLMPanelClose").addEventListener("click", () => setLLMPanel(false));
+  $("llm-panel-mask").addEventListener("click", (event) => {
+    if (event.target === event.currentTarget) setLLMPanel(false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") setLLMPanel(false);
   });
 }
 
@@ -1420,13 +1517,249 @@ function setDockOpen(open) {
   }
 }
 
+/* ---------------- 悬浮模式:气泡 ↔ 浮动面板 ----------------
+   docked(停靠)→ 拖拽对话按钮脱离(>24px)→ bubble(悬浮泡,可拖动)
+   → 点击 → panel(浮动面板);× 收回气泡;图钉停靠回底部。
+   形变动画以气泡位置为 transform-origin,纯 transform/opacity。 */
+
+const floatState = { mode: "docked", x: 0, y: 0, bx: 0, by: 0 };
+let suppressFabClick = false;
+let floatBusy = false;
+
+function persistFloatMode(on) {
+  try { localStorage.setItem("zsx_float", on ? "1" : "0"); } catch (_) { /* 忽略 */ }
+}
+
+function setFloatPos(x, y, save) {
+  const dock = $("chatDock");
+  const w = dock.getBoundingClientRect().width || 56;
+  const h = dock.getBoundingClientRect().height || 56;
+  floatState.x = Math.min(Math.max(8, x), Math.max(8, innerWidth - w - 8));
+  floatState.y = Math.min(Math.max(8, y), Math.max(8, innerHeight - h - 8));
+  dock.style.left = `${floatState.x}px`;
+  dock.style.top = `${floatState.y}px`;
+  if (save && floatState.mode === "bubble") {
+    try { localStorage.setItem("zsx_float_pos", JSON.stringify({ x: floatState.x, y: floatState.y })); } catch (_) { /* 忽略 */ }
+  }
+}
+
+/* 悬浮状态标记到 #app:切换头部按钮的图标(弹出 ↔ 图钉)与提示 */
+function syncFloatUi() {
+  const app = $("app");
+  const floating = floatState.mode !== "docked";
+  app.classList.toggle("float-mode", floating);
+  const btn = $("btnChatRedock");
+  const title = floating ? "收回至底部" : "变成悬浮球";
+  btn.title = title;
+  btn.setAttribute("aria-label", title);
+}
+
+function enterFloat(cx, cy, opts = {}) {
+  if (floatState.mode !== "docked" || floatBusy) return;
+  floatState.mode = "bubble";
+  const dock = $("chatDock");
+  dock.classList.add("float", "float-bubble", "spawning");
+  setTimeout(() => dock.classList.remove("spawning"), 300);
+  setDockOpen(false);
+  setFloatPos(cx - 28, cy - 28, true);
+  persistFloatMode(true);
+  syncFloatUi();
+  if (!opts.silent && !localStorage.getItem("zsx_float_hint")) {
+    toast("智能助手已悬浮:拖动可移动,点击展开");
+    try { localStorage.setItem("zsx_float_hint", "1"); } catch (_) { /* 忽略 */ }
+  }
+}
+
+function exitFloat() {
+  floatState.mode = "docked";
+  const dock = $("chatDock");
+  dock.classList.remove("float", "float-bubble", "float-panel", "morphing", "collapsing", "docking-out");
+  dock.style.left = dock.style.top = dock.style.transformOrigin = "";
+  persistFloatMode(false);
+  try { localStorage.removeItem("zsx_float_pos"); } catch (_) { /* 忽略 */ }
+  syncFloatUi();
+  setDockOpen(true);
+  toast("已停靠到底部输入条");
+}
+
+function expandFloatPanel(immediate = false) {
+  if (floatState.mode !== "bubble" || floatBusy) return;
+  const dock = $("chatDock");
+  floatState.bx = floatState.x;
+  floatState.by = floatState.y;
+  dock.classList.remove("float-bubble");
+  dock.classList.add("float-panel");
+  floatState.mode = "panel";
+  const pw = dock.getBoundingClientRect().width || 400;
+  const px = Math.min(Math.max(12, floatState.bx + 28 - pw), Math.max(12, innerWidth - pw - 12));
+  const py = Math.min(Math.max(12, floatState.by + 28 - 500), Math.max(12, innerHeight - 500));
+  setFloatPos(px, py, false);
+  dock.style.transformOrigin = `${floatState.bx + 28 - px}px ${floatState.by + 28 - py}px`;
+  if (!immediate) {
+    dock.classList.add("morphing");
+    setTimeout(() => dock.classList.remove("morphing"), 360);
+  }
+  setDockOpen(true);
+}
+
+function collapseFloatToBubble() {
+  if (floatState.mode !== "panel" || floatBusy) return;
+  floatBusy = true;
+  const dock = $("chatDock");
+  const fr = dock.getBoundingClientRect();
+  dock.style.transformOrigin = `${fr.width - 28}px ${fr.height - 28}px`;
+  dock.classList.add("collapsing");
+  setTimeout(() => {
+    dock.classList.remove("float-panel", "collapsing");
+    dock.classList.add("float-bubble", "settling");
+    floatState.mode = "bubble";
+    dock.style.transformOrigin = "";
+    setFloatPos(fr.right - 56, fr.bottom - 56, true);
+    setTimeout(() => dock.classList.remove("settling"), 300);
+    setDockOpen(false);
+    setDockOpen(false);
+    floatBusy = false;
+  }, 250);
+}
+
+function initFloatDrag() {
+  const dock = $("chatDock");
+  // 泡泡态:拖容器移动;面板态:拖头部移动
+  dock.addEventListener("pointerdown", (e) => {
+    if (floatState.mode === "docked" || e.button !== 0) return;
+    e.preventDefault();                    // 阻止浏览器原生文字选择/拖拽
+    suppressFabClick = false;               // 每次按下重置,避免上一次拖拽的标记误吞本次点击
+    const onHead = !!e.target.closest(".dock-head");
+    if (floatState.mode === "panel" && !onHead) return;
+    const rect = dock.getBoundingClientRect();
+    const offX = e.clientX - rect.left;
+    const offY = e.clientY - rect.top;
+    let moved = false;
+    let inZone = false;
+    const onMove = (ev) => {
+      if (!moved && Math.hypot(ev.clientX - rect.left - offX, ev.clientY - rect.top - offY) < 5) return;
+      if (!moved) { moved = true; document.body.classList.add("float-dragging"); }
+      dock.classList.add("dragging-float");
+      inZone = ev.clientY > innerHeight - 96;
+      $("dock-drop-hint").classList.toggle("show", inZone);
+      dock.classList.toggle("dock-hint", inZone && floatState.mode === "bubble");
+      setFloatPos(ev.clientX - offX, ev.clientY - offY);
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      dock.classList.remove("dragging-float", "dock-hint");
+      document.body.classList.remove("float-dragging");
+      $("dock-drop-hint").classList.remove("show");
+      if (moved) suppressFabClick = true;   // 拖拽结束吞掉随后的 click
+      if (moved && inZone) magnetDock();    // 在吸附区松手 → 融入底栏
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  });
+  // 停靠态:拖拽对话按钮脱离成为悬浮泡
+  $("btnChatDockToggle").addEventListener("pointerdown", (e) => {
+    if (floatState.mode !== "docked" || e.button !== 0) return;
+    e.preventDefault();
+    suppressFabClick = false;
+    const sx = e.clientX;
+    const sy = e.clientY;
+    let detached = false;
+    let inZone = false;
+    const onMove = (ev) => {
+      if (!detached && Math.hypot(ev.clientX - sx, ev.clientY - sy) < 24) return;
+      if (!detached) {
+        detached = true;
+        suppressFabClick = true;
+        enterFloat(ev.clientX, ev.clientY);
+        document.body.classList.add("float-dragging");
+      }
+      setFloatPos(ev.clientX - 28, ev.clientY - 28);
+      inZone = ev.clientY > innerHeight - 96;
+      $("dock-drop-hint").classList.toggle("show", inZone);
+      dock.classList.toggle("dock-hint", inZone);
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      document.body.classList.remove("float-dragging");
+      $("dock-drop-hint").classList.remove("show");
+      dock.classList.remove("dock-hint");
+      if (detached && inZone) magnetDock();  // 拖到底部松手 → 吸附回底栏
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  });
+  // 窗口变化时把悬浮体收回视口
+  window.addEventListener("resize", () => {
+    if (floatState.mode !== "docked") setFloatPos(floatState.x, floatState.y);
+  });
+}
+
+/* 磁性吸附:悬浮球滑向底部中央融入底栏;面板直接落回底栏 */
+function magnetDock() {
+  const dock = $("chatDock");
+  dock.classList.remove("dragging-float", "dock-hint");
+  document.body.classList.remove("float-dragging");
+  $("dock-drop-hint").classList.remove("show");
+  if (floatState.mode === "bubble") {
+    dock.classList.add("gliding");                                 // 悬浮球滑向底部中央
+    setFloatPos((innerWidth - 56) / 2, innerHeight - 76, false);
+    setTimeout(() => {
+      dock.classList.remove("gliding");
+      exitFloat();
+      dock.classList.add("redocking");
+      setTimeout(() => dock.classList.remove("redocking"), 340);
+    }, 250);
+  } else {
+    exitFloat();                                                   // 面板直接落回底栏
+    dock.classList.add("redocking");
+    setTimeout(() => dock.classList.remove("redocking"), 340);
+  }
+}
+
 function initChatDock() {
   let pref = null;
   try { pref = localStorage.getItem("zsx_ai_open"); } catch (_) { /* 忽略 */ }
+  let floatOn = false;
+  let floatPos = null;
+  try {
+    floatOn = localStorage.getItem("zsx_float") === "1";
+    floatPos = JSON.parse(localStorage.getItem("zsx_float_pos") || "null");
+  } catch (_) { /* 忽略 */ }
+  if (floatOn) {
+    enterFloat(floatPos ? floatPos.x : innerWidth - 84, floatPos ? floatPos.y : innerHeight - 96, { silent: true });
+  }
   setDockOpen(pref === "1");                       // 默认收起:只留底部输入条
-  $("btnChatDockToggle").addEventListener("click", () => setDockOpen());
-  $("btnChatCollapse").addEventListener("click", () => setDockOpen(false));
+  if (floatOn && pref === "1") expandFloatPanel(true);   // 恢复为浮动面板
+  $("btnChatDockToggle").addEventListener("click", () => {
+    if (suppressFabClick) { suppressFabClick = false; return; }
+    if (floatState.mode === "bubble") { expandFloatPanel(); return; }
+    if (floatState.mode === "panel") { collapseFloatToBubble(); return; }
+    setDockOpen();
+  });
+  $("btnChatCollapse").addEventListener("click", () => {
+    if (floatState.mode === "panel") { collapseFloatToBubble(); return; }
+    setDockOpen(false);
+  });
+  $("btnChatRedock").addEventListener("click", () => {
+    if (floatState.mode === "docked") {
+      enterFloat(innerWidth - 96, innerHeight - 260);   // 悬浮球在落点原地生成脉冲
+    } else if (!floatBusy) {
+      // 收回至底部:面板向下潜入底栏方向,底栏随后滑入落位
+      floatBusy = true;
+      const dock = $("chatDock");
+      dock.style.transformOrigin = "50% 100%";
+      dock.classList.add("docking-out");
+      setTimeout(() => {
+        exitFloat();
+        dock.classList.add("redocking");
+        setTimeout(() => { dock.classList.remove("redocking"); floatBusy = false; }, 340);
+      }, 240);
+    }
+  });
   $("chatInput").addEventListener("focus", () => { if ($("chatDockBody").hidden) setDockOpen(true); });
+  initFloatDrag();
   initDockResize();
 }
 
@@ -1446,7 +1779,7 @@ function initDockResize() {
     const startH = $("chatDockBody").getBoundingClientRect().height;
     const onMove = (e) => {
       const h = Math.min(window.innerHeight * 0.78,
-                         Math.max(240, Math.round(startH + (startY - e.clientY))));
+                         Math.max(260, Math.round(startH + (startY - e.clientY))));
       root.style.setProperty("--dock-h", `${h}px`);
     };
     const onUp = () => {
@@ -1581,40 +1914,6 @@ function initCmdk() {
   });
 }
 
-/* ---------------- 面板宽度拖拽(侧栏 / AI 面板) ---------------- */
-
-function initPaneResize() {
-  $$(".pane-resizer").forEach((handle) => {
-    const varName = "--pane-side";                    // AI 面板已改为底部 Dock,仅剩侧栏可拖宽
-    const currentWidth = () =>
-      document.querySelector(".sidebar").getBoundingClientRect().width;
-
-    handle.addEventListener("mousedown", (event) => {
-      event.preventDefault();
-      handle.classList.add("dragging");
-      document.body.classList.add("col-resizing");
-      const startX = event.clientX;
-      const startW = currentWidth();
-      const onMove = (e) => {
-        const delta = e.clientX - startX;
-        const w = Math.min(560, Math.max(210, Math.round(startW + delta)));
-        document.documentElement.style.setProperty(varName, `${w}px`);
-      };
-      const onUp = () => {
-        handle.classList.remove("dragging");
-        document.body.classList.remove("col-resizing");
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
-      };
-      document.addEventListener("mousemove", onMove);
-      document.addEventListener("mouseup", onUp);
-    });
-    handle.addEventListener("dblclick", () => {
-      document.documentElement.style.removeProperty(varName);
-    });
-  });
-}
-
 /* ---------------- 启动:欢迎页 → 应用壳 ---------------- */
 
 let appInited = false;
@@ -1633,8 +1932,9 @@ function initAppOnce() {
   initSettings();
   initChatDock();
   initSideToggle();
+  initNavPill();
   initCmdk();
-  initPaneResize();
+  initLLMPanel();
   switchTab(lastTab() || "overview");
 
   (async () => {
@@ -1651,10 +1951,31 @@ function initAppOnce() {
 
 function boot() {
   initTheme();
+  initWelcomeReveals();
   $$(".nav-item[data-tab]").forEach((item) =>
     item.addEventListener("click", () => switchTab(item.dataset.tab)));
   showView("welcome");
   refreshTopbar(); // 欢迎页统计与服务状态(应用壳元素隐藏但已存在)
+}
+
+/* 欢迎页下半屏内容滚动显现:只播一次,进过视口即标记,不打扰回读 */
+function initWelcomeReveals() {
+  const items = $$(".reveal");
+  if (!items.length) return;
+  const showAll = () => items.forEach((el) => el.classList.add("in"));
+  const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduce || !("IntersectionObserver" in window)) { showAll(); return; }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("in");
+      io.unobserve(entry.target);
+    });
+  }, { threshold: 0.15 });
+  items.forEach((el, i) => {
+    el.style.transitionDelay = `${Math.min(i * 70, 210)}ms`;
+    io.observe(el);
+  });
 }
 
 document.addEventListener("DOMContentLoaded", boot);

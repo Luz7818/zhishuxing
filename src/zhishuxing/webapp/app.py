@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from flask import Flask, current_app, jsonify, render_template, request, send_from_directory
+from flask import Flask, current_app, jsonify, make_response, render_template, request, send_from_directory
 
 from .. import config as cfg
 from .. import settings as settings_store
@@ -48,12 +48,17 @@ def create_app(
     @app.get("/")
     def home():
         amap_conf = cfg.amap_config()
-        return render_template(
-            "index.html",
-            amap_js_key=amap_conf["js_key"] or "",
-            amap_security_code=amap_conf["security_code"] or "",
-            settings_writable=settings_writable,
+        resp = make_response(
+            render_template(
+                "index.html",
+                amap_js_key=amap_conf["js_key"] or "",
+                amap_security_code=amap_conf["security_code"] or "",
+                settings_writable=settings_writable,
+            )
         )
+        # 首页禁用启发式缓存:静态资源带版本号,页面本身必须每次取最新
+        resp.headers["Cache-Control"] = "no-cache"
+        return resp
 
     @app.get("/health")
     def health():

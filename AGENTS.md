@@ -16,8 +16,8 @@
 
 | 项 | 值 | 复核命令 |
 |---|---|---|
-| 测试 | `180 passed`（17–19 s） | `python -m pytest` |
-| 用例分布 | `180 tests collected` | `python -m pytest -o addopts="" --collect-only -q` |
+| 测试 | `201 passed`（本机实测 20–50 s 之间浮动，受机器负载影响，别当判据） | `python -m pytest` |
+| 用例分布 | `201 tests collected` | `python -m pytest -o addopts="" --collect-only -q` |
 | 静态检查 | `0 告警`，退出码 0 | `python -m pyflakes src/ scripts/ tests/` |
 | API 冒烟 | `Web smoke test passed.`，退出码 0 | `zhishuxing smoke` |
 | 配置体检 | 本机配好 3 项必需密钥 → 退出码 0；全新 clone 无 `.env` → 退出码 1 并列缺 3 项 | `zhishuxing doctor` |
@@ -149,7 +149,7 @@
   用管道捕获时还会变成 `UnicodeDecodeError`。先 `set PYTHONIOENCODING=utf-8`（PowerShell 用
   `$env:PYTHONIOENCODING="utf-8"`）。
 - **`python -m pytest -q` 看不到统计行**：`pyproject.toml` 里已有 `addopts = "-q"`，命令行再给 `-q`
-  就成了 `-qq`，末行 `180 passed` 被吞。要计数就用 `python -m pytest`，或用
+  就成了 `-qq`，末行 `201 passed` 被吞。要计数就用 `python -m pytest`，或用
   `python -m pytest -o addopts="" --collect-only -q`。
 - **`src/zhishuxing.egg-info/` 是生成物**：`pip install -e .` 写出来的，已被 `*.egg-info/` 忽略。
   它会让"搜 `zhishuxing` 全仓"的结果多出一份带旧 README 的副本，别拿它当事实来源。

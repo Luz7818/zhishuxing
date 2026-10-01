@@ -163,6 +163,25 @@
     <path d="M12 4.2v9.6M8.2 10.4l3.8 3.8 3.8-3.8M5 19.6h14"/>
   </g></symbol>
 
+  <symbol id="i-elevator" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="4.6" y="3.8" width="14.8" height="16.4" rx="2.6"/>
+    <path d="M9.2 15.4V8.6M9.2 8.6 7.3 10.7M9.2 8.6l1.9 2.1"/>
+    <path d="M14.8 8.6v6.8M14.8 15.4l1.9-2.1M14.8 15.4l-1.9-2.1"/>
+  </g></symbol>
+
+  <symbol id="i-alert" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 4.4 21 19.4H3Z"/><path d="M12 10.4v4"/><circle cx="12" cy="16.8" r=".95" fill="currentColor" stroke="none"/>
+  </g></symbol>
+
+  <symbol id="i-panel" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3.6" y="4.4" width="16.8" height="15.2" rx="2.6"/><path d="M9.8 4.4v15.2"/>
+  </g></symbol>
+
+  <symbol id="i-popout" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M13.8 4.4h5.8v5.8"/><path d="M19.6 4.4 11.8 12.2"/>
+    <path d="M17.4 13.6v4.2a1.8 1.8 0 0 1-1.8 1.8H6.4a1.8 1.8 0 0 1-1.8-1.8V8.4a1.8 1.8 0 0 1 1.8-1.8h4.2"/>
+  </g></symbol>
+
   <!-- 空状态插画:起终点 + 虚线换乘动线 + 直梯设施(48 网格) -->
   <symbol id="art-route" viewBox="0 0 48 48"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
     <rect x="4" y="4" width="40" height="40" rx="10" stroke-opacity=".28"/>

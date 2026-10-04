@@ -12,7 +12,7 @@ requests>=2.31
 #   pip install ./third_party/ml-agents-develop/ml-agents-develop/ml-agents-envs
 
 # 真实 LLM 适配器（SiliconFlow 等 OpenAI 兼容接口，可选）
-# openai>=1.30
+# openai>=1.30,<2(1.x 系列自带 httpx,3.x 起 HTTP 层换 httpx2,与 adapters.py 直连写法不兼容)
 
 # 开发
 # pytest>=8.0

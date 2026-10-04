@@ -20,7 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 train = ["torch>=2.1", "tensorboard>=2.14"]
-llm = ["openai>=1.30"]
+llm = ["openai>=1.30,<2"]
 dev = ["pytest>=8.0", "Pillow>=10.0"]  # Pillow 供 scripts/render_brand_assets.py 品牌图标渲染
 
 [project.scripts]

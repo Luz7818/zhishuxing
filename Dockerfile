@@ -23,7 +23,9 @@ COPY src ./src
 COPY web ./web
 COPY data/transfer_kb ./data/transfer_kb
 COPY configs ./configs
-RUN pip install --no-cache-dir .
+# .[llm] 把 openai 装进镜像:缺它时适配器 import 失败会静默降级 Mock,
+# .env 里配了 SILICONFLOW_API_KEY 也不生效
+RUN pip install --no-cache-dir ".[llm]"
 
 # 运行期可写目录:报告图 / 模型 / 会话库(挂卷持久化)
 RUN mkdir -p data/outputs data/model data/runs && chown -R zsx:zsx /app

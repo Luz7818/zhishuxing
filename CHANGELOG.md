@@ -5,6 +5,20 @@
 
 ## [Unreleased]
 
+### Added(新增)
+
+- **Windows 启动器** `启动器.bat`(仓库根):双击即用——7860 端口未监听时最小化窗口拉起
+  `zhishuxing serve`,就绪后自动打开浏览器;已在运行则直接开浏览器,不重复起服务。
+
+### Fixed(修复)
+
+- **悬浮面板收回悬浮泡的「白球无图标」**:点 × 后 `[hidden]` 的 `display` 过渡(allow-discrete)
+  留 ~260ms 离场窗口,480px 高的对话体仍占布局,把输入条连同 FAB 挤出 56px 圆窗
+  (`overflow: hidden`),等 display 翻转后图标才跳回。现在泡泡态强制 `.chat-dock-body`
+  即时 `display: none; transition: none`(展开淡入不受影响,仍走 `@starting-style`);
+  落位脉冲 `bubbleSettle` 补 0→40% 透明度渐入,与缩没动画末态(透明度 0)无缝衔接。
+  静态资源版本号 v5.8 → v5.9。
+
 ### Changed(变更)
 
 - **界面精修一轮**:主题切换走 View Transitions(明暗互换有过渡动画,`startViewTransition` 不可用时

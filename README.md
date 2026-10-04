@@ -47,6 +47,8 @@ zhishuxing analyze --report all   # 7 类报告，全 OK 时退出码 0
 zhishuxing serve --host 127.0.0.1 --port 7860   # 控制台 http://127.0.0.1:7860，PWA /mobile
 ```
 
+Windows 下也可直接双击根目录 [启动器.bat](启动器.bat)：未运行则拉起 serve，就绪后自动打开浏览器。
+
 缺依赖时的降级是设计好的：没装 `torch` 时 RL 的 6 个用例跳过而非失败、策略回退启发式；
 没装 `mlagents_envs` 只有 `train` 用不了；没装 `openai` 或没配 LLM 密钥时对话走 Mock 模板，
 响应里如实标注当前是本地模板模式。

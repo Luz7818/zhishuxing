@@ -910,6 +910,11 @@ html[data-theme="dark"] .legend .swatch { box-shadow: inset 0 0 0 1px rgba(255,2
 .chat-dock.float.float-bubble:active { cursor: grabbing; }
 .chat-dock.float.float-bubble .chat-dock-bar { padding: 8px; background: transparent; }
 .chat-dock.float.float-bubble .chat-dock-bar > *:not(.dock-fab) { display: none; }
+/* 泡泡态对话体必须同帧退出布局:[hidden] 挂 display 过渡(allow-discrete)
+   会留 ~260ms 淡出窗口,期间 480px 高的对话体仍占位,把输入条连同 FAB
+   挤出 56px 圆窗,出现「白球无图标」。transition:none 切断窗口,
+   display:none 让 FAB 即刻可见;展开时本规则不再命中,淡入仍走 @starting-style。 */
+.chat-dock.float.float-bubble .chat-dock-body { display: none; transition: none; }
 /* 拖拽抬升:轻微放大 + 阴影加深,抓取感 */
 .chat-dock.float.dragging-float { transform: scale(1.012); cursor: grabbing;
   box-shadow: 0 28px 64px -16px rgba(58,55,106,.5); }
@@ -918,7 +923,7 @@ html[data-theme="dark"] .legend .swatch { box-shadow: inset 0 0 0 1px rgba(255,2
 .chat-dock.float.spawning { animation: bubbleSpawn .28s var(--ease-out); }
 @keyframes bubbleSpawn { from { transform: scale(.3); opacity: 0; } 60% { opacity: 1; } }
 .chat-dock.float.settling { animation: bubbleSettle .28s var(--ease-out); }
-@keyframes bubbleSettle { 0% { transform: scale(.85); } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
+@keyframes bubbleSettle { 0% { transform: scale(.85); opacity: 0; } 40% { opacity: 1; } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
 
 /* 展开绽放 / 收回缩没(原点为气泡位置,由 JS 设 transform-origin) */
 .chat-dock.float.morphing { animation: floatPop .34s var(--ease-out); }

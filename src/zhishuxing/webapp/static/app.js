@@ -1617,7 +1617,6 @@ function collapseFloatToBubble() {
     setFloatPos(fr.right - 56, fr.bottom - 56, true);
     setTimeout(() => dock.classList.remove("settling"), 300);
     setDockOpen(false);
-    setDockOpen(false);
     floatBusy = false;
   }, 250);
 }

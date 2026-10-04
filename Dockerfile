@@ -14,6 +14,9 @@ RUN useradd --create-home --uid 1000 zsx
 WORKDIR /app
 
 # 先装依赖(层缓存:代码变更不触发重装)
+# 境内构建 pypi.org 常被限速:docker compose build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
+ARG PIP_INDEX_URL=https://pypi.org/simple
+ENV PIP_INDEX_URL=${PIP_INDEX_URL}
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 

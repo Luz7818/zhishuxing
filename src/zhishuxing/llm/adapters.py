@@ -230,9 +230,3 @@ class SiliconFlowLLMAdapter:
             response = self._client.chat.completions.create(**kwargs)
         return response.choices[0].message.content or ""
 
-
-def create_llm_adapter(prefer_real: bool = False) -> LLMAdapter:
-    """工厂：prefer_real 且已配置密钥时返回真实适配器，否则返回 Mock。"""
-    if prefer_real and cfg.siliconflow_config()["api_key"]:
-        return SiliconFlowLLMAdapter()
-    return MockLLMAdapter()

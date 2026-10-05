@@ -11,18 +11,17 @@
 | 文件 | 干什么 | 是否入库 |
 |---|---|---|
 | `ui/jiaohu.py` | 换乘引导原型主页：OD 提取、高德地理编码与公交换乘、折线渲染、偏好汇总 | ✓ |
-| `ui/jiaohu_sj.py` | 第二个原型页（深色调 CSS 与状态机独立实现），与上页共享 `config_direct` | ✓ |
-| `ui/config_direct.py` | 早期集中放密钥与端点的配置模块 | ✗ 被 `.gitignore` 的 `config_direct.py` 规则排除 |
-| `ui/mobile_app.zip` | 旧版移动端整包，11.9 MB | ✗ 被 `*.zip` 排除 |
-| `ui/*.mp4`（演示录屏） | 参赛演示录屏，50.8 MB | ✗ 被 `*.mp4` 排除 |
+| `ui/jiaohu_sj.py` | 第二个原型页（深色调 CSS 与状态机独立实现），曾与已删的 `config_direct` 共享配置 | ✓ |
 
-也就是说：`git ls-files legacy/` 只有 2 个 `.py`，另外三个只存在于本机。
+2026-10-05 清理记录：本机独有的三个文件（`ui/config_direct.py` 早期配置模块、
+`ui/mobile_app.zip` 旧移动端整包 11.9 MB、`ui/*.mp4` 参赛录屏 50.8 MB）已删除，
+释放约 63 MB。`.gitignore` 的对应排除规则保留，防止同类文件再混进来。
 
 ## 子目录
 
 | 子目录 | 负责 |
 |---|---|
-| `ui/` | 迁移前的 Streamlit 原型：两页 `jiaohu*.py`、它们共享的 `config_direct.py`、旧移动端整包 `mobile_app.zip`、一份参赛录屏 `.mp4`。后三者都不入库（见上表） |
+| `ui/` | 迁移前的 Streamlit 原型：两页 `jiaohu*.py`（其余本机遗留已于 2026-10-05 清理，见上表） |
 
 `legacy/` 下只有 `ui/` 这一个二级目录，没有第三层。复核：`find legacy -mindepth 1 -maxdepth 1 -type d`。
 
@@ -54,8 +53,7 @@ f-string；复核：`python -m pyflakes legacy/ui/jiaohu_sj.py`），
 
 ## 关于密钥的一件事
 
-`ui/config_direct.py` 的**当前本机内容**已经没有密钥字面量（复核：
-`grep -cE '"[0-9a-f]{32}"|sk-[A-Za-z0-9]{20,}' legacy/ui/config_direct.py` 输出 `0`）。
+本机副本 `ui/config_direct.py`（已随 2026-10-05 清理删除）最后核对时已无密钥字面量。
 但它的**前身** `UI/config_direct.py` 在首次提交 `93656291` 里含 3 处密钥形状的字面量，
 而 git 历史没有被重写（复核：
 `git show 93656291:UI/config_direct.py | grep -cE '"[0-9a-f]{32}"|sk-[A-Za-z0-9]{20,}'`）。

@@ -65,7 +65,7 @@
   `zhishuxing train` 写 `model/` 与 `runs/`。本目录不吃外部输入。
 - **下游**：`outputs/` 经 Flask 的 `GET /outputs/<path:filename>` 同源暴露给前端
   （复核：`grep -n 'outputs/<path' src/zhishuxing/webapp/app.py`）；`samples/` 是奖励曲线报告
-  的回退目录、`tests/test_cli.py` 的产物名断言来源、`docs/getting-started.md` 的离线样例；
+  的回退目录、`tests/test_cli.py` 的产物名断言来源、`docs/GET-START.md` 的离线样例；
   `transfer_kb/corpus.jsonl` 由 `llm/kb.py` 建索引。
 - **改这里之后要跑**：
 
@@ -84,7 +84,7 @@ zhishuxing kb-ingest --query "带老人 优先直梯"
 
 ## 别动
 
-- `samples/` 下的 `png`、`csv` 与 `gif`：`docs/getting-started.md` 拿它们当离线样例，`reward`
+- `samples/` 下的 `png`、`csv` 与 `gif`：`docs/GET-START.md` 拿它们当离线样例，`reward`
   报告没有训练产物时回退到这里取 `*_env_*.npy`。删了测试不会变红，但新克隆就出不了图；
   要更新就重跑报告再拷回。复核：`sed -n '52,56p' src/zhishuxing/analysis/reports.py`。
 - `.gitignore` 中 `!data/samples/*.gif` 这一行是全局 `*.gif` 忽略的例外。删掉它，

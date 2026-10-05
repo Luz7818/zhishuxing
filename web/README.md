@@ -13,9 +13,9 @@
 
 | 文件 | 干什么 | 备注 |
 |---|---|---|
-| `mobile_app.html` | 单文件 PWA：对话式换乘引导、需求档案可视化、路线历史、深色模式 | 1885 行，样式与脚本内联；入口 URL 是 `/mobile` |
+| `mobile_app.html` | 单文件 PWA：对话流（气泡消息/需求档案/经验引用/动作信封）、结构化路线、站内导航 Canvas、客流提示、三态深色模式 | 约 1830 行，样式与脚本内联；入口 URL 是 `/mobile` |
 | `manifest.webmanifest` | 安装清单：名称、`start_url`、主题色 `#4f46e5`、3 个图标 | `start_url` 指向同目录的 `mobile_app.html` |
-| `sw.js` | ServiceWorker：预缓存 9 个静态资源，`/api/` 与 `/outputs/` 走网络优先 | 缓存名 `zhishuxing-mobile-v5`，改了静态资源要一起升版本号 |
+| `sw.js` | ServiceWorker：预缓存 9 个静态资源，`/api/` 与 `/outputs/` 走网络优先 | 缓存名 `zhishuxing-mobile-v7`，改了静态资源要一起升版本号 |
 | `icon-192.png`、`icon-512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`、`splash-logo.png` | 安装与启动屏图标 | **生成物**：`python scripts/render_brand_assets.py` |
 | `logo-mark.svg`、`favicon.svg` | 矢量标识与标签页图标 | 手工维护，是上面 PNG 的设计来源 |
 | `地图.png` | 「地图导航」模式下的站内示意图 | 被 `mobile_app.html` 与 `sw.js` 的预缓存列表引用 |
@@ -43,12 +43,14 @@
 
 ## 后端不可用时的行为
 
-`mobile_app.html` 只调两个接口：`POST /api/chat` 与 `GET /api/settings`。
-请求失败时页面回退到内置的本地演示数据，并在状态栏写明「演示数据」与
-「离线演示模式：未连接后端服务」，同时弹提示「后端不可用，已回退演示数据」。
+`mobile_app.html` 调 6 个接口：`POST /api/chat`（+`/api/chat/reset` 新会话）、`GET /api/settings`、
+`GET /api/navigation/grid`、`POST /api/navigation/plan`、`GET /api/scenarios`、`POST /api/dashboard/run`。
+对话与配置请求失败时页面回退到内置的本地演示数据，在消息流里挂「演示数据」横幅，
+同时弹提示「后端不可用，已回退演示数据」；站内导航与客流卡失败则就地显示错误或静默收起（非关键路径）。
 这条降级路径是有意为之：PWA 装到手机上后要能脱离服务演示。
 
-需求档案与路线历史存在浏览器 `localStorage`（键 `zsx_prefs`、`routeHistory`、`zsx_user`），
+会话、需求档案与路线历史存在浏览器 `localStorage`（键 `zsx_prefs`、`routeHistory`、`zsx_user`、
+`zsx_session`、`zsx_chat_log`、`zsx_theme`；服务端会话另有 SQLite 持久化），
 没有账号体系，换浏览器即清空。
 
 ## 怎么起
@@ -67,8 +69,9 @@ zhishuxing serve --host 127.0.0.1 --port 7860
 - **上游**：Flask 用 `GET /mobile` 与 `GET /mobile/<path:filename>` 把本目录当静态根直接送出去，
   根路径取自 `cfg.paths.mobile_dir`（复核：`grep -n "mobile" src/zhishuxing/webapp/app.py`）；
   5 个图标 PNG 来自 `python scripts/render_brand_assets.py`。
-- **下游**：装了 PWA 的手机浏览器。页面只调两个接口 `POST /api/chat` 与 `GET /api/settings`
-  （复核：`grep -noE "'/api/[a-z/]*'" web/mobile/mobile_app.html` 只有这两行），
+- **下游**：装了 PWA 的手机浏览器。页面调 6 个接口：`POST /api/chat`（+`/api/chat/reset`）、
+  `GET /api/settings`、`GET /api/navigation/grid`、`POST /api/navigation/plan`、`GET /api/scenarios`、
+  `POST /api/dashboard/run`（复核：`grep -noE "'/api/[a-z/]*'" web/mobile/mobile_app.html`），
   不读 `data/outputs/` 里的产物图（复核：`grep -c "outputs" web/mobile/mobile_app.html` 输出 `0`）。
 - **改这里之后要跑**：
 

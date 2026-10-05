@@ -7,6 +7,19 @@
 
 ### Added(新增)
 
+- **移动端 PWA 对齐乘客侧功能 + 全面美化**:`web/mobile/mobile_app.html` 重写——新增真对话流
+  (气泡消息、输入中动效,消费后端一直返回但此前被丢弃的 `kb_refs` 经验引用/`action` 动作信封/
+  `real_adapter_error`,`POST /api/chat/reset` 新会话);结构化路线(步骤卡+沿途设施徽章+里程 KPI,
+  替换 `<br>` 拼文本);站内导航页(13 地标选起终点/必经点,`/api/navigation/grid|plan` Canvas
+  动画描线,演示场景一键填充);客流提示卡(`/api/dashboard/run` 三档拥挤度,失败静默收起)。
+  免登录直达(移除纯前端演示登录);设计令牌与控制台同源(靛蓝紫渐变/阴影三档/缓动两族)+
+  iOS 质感(毛玻璃顶栏底栏、按下即反馈、页面入场过渡、骨架屏、`prefers-reduced-motion` 降级),
+  emoji 图标全部换内联 SVG;深色模式三态(浅/深/跟随系统,`data-theme` 对齐控制台机制,
+  兼容旧 `darkMode` 键);补换乘方式偏好 UI,清理 quick-tag 与 aiConfig 死代码;SW 缓存 v5 → v7。
+  质感与切换打磨:方向感知的双页滑动过渡(旧页滑出/新页滑入,返回保留滚动位)、底部导航滑动
+  高亮药丸(弹簧曲线)、主题切换 View Transition 圆形揭示(不支持时退化为颜色交叉过渡)、
+  顶栏滚动感知投影、卡片内高光、KPI/状态数值入场动效、导航画线 easeOutCubic、启动屏分层入场、
+  hub 路线 KPI 智能收纳为里程+步数(不再以「-」占位)。
 - **Windows 启动器** `启动器.bat`(仓库根):双击即用——7860 端口未监听时最小化窗口拉起
   `zhishuxing serve`,就绪后自动打开浏览器;已在运行则直接开浏览器,不重复起服务。
 
@@ -16,7 +29,7 @@
   留 ~260ms 离场窗口,480px 高的对话体仍占布局,把输入条连同 FAB 挤出 56px 圆窗
   (`overflow: hidden`),等 display 翻转后图标才跳回。现在泡泡态强制 `.chat-dock-body`
   即时 `display: none; transition: none`(展开淡入不受影响,仍走 `@starting-style`);
-  落位脉冲 `bubbleSettle` 补 0→40% 透明度渐入,与缩没动画末态(透明度 0)无缝衔接。
+  落位脉冲 `bubbleSettle` 补 0→40% 透明度渐入,与缩没动画末态(透明度 0)直接衔接。
   静态资源版本号 v5.8 → v5.9。
 
 ### Changed(变更)

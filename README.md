@@ -74,8 +74,9 @@ Windows 下也可直接双击根目录 [启动器.bat](启动器.bat)：未运�
 - **Web 控制台** `http://127.0.0.1:7860/`：概览、路线规划、枢纽导航、客流面板、RL 智能体、
   分析报告、设置 7 个视图;智能换乘助手为页面底部对话 Dock(输入条常驻,面板可展开收起),
   侧栏可收起为图标栏。地图优先走高德 JS API 真实底图,未配 Key 或加载失败自动回退 Canvas 折线并注明原因。
-- **移动端 PWA** `http://127.0.0.1:7860/mobile`：同源托管，可安装、ServiceWorker 离线缓存；
-  只调 `/api/chat` 与 `/api/settings`，后端不可用时回退本地演示数据并写明「演示数据」。
+- **移动端 PWA** `http://127.0.0.1:7860/mobile`：同源托管，可安装、ServiceWorker 离线缓存；对话流、
+  结构化路线、站内导航 Canvas、客流提示与控制台同源设计；调 `/api/chat(+reset)`、`/api/settings`、
+  `/api/navigation/*`、`/api/scenarios`、`/api/dashboard/run`，后端不可用时回退演示数据。
 
 ## HTTP 路由（逐条对 `webapp/app.py`）
 
@@ -137,8 +138,7 @@ CSV)。适合课程/竞赛演示、毕业设计与算法迭代实验;面向真�
    `ModuleNotFoundError`。不训练时引导仿真是启发式回退。
 2. **分析图默认是固定种子的合成数据**,但 2.2.0 起支持真实数据:把客流 CSV 按
    [data/real/README.md](data/real/README.md) 的约定放入 `data/real/`,heatmap/transfer/efficiency
-   自动改用真实数据并在输出与图题标注来源;缺文件时回退合成。换乘米数按 `cell_size_m = 30`
-   换算,是示意值。
+   自动改用真实数据并在输出与图题标注来源;缺文件时回退合成。换乘米数按 `cell_size_m = 30` 换算,是示意值。
 3. **不配高德密钥就没有真实路线与真实底图**：`engine=amap` 返回 400 说明原因，
    规划自动改用内置枢纽引擎，地图回退 Canvas 折线。
 4. **知识库的 22 篇经验是按公开攻略手工整理的演示语料**，不是站内实测数据，站内布局以现场为准。
@@ -147,10 +147,9 @@ CSV)。适合课程/竞赛演示、毕业设计与算法迭代实验;面向真�
 
 ## 环境要求
 
-Python ≥ 3.10（CI 跑 3.11 与 3.12）。必需依赖 5 个：`numpy`、`matplotlib`、`flask`、
-`waitress`、`requests`。可选：`.[train]` → torch + tensorboard，`.[llm]` → openai，
-`.[dev]` → pytest。密钥走环境变量或根目录 `.env`（零第三方 dotenv 依赖，自己解析），
-配置项与作用见 [.env.example](.env.example) 与手册第 5 节。
+Python ≥ 3.10（CI 跑 3.11 与 3.12）。必需依赖 5 个：`numpy`、`matplotlib`、`flask`、`waitress`、
+`requests`。可选：`.[train]` → torch + tensorboard，`.[llm]` → openai，`.[dev]` → pytest。密钥走
+环境变量或根目录 `.env`（零第三方 dotenv 依赖，自己解析），配置项与作用见 [.env.example](.env.example)。
 
 ## 许可
 

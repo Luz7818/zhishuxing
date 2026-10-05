@@ -17,8 +17,6 @@ WORKDIR /app
 # 境内构建 pypi.org 常被限速:docker compose build --build-arg PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
 ARG PIP_INDEX_URL=https://pypi.org/simple
 ENV PIP_INDEX_URL=${PIP_INDEX_URL}
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
 
 # 源码与前端资产(package-data 已含 webapp/templates 与 static)
 COPY pyproject.toml README.md ./

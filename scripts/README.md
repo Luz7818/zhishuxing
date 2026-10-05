@@ -34,7 +34,7 @@ python scripts/render_brand_assets.py
 ## 两个已知的坑
 
 1. **它需要 Pillow，而 Pillow 没有写进任何依赖清单。** 脚本 `from PIL import Image`，
-   `pyproject.toml` 的 `dependencies` 与 `requirements.txt` 里都没有 `pillow`（复核：
+   `pyproject.toml` 的依赖里没有 `pillow`(它在 dev 组)（复核：
    `python -c "import importlib.metadata as m; print([r for r in m.requires('zhishuxing') or []])"`）。
    本机装了 Pillow 所以跑得通，干净环境里要先 `pip install pillow`。这是待补的声明缺口，
    不要因为它"在谁机器上都能跑"就当它不存在。

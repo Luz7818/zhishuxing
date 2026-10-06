@@ -1,27 +1,30 @@
 # tests/ —— pytest 套件
 
-> 用途：说明 180 个用例分别钉住哪条链路、哪些用例需要 torch、以及加用例时的隔离要求。
+> 用途：说明 201 个用例分别钉住哪条链路、哪些用例需要 torch、以及加用例时的隔离要求。
 > 复核口径：`python -m pytest -o addopts="" --collect-only -q` 计数，`python -m pytest` 跑。
 
 ## 文件清单
 
-`tests/` 下 12 个 `.py`：1 个 `conftest.py` + 11 个 `test_*.py`，合计 180 个用例（复核：
-`python -m pytest -o addopts="" --collect-only -q` 末行 `180 tests collected`；
-`python -m pytest` 末行 `180 passed`，本机实测 18.66 s）。逐文件计数用
+`tests/` 下 15 个 `.py`：1 个 `conftest.py` + 14 个 `test_*.py`，合计 201 个用例（复核：
+`python -m pytest -o addopts="" --collect-only -q` 末行 `201 tests collected`；
+`python -m pytest` 末行 `201 passed`，耗时随负载浮动，见仓库根 `AGENTS.md`「当前状态」）。逐文件计数用
 `python -m pytest -o addopts="" --collect-only -q`，把输出的 `文件::用例` 按文件归类即可。
 
 | 文件 | 用例数 | 钉住什么 |
 |---|---|---|
 | `test_settings.py` | 98 | 配置注册表、掩码、写入校验、`.env` 合并与原子写、热重载、loopback 判定、`doctor` 退出码，以及"无密钥离线可演示"这条承诺 |
-| `test_api.py` | 19 | 全部 HTTP 端点：导航、RL、LLM、面板、报告、`/api/plan` 两个引擎、`/api/chat` 的偏好理解与无 Key 降级、`/mobile` 页面 |
+| `test_api.py` | 21 | 全部 HTTP 端点：导航、RL、LLM、面板、报告、`/api/plan` 两个引擎、`/api/chat` 的偏好理解与无 Key 降级、`/mobile` 页面 |
 | `test_profile.py` | 12 | 需求档案：规则解析、LLM JSON 解析、多轮合并、`to_cost_spec()` 翻译 |
 | `test_amap.py` | 9 | OD 正则提取、新旧两代高德响应结构的折线与详情解析、`resolve_strategy()`、`.env` 解析器 |
 | `test_navigation_prefs.py` | 8 | 偏好加权 A*、设施硬约束与降级、软必经点取舍、旧格式导航图兼容 |
+| `test_session_store.py` | 8 | 会话持久化：SQLite 存取、重启恢复、过期清理、持久化失败不阻断对话 |
 | `test_navigation.py` | 7 | A* 基础正确性：可达、绕障、必经地标拼接、非法坐标报错 |
 | `test_synthetic.py` | 7 | 四类合成数据的形状、取值范围与同种子可复现 |
+| `test_actions.py` | 7 | 动作协议：动作注册表白名单、"打开/切换板块"规则短路、LLM 动作信封解析 |
 | `test_kb.py` | 6 | 入库幂等、BM25 相关性排序、`hub` 过滤 |
 | `test_rl_runtime.py` | 6 | 权重扫描与命名解析、加载后 `act()` 输出维度、无权重时的启发式回退（**需要 torch**） |
 | `test_simulation.py` | 5 | 引导仿真：动作语义、到达统计、拥堵峰值、分组明细 |
+| `test_real_data.py` | 4 | `data/real/` 真实数据通路：约定目录发现、来源标注、缺失回退合成 |
 | `test_cli.py` | 3 | `analyze`、`simulate`、`demo` 三个子命令的真实退出码与产物 |
 | `conftest.py` | 不产出用例 | 三个 fixture：`navigation`（session 级，读 `configs/hub_default.json`）、`service`（session 级）、`client`（每用例新建 app）。详见下面「依赖边界」 |
 
@@ -68,7 +71,7 @@ python -m pyflakes src/ scripts/ tests/
 ```
 
 `pyproject.toml` 的 `addopts = "-q"` 会让 `python -m pytest -q` 变成 `-qq`，
-末行统计会被吞掉；要看到 `180 passed` 就只写 `python -m pytest`。
+末行统计会被吞掉；要看到 `201 passed` 就只写 `python -m pytest`。
 
 ## 别动
 

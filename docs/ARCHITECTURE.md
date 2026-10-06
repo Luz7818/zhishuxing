@@ -52,7 +52,8 @@
 | `data/` 下 `outputs/`、`model/`、`runs/` | 运行时产物 | 全部 gitignore，首次运行自动建目录 |
 | `web/mobile/` | 移动端 PWA | 由 `/mobile` 同源托管；无构建步骤 |
 | `unity/` | Unity 侧智能体脚本与接入说明 | **不是可构建工程**，没有 Assets/ProjectSettings |
-| `scripts/` | 唯一的工具脚本：品牌 PNG 图标渲染 | 需要 Pillow（已在 dev 组） |
+| `scripts/` | 工具脚本：品牌 PNG 图标渲染（`render_brand_assets.py`）与 Windows exe 打包（`build_exe.py`） | 渲染需要 Pillow（已在 dev 组）；打包需要 pyinstaller |
+| `packaging/` | Windows 单文件 exe 的打包资产：`exe_entry.py` 打包入口 + `app.ico`、`_build_version.txt` 两个生成物 | 后两者由 `build_exe.py` 生成，勿手改 |
 | `tests/` | pytest 套件 | `test_settings.py` 一个文件占 98 个用例 |
 | `code_optimization/` | 行人仿真向量化基准与报告 | 跑基准会重写入库的 `benchmark_results.json` |
 | `legacy/ui/` | 迁移前的 Streamlit 原型 | 不参与测试，也不在 pyflakes 门禁里 |

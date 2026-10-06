@@ -28,10 +28,10 @@ cd zhishuxing
 pip install -e .
 ```
 
-预期输出的末行（重装时会先出现 `Uninstalling zhishuxing-2.2.0`）：
+预期输出的末行（重装时会先出现 `Uninstalling zhishuxing-2.3.0`）：
 
 ```
-Successfully installed zhishuxing-2.2.0
+Successfully installed zhishuxing-2.3.0
 ```
 
 `-e` 是 editable（源码改了立刻生效，不用重装）。控制台脚本入口注册为 `zhishuxing`，
@@ -317,8 +317,14 @@ zhishuxing kb-ingest --query "带老人 优先直梯"
 `data/transfer_kb/shenzhen_north/` 下 22 篇 `.md` 是**按公开出行攻略与站方指引手工整理的演示语料**，
 不是站内实测数据，站内布局以现场为准。
 
-换枢纽或收新文档：把 `.txt` / `.md` / `.html` 放进一个目录，
-`zhishuxing kb-ingest --src <目录> --hub <枢纽标识> --query "<试搜>"`。输出语料默认就是
+换枢纽或收新文档：把 `.txt` / `.md` / `.html` 放进一个目录再执行 `kb-ingest`
+（下面以演示语料自指为例，入库幂等，重跑应报 `changed: 0`）：
+
+```bash
+zhishuxing kb-ingest --src data/transfer_kb/shenzhen_north --hub shenzhen_north --query "怎么换乘"
+```
+
+输出语料默认就是
 `data/transfer_kb/corpus.jsonl`（`--out` 可改），不需要改代码。
 
 ### 7.2 移动端 PWA

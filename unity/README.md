@@ -14,6 +14,8 @@ Python 侧的训练循环、算法与运行时都在 `src/zhishuxing/rl/`；Unit
 | 文件 | 干什么 | 与 Python 侧的对应关系 |
 |---|---|---|
 | `HubTransferAgent.cs` | 挂在智能体 GameObject 上的 `Agent` 子类（133 行）：`CollectObservations()` 拼「目标相对位置 (dx, dz) + 自身速度 (vx, vz) + 邻近行人相对位置」；`OnActionReceived()` 把 `a[0]` 当前进/后退、`a[1]` 当转向；`Heuristic()` 供键盘演示 | 观测与动作语义对齐 `src/zhishuxing/rl/envs.py`；内置网格仿真的同一套契约见 `src/zhishuxing/core/simulation.py`（那里 `OBS_DIM = 4 + 2×3`） |
+| `package.json` | UPM 本地包清单，Package Manager「Add package from disk」的入口；依赖 `com.unity.ml-agents@2.2.1-exp.1`（release 18 分支，与 `third_party/` 镜像同源） | 2.2.0 起存在 |
+| `HubTransferAgent.asmdef` | 程序集定义，以 UPM 包导入后脚本自动编译进工程 | 同上 |
 | `README.md` | 本文档：挂载步骤、参数对齐、奖励建议、训练启动与产物位置 | — |
 
 `[Header("Reward Weights")]` 下的 5 个奖励权重（`stepPenalty` -0.001、`progressReward` 0.01、

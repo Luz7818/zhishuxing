@@ -117,8 +117,8 @@ Windows 下也可直接双击根目录 [启动器.bat](启动器.bat)：未运�
 | `data/` | 知识库语料与入库参考产物；`outputs` `model` `runs` 是运行时目录 |
 | `web/` | 移动端 PWA 静态文件 |
 | `unity/` | Unity 侧智能体脚本与接入说明（不是可构建工程） |
-| `tests/` | pytest 套件，按链路分 11 个文件 |
-| `scripts/` | 品牌图标渲染工具 |
+| `tests/` | pytest 套件，按链路分 14 个文件 |
+| `scripts/` 与 `packaging/` | 品牌图标渲染、Windows exe 打包脚本，及打包资产（PyInstaller 入口与生成物） |
 | `code_optimization/` | 行人仿真向量化基准与报告 |
 | `legacy/` | 迁移前的 Streamlit 原型归档 |
 

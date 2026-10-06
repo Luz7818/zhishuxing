@@ -165,3 +165,18 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   数据流/关键约定/迁移映射/历史问题表移入 ARCHITECTURE，改动后的验证移入 TESTING）；
   `CHANGELOG.md` 并入本文件后删除；README 规模行测试数 180 → 201 对齐实测。
 - 变更缘由：落位《项目整体规范.md》九件必建。
+
+## 2026-10-06 · 文档全仓核查修复（只动文档与 CHANGELOG 兑现删除）
+
+- **packaging/ 落说明**：新建 `packaging/README.md`（exe_entry.py / app.ico / _build_version.txt
+  三件的职责与门禁盲区），`目录说明.md` 树、一级目录表、快捷路径补 `packaging/`；
+  README/GIT/ARCHITECTURE 的目录表同步收录。
+- **数字对齐实测**：tests/README 180→201（补 test_actions/test_real_data/test_session_store 三行，
+  test_api 19→21）；src/README 33→35 个 .py、llm 5→7（补 actions.py/session_store.py 两行）、
+  版本 2.1.0→2.3.0；web/README 1830→2058 行、磁盘 14→12 个文件（VR.png/图标.png 已删）、
+  「三个不入库的资源」改「不入库的资源」、别动段 v5→v7；data/README 入库 42→46、
+  子目录表补 `real/`；GET-START 安装样例 2.2.0→2.3.0。
+- **AGENTS**：HTTP 路由复核命令从表格内含 `|` 的交替写法改为两条无交替 grep（原样粘贴会得 0）。
+- **GET-START kb-ingest 示例改为可直接粘贴**（以演示语料自指，幂等报 changed: 0）。
+- **CHANGELOG.md 兑现删除**：上节声明的「并入后删除」至此执行，内容已逐条在档（复核：
+  2.3.0 收纳节含 SILICONFLOW_BASE_URL 等全部条目）。

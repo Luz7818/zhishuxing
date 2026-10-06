@@ -13,7 +13,7 @@
 
 | 文件 | 干什么 | 备注 |
 |---|---|---|
-| `mobile_app.html` | 单文件 PWA：对话流（气泡消息/需求档案/经验引用/动作信封）、结构化路线、站内导航 Canvas、客流提示、三态深色模式 | 约 1830 行，样式与脚本内联；入口 URL 是 `/mobile` |
+| `mobile_app.html` | 单文件 PWA：对话流（气泡消息/需求档案/经验引用/动作信封）、结构化路线、站内导航 Canvas、客流提示、三态深色模式 | 2058 行（复核：`wc -l web/mobile/mobile_app.html`），样式与脚本内联；入口 URL 是 `/mobile` |
 | `manifest.webmanifest` | 安装清单：名称、`start_url`、主题色 `#4f46e5`、3 个图标 | `start_url` 指向同目录的 `mobile_app.html` |
 | `sw.js` | ServiceWorker：预缓存 9 个静态资源，`/api/` 与 `/outputs/` 走网络优先 | 缓存名 `zhishuxing-mobile-v7`，改了静态资源要一起升版本号 |
 | `icon-192.png`、`icon-512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`、`splash-logo.png` | 安装与启动屏图标 | **生成物**：`python scripts/render_brand_assets.py` |
@@ -27,18 +27,18 @@
 | `mobile/` | 移动端 PWA 的全部文件：页面本体、清单、ServiceWorker、图标与站内示意图。本目录的另一半 |
 
 `web/` 下只有 `mobile/` 这一个二级目录，没有构建产物目录（复核：
-`find web -mindepth 1 -maxdepth 1 -type d`）。磁盘上 `web/mobile/` 是 14 个文件，入库 11 个，
-差额就是下面「三个不入库的资源」那一节（复核：`ls web/mobile | wc -l` 与
+`find web -mindepth 1 -maxdepth 1 -type d`）。磁盘上 `web/mobile/` 是 12 个文件，入库 11 个，
+差额就是下面「不入库的资源」里的 `AR.gif`（复核：`ls web/mobile | wc -l` 与
 `git ls-files web/mobile | wc -l`）。
 
-## 三个不入库的资源
+## 不入库的资源
 
 | 文件 | 状态 | 为什么 |
 |---|---|---|
 | `AR.gif` | 被 `.gitignore` 的 `*.gif` 排除 | 「AR 实景导航」的演示素材，约 10 MB；缺失时页面显示"将 AR.gif 放入 web/mobile/ 即可启用"的占位说明而不是破图（复核：`web/mobile/mobile_app.html` 里的 `onerror` 分支） |
-| `VR.png`、`图标.png` | 被 `.gitignore` 显式点名排除 | 旧版品牌大图，全仓无引用，已被 `render_brand_assets.py` 生成的图标替代 |
+| `VR.png`、`图标.png` | 已从磁盘删除；`.gitignore` 仍显式点名排除 | 旧版品牌大图，全仓无引用，已被 `render_brand_assets.py` 生成的图标替代；留着排除规则是防止它们再被塞回目录 |
 
-本机如果这三个文件在，`ls web/mobile` 会看到它们；`git ls-files web/mobile` 只有 11 个。
+本机如果 `AR.gif` 在，`ls web/mobile` 会看到它；`git ls-files web/mobile` 没有它。
 别把 `VR.png` 或 `图标.png` 再塞回清单，它们没有任何引用点。
 
 ## 后端不可用时的行为
@@ -87,7 +87,7 @@ python -m pytest tests/test_api.py -k mobile -o addopts="" -q
 - `地图.png` 这个中文文件名：`mobile_app.html` 第 971 行的 `<img>`、第 1290 行的 `navImage.src`
   赋值，加上 `sw.js` 第 5 行的预缓存项，**三处**都写死了它。改英文名要同时改三处，
   漏一处的表现是破图或 SW 缓存 miss。复核：`grep -n "地图.png" web/mobile/mobile_app.html web/mobile/sw.js`。
-- `sw.js` 第 1 行的 `CACHE_NAME = "zhishuxing-mobile-v5"`：增删静态资源不升这个版本号，
+- `sw.js` 第 1 行的 `CACHE_NAME`（当前 `zhishuxing-mobile-v7`）：增删静态资源不升这个版本号，
   已经装到手机上的 PWA 会一直命中旧缓存，表现是"改了没生效"。复核：`sed -n '1p' web/mobile/sw.js`。
 - `AR.gif`：本机文件、不入库，却被第 1290 行当正常资源引用，靠 `onerror` 分支出占位说明。
   删本机那个文件没影响，删 `onerror` 那段就是新克隆破图。复核：

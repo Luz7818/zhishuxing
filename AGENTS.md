@@ -105,7 +105,7 @@
 | API 冒烟 | `Web smoke test passed.`，退出码 0 | `zhishuxing smoke` |
 | 配置体检 | 本机配好 3 项必需密钥 → 退出码 0；全新 clone 无 `.env` → 退出码 1 并列缺 3 项 | `zhishuxing doctor` |
 | 7 类报告 | 全部 `OK`，退出码 0 | `zhishuxing analyze --report all` |
-| HTTP 路由 | 24 个注册 / 23 条不同路径（`/api/chat` 与 `/api/settings` 各含 GET+POST） | `grep -cE '@app\.(get\|post)\(' src/zhishuxing/webapp/app.py` |
+| HTTP 路由 | 24 个注册 / 23 条不同路径（`/api/chat` 与 `/api/settings` 各含 GET+POST） | `grep -c '@app.get(' src/zhishuxing/webapp/app.py` 与 `grep -c '@app.post(' src/zhishuxing/webapp/app.py`，两条之和应为 24 |
 | CLI 子命令 | 9 个 | `grep -cE 'add_parser\("[a-z-]+"' src/zhishuxing/cli.py` |
 | CI | 定义在 `.github/workflows/ci.yml`：ubuntu-latest × Python `3.11` / `3.12`，装 `.[dev]` + CPU 版 torch，先 pyflakes 再 pytest（`MPLBACKEND=Agg`）。**这里不写"最近一次是哪个提交"**——分支每推一次它就变，写进文档同一次提交里就作废了；当前分支 HEAD 的徽章为 `passing`（复核见右）。本机没有 `gh`，但徽章与 Actions 接口对**公开仓都免认证**；要提交号与耗时再用 `/actions/runs`（匿名限 60 次/小时/IP，别拿它轮询） | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/zhishuxing/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`；步骤读 `.github/workflows/ci.yml` |
 | 版本 | `2.3.0` | `python -c "import zhishuxing;print(zhishuxing.__version__)"`，另一份在 `pyproject.toml` 的 `project.version` |

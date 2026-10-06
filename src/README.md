@@ -5,15 +5,15 @@
 
 包以 src-layout 打包（`pip install -e .`），入口 `zhishuxing = zhishuxing.cli:main`（复核：
 `pyproject.toml` 的 `[project.scripts]`）。`zhishuxing/__init__.py` 里的 `__version__` 与
-`pyproject.toml` 的 `version` 各自写了一份，当前都是 `2.1.0`（复核：
+`pyproject.toml` 的 `version` 各自写了一份，当前都是 `2.3.0`（复核：
 `python -c "import zhishuxing;print(zhishuxing.__version__)"`）。
 
 ## 文件清单
 
 `src/` 根下只有 `README.md`、包目录 `zhishuxing/`，以及生成物 `zhishuxing.egg-info/`。
-下表是包顶层那 4 个 `.py`。包内共 33 个 `.py` 且全部入库（复核：
+下表是包顶层那 4 个 `.py`。包内共 35 个 `.py` 且全部入库（复核：
 `find src/zhishuxing -name "*.py" -not -path "*__pycache__*" | wc -l` 与
-`git ls-files "src/**/*.py" | wc -l`，两条都输出 `33`）。
+`git ls-files "src/**/*.py" | wc -l`，两条都输出 `35`）。
 
 | 文件 | 干什么 | 被谁调用 |
 |---|---|---|
@@ -33,7 +33,7 @@
 | `zhishuxing/` | 整个 Python 包：4 个顶层模块 + 下面 6 个子包，入口是 `cli.py` |
 | `zhishuxing/core/` | 7 个 `.py`：A* 导航、场景解析、客流撒点、行人引导仿真、面板编排、GIF 动图。不依赖 torch，不依赖网络 |
 | `zhishuxing/rl/` | 7 个 `.py`：MADDPG/MATD3 算法、网络与回放池、Unity 环境封装、训练循环、推理运行时 |
-| `zhishuxing/llm/` | 5 个 `.py`：需求档案、BM25 经验检索、回答编排、适配器（Mock 与 SiliconFlow） |
+| `zhishuxing/llm/` | 7 个 `.py`：需求档案、BM25 经验检索、回答编排、适配器（Mock 与 SiliconFlow）、动作协议、会话持久化 |
 | `zhishuxing/analysis/` | 5 个 `.py`：7 类报告、合成数据、绘图与字体、CSV IO。全仓唯一一份实现 |
 | `zhishuxing/planning/` | 2 个 `.py`：`amap.py` 真实路线规划（OD 提取 → 地理编码 → 公交换乘） |
 | `zhishuxing/webapp/` | 3 个 `.py` + `templates/index.html` + `static/`：应用工厂、服务层、控制台前端 |
@@ -73,6 +73,8 @@
 | `profile.py` | `PassengerProfile`：4 维优先级 + 硬约束 + 软偏好 + 5 类画像（画像按 `PERSONA_IMPLICATIONS` 派生隐含偏好）；规则关键词优先、真实 LLM JSON 兜底；`to_cost_spec()` 翻译成 A* 参数 | `assistant.py`、`service.py plan_route`、`tests/test_profile.py` |
 | `kb.py` | 纯 Python BM25（中文 2-gram + ASCII 词，标题重复一次加权）；`ingest_directory()` 把 txt/md/html 清洗切段写入 JSONL，按 id 覆盖所以可重复跑 | `assistant.py`、`cli.py kb-ingest` |
 | `adapters.py` | `MockLLMAdapter`（确定性模板，`mock=True`）与 `SiliconFlowLLMAdapter`（OpenAI 兼容，缺 Key 或未装 `openai` 时抛 `RuntimeError` 由调用方降级） | `system.py`、`service.py`、`assistant.py` |
+| `actions.py` | 智能体动作协议：动作注册表白名单 + 两条触发通道（"打开/切换板块"规则短路不经 LLM、泛化请求由 LLM 输出 JSON 动作信封），服务端校验后下发前端执行（如 `switch_tab`） | `assistant.py` 的 `handle()` |
+| `session_store.py` | 会话持久化：SQLite 单文件（`data/runs/sessions.db`）写穿读缓存，重启按 `session_id` 惰性回填，30 天不活跃清理 | `assistant.py`（构造 `SessionStore`） |
 
 ## `zhishuxing/planning/` 与 `zhishuxing/analysis/`
 

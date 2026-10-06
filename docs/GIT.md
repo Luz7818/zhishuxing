@@ -12,7 +12,7 @@
 
 | 判定 | 规则 |
 |---|---|
-| 必须入库 | `src/`、`configs/`、`data/transfer_kb/` 与 `data/samples/`、`data/real/` 的模板 CSV、`web/`、`unity/`（UPM 本地包）、`scripts/`、`tests/`、`code_optimization/` 的基准脚本与报告、`legacy/`、九件文档 |
+| 必须入库 | `src/`、`configs/`、`data/transfer_kb/` 与 `data/samples/`、`data/real/` 的模板 CSV、`web/`、`unity/`（UPM 本地包）、`scripts/`、`packaging/`（exe 打包资产与入口）、`tests/`、`code_optimization/` 的基准脚本与报告、`legacy/`、九件文档 |
 | 禁止上传 | `data/outputs/`、`data/model/`、`data/runs/`（运行时产物）；`data/real/` 的真实 CSV（可能含敏感客流数据，只有 `*.example.csv` 模板入库）；`.env*`（`!.env.example` 例外必须在 `.env.*` 规则**之后**，gitignore 最后匹配赢——顺序换了它就静默不入库）；`third_party/`（上游镜像）；`*.egg-info/` |
 | 密钥 | 任何真实密钥（高德/LLM）永不入库；2.2.0 已做全历史重写收口（`.git` 214 MB → 18 MB，全历史密钥字面量 0 残留），引用旧 SHA 的文档需复核 |
 

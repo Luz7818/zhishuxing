@@ -1,12 +1,12 @@
 # data/ —— 输入语料与产物
 
 > 用途：说清哪些文件是入库的源数据、哪些是跑一次就变的产物，以及改动的正确顺序。
-> 本目录只有 `transfer_kb/` 与 `samples/` 入库；三个运行时目录首次运行才建出来。
+> 本目录入库的只有 `real/` 的模板、`transfer_kb/` 与 `samples/`；三个运行时目录首次运行才建出来。
 
 ## 文件清单
 
-本目录根下只有 `README.md` 一份文件，其余入库文件全在 `transfer_kb/` 与 `samples/` 两个子目录里，
-逐份说明见下面两张表，这里只登记口径与命名规律。
+本目录根下只有 `README.md` 一份文件，其余入库文件全在 `real/`、`transfer_kb/` 与 `samples/`
+三个子目录里，逐份说明见下面两张表，这里只登记口径与命名规律。
 
 | 文件 | 干什么 | 备注 |
 |---|---|---|
@@ -15,7 +15,7 @@
 | `transfer_kb/` 的 23 个文件 | 22 篇语料 + 1 份入库语料 `corpus.jsonl` | 语料命名 `NN_主题.md`，一文件一篇；23 复核 `git ls-files data/transfer_kb \| wc -l` |
 | `samples/` 的 18 个文件 | 报告与演示的参考产物 | 带 `_simulated` 后缀的 6 个出自固定种子合成数据；18 复核 `git ls-files data/samples \| wc -l` |
 
-`data/` 下入库文件合计 42 个（复核：`git ls-files data` 计数）。`outputs/`、`model/`、`runs/`
+`data/` 下入库文件合计 46 个（复核：`git ls-files data` 计数）。`outputs/`、`model/`、`runs/`
 里的东西一个都没入库，所以不在计数内（复核：`git check-ignore -v data/outputs data/model data/runs`）。
 
 ## 子目录
@@ -24,6 +24,7 @@
 |---|---|---|
 | `transfer_kb/` | ✓ | 换乘经验知识库：源文档 + 入库语料 |
 | `samples/` | ✓ | 参考产物，README 展示图与奖励 npy 从这里取；只由脚本重建 |
+| `real/` | 部分 ✓（模板入库） | 真实客流数据约定目录：`README.md` 与 3 个 `*.example.csv` 模板入库，真实 CSV 不入库 |
 | `outputs/` | ✗（在 `.gitignore` 里） | 运行时输出：报告图、CSV、GIF、JSON、Web 面板图 |
 | `model/` | ✗ | 训练权重 `*_actor_*_agent_*.pth` |
 | `runs/` | ✗ | TensorBoard 日志 |

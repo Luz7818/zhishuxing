@@ -49,9 +49,9 @@ zhishuxing serve --host 127.0.0.1 --port 7860   # 控制台 http://127.0.0.1:786
 
 Windows 下也可直接双击根目录 [launcher.bat](launcher.bat)：未运行则拉起 serve，就绪后自动打开浏览器。
 
-**桌面版（不走浏览器）**：`python scripts/build_exe.py` 构建 onedir 产物 `dist/zhishuxing/`，
+**桌面版（不走浏览器）**：`python packaging/build_exe.py` 构建 onedir 产物 `dist/zhishuxing/`，
 双击其中的 `zhishuxing.exe` 直接弹出原生应用窗口（pywebview + Edge WebView2，本地服务随
-窗口启停）；`python scripts/package_zip.py` 进一步组装便携分发包
+窗口启停）；`python packaging/package_zip.py` 进一步组装便携分发包
 `dist/zhishuxing-<版本>-win64-portable.zip`，解压即用、删除即卸载。构建细节见
 [packaging/README.md](packaging/README.md)。
 
@@ -99,7 +99,8 @@ Windows 下也可直接双击根目录 [launcher.bat](launcher.bat)：未运行�
 | `web/` | 移动端 PWA 静态文件 |
 | `unity/` | Unity 侧智能体脚本与接入说明（不是可构建工程） |
 | `tests/` | pytest 套件，按链路分 14 个文件 |
-| `scripts/` 与 `packaging/` | 品牌图标渲染、Windows 交付物打包脚本（桌面版 onedir + 便携 zip / 兼容 onefile），及打包资产（PyInstaller 入口与生成物） |
+| `scripts/` | 品牌图标渲染（PWA 图标与 favicon） |
+| `packaging/` | Windows 交付物打包一条链：构建脚本 + 便携 zip 组装 + PyInstaller 入口与生成资产（桌面版 onedir / 兼容 onefile） |
 | `legacy/` | 历史归档：迁移前的 Streamlit 原型（`ui/`）与行人仿真向量化基准（`code_optimization/`） |
 
 逐目录说明见各目录的 `README.md`；产物目录见 `.docsignore`。

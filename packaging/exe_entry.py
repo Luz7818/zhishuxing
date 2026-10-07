@@ -1,4 +1,4 @@
-"""浏览器模式冻结入口:PyInstaller 打包入口(由 scripts/build_exe.py --mode onefile 使用)。
+"""浏览器模式冻结入口:PyInstaller 打包入口(由 packaging/build_exe.py --mode onefile 使用)。
 
 启动本地服务后打开系统浏览器——保留为兼容回退与开发自检链路;
 "不走浏览器"的桌面窗口模式见 desktop_entry.py(onedir 构建)。

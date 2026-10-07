@@ -1,4 +1,4 @@
-"""桌面模式冻结入口:pywebview 原生窗口,不打开浏览器(由 scripts/build_exe.py --mode onedir 使用)。
+"""桌面模式冻结入口:pywebview 原生窗口,不打开浏览器(由 packaging/build_exe.py --mode onedir 使用)。
 
 与 exe_entry(浏览器模式)共用 bootstrap 引导,最后一公里不同:
 1. WebView2 运行时预检(winreg 只读),缺失时原生对话框给出安装指引,不弹黑控制台;

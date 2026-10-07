@@ -1,7 +1,7 @@
-"""组装便携 zip 分发包:python scripts/package_zip.py [--skip-build]
+"""组装便携 zip 分发包:python packaging/package_zip.py [--skip-build]
 
 流程:
-1. (默认)先执行 scripts/build_exe.py --mode onedir 构建桌面模式产物;
+1. (默认)先执行 packaging/build_exe.py --mode onedir 构建桌面模式产物;
 2. 把 dist/zhishuxing/ 整目录 + 使用说明.txt + LICENSE 压成
    dist/zhishuxing-<version>-win64-portable.zip,解压即用。
 

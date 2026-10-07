@@ -1,8 +1,8 @@
-"""构建 Windows 桌面交付物:python scripts/build_exe.py [--mode onedir|onefile]
+"""构建 Windows 桌面交付物:python packaging/build_exe.py [--mode onedir|onefile]
 
 两种模式:
 - onedir(默认,桌面模式):入口 packaging/desktop_entry.py,pywebview 原生窗口、不打开浏览器;
-  产物 dist/zhishuxing/ 目录,供 scripts/package_zip.py 组装便携 zip。
+  产物 dist/zhishuxing/ 目录,供 packaging/package_zip.py 组装便携 zip。
   pythonnet/WebView2 的 DLL 与运行时配置依赖 collect-all 完整收集,onedir 布局最稳、启动最快。
 - onefile(浏览器模式):入口 packaging/exe_entry.py,起服务后打开系统浏览器;
   产物 dist/zhishuxing.exe 单文件,保留为兼容回退。

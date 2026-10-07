@@ -12,6 +12,7 @@
 | 文件 | 干什么 | 备注 |
 |---|---|---|
 | `render_brand_assets.py` | 从矢量设计参数直接绘制品牌 PNG：PWA 图标与 favicon | 入口脚本，无参数 |
+| `make_license.py` | 厂商侧授权签发：`--customer --days --out` 生成 HMAC 签名的 license.lic | **只在厂商环境运行**；签发密钥在 `zhishuxing/licensing.py`，本脚本不进 Docker 镜像与交付包 |
 
 ## render_brand_assets.py
 

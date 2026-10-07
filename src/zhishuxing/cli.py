@@ -1,4 +1,4 @@
-"""统一命令行入口：demo / train / analyze / simulate / animate / serve / smoke / doctor。
+"""统一命令行入口：demo / train / analyze / simulate / animate / serve / smoke / doctor / kb-ingest / license / verify。
 
 用法示例：
     zhishuxing demo --reports
@@ -7,12 +7,15 @@
     zhishuxing train --algorithm MADDPG --max_train_steps 500000
     zhishuxing serve --host 0.0.0.0 --port 7860 --production
     zhishuxing doctor          # 检查密钥配置与当前降级项（不输出明文）
+    zhishuxing license         # 查看授权状态（--file 激活；无授权=试用模式）
+    zhishuxing verify          # 部署验收：本地体检；--url 探测运行中的实例
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import shutil
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -86,6 +89,13 @@ def _build_parser() -> argparse.ArgumentParser:
     kb_ingest.add_argument("--hub", type=str, default="shenzhen_north", help="枢纽标识（写入每条语料的 hub 字段）")
     kb_ingest.add_argument("--query", type=str, default=None, help="入库后用该查询自检检索效果")
 
+    license_cmd = sub.add_parser("license", help="查看授权状态；--file 把授权文件激活到 workspace（无授权=试用模式）")
+    license_cmd.add_argument("--file", type=Path, default=None, help="待激活的授权文件（复制为 workspace 根的 license.lic）")
+
+    verify_cmd = sub.add_parser("verify", help="部署验收：本地体检（默认）或 --url 探测运行中的实例；产出验收报告，退出码 0=通过")
+    verify_cmd.add_argument("--url", type=str, default=None, help="远程模式：待验收实例的基地址（如 http://127.0.0.1:7860）")
+    verify_cmd.add_argument("--timeout", type=int, default=5, help="远程模式单请求超时秒数")
+    verify_cmd.add_argument("--report_dir", type=Path, default=None, help="验收报告目录（默认 data/outputs）")
     return parser
 
 
@@ -241,8 +251,15 @@ def cmd_animate(args) -> int:
 
 
 def cmd_serve(args) -> int:
+    from . import licensing
     from . import settings as settings_store
     from .webapp.app import create_app
+
+    try:
+        licensing.ensure_serve_allowed()
+    except licensing.LicenseExpired as exc:
+        print(f"服务启动被拒绝: {exc}", file=sys.stderr)
+        return 3
 
     # 密钥写入接口按「监听地址」裁决,与开发/生产托管方式无关:
     # 只有监听本机回环地址时默认可写;监听非本机地址时必须显式 --allow-remote-settings
@@ -309,6 +326,10 @@ def cmd_doctor(args) -> int:
     print()
     print(f"  在线能力 : 真实路线规划 {plan_label} / 高德底图 {map_label} / 真实 LLM {llm_label}")
     print("  离线演示 : 始终可用（Mock 对话 + Canvas 折线 + 内置枢纽引擎），与是否填写密钥无关")
+    lic = state["license"]
+    print(f"  授权     : {lic['message']}")
+    if lic["status"] in ("missing", "invalid"):
+        print(f"             授权文件位置: {lic['file']}（向厂商索取后放至此处,或 zhishuxing license --file <文件> 激活）")
 
     missing_required = state["missing"]
     blocking = missing_required + (missing_optional if args.strict else [])
@@ -387,6 +408,31 @@ def cmd_smoke(_args) -> int:
     return 0
 
 
+def cmd_license(args) -> int:
+    from . import licensing
+
+    if args.file:
+        source = Path(args.file)
+        if not source.exists():
+            print(f"授权文件不存在: {source}", file=sys.stderr)
+            return 2
+        target = licensing.license_file_path()
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+        print(f"已激活: {source} -> {target}")
+    state = licensing.read_license()
+    print(f"授权状态: {state.status}")
+    print(f"  {state.message}")
+    print(f"  文件: {state.file}")
+    return 3 if state.status == "expired" else 0
+
+
+def cmd_verify(args) -> int:
+    from .verify import run_verify
+
+    return run_verify(url=args.url, timeout=args.timeout, report_dir=args.report_dir)
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     args = _build_parser().parse_args(argv)
     handlers = {
@@ -399,6 +445,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         "smoke": cmd_smoke,
         "doctor": cmd_doctor,
         "kb-ingest": cmd_kb_ingest,
+        "license": cmd_license,
+        "verify": cmd_verify,
     }
     return handlers[args.command](args)
 

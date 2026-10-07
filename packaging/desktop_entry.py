@@ -156,6 +156,14 @@ def main() -> int:
     if viewer:
         print("[desktop] 检测到已有实例,本次仅作为窗口连接既有服务")
     else:
+        from zhishuxing import licensing
+
+        try:
+            licensing.ensure_serve_allowed()
+        except licensing.LicenseExpired as exc:
+            log(f"license gate refused: {exc}")
+            error_dialog("授权已过期", f"{exc}\n\n续期后把新的 license.lic 放到 workspace 根目录,再重新启动。")
+            return 3
         threading.Thread(target=run_server, daemon=True).start()
 
     window = webview.create_window(

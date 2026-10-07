@@ -1,0 +1,32 @@
+# 智枢星 私有化部署编排（由打包脚本按版本号生成,镜像名与 image tar 对号入座）
+#
+# 前置：同目录已 docker load 载入镜像 tar;.env 已按 .env.example 填好。
+# 生产建议：ports 收窄为 "127.0.0.1:7860:7860",只让本机 Nginx 反代对外。
+# 数据说明：outputs/model/runs 三个命名卷在容器升级重建后保留;会话库 sessions.db 在 runs 卷。
+
+services:
+  zhishuxing:
+    image: zhishuxing:{VERSION}
+    container_name: zhishuxing
+    ports:
+      - "7860:7860"
+    env_file:
+      - .env
+    volumes:
+      - zhishuxing_outputs:/app/data/outputs
+      - zhishuxing_model:/app/data/model
+      - zhishuxing_runs:/app/data/runs
+      # 授权文件：拿到 license.lic 后放到本文件同目录,再取消下行注释并 `docker compose up -d`
+      # - ./license.lic:/app/license.lic:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:7860/health', timeout=5)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  zhishuxing_outputs:
+  zhishuxing_model:
+  zhishuxing_runs:

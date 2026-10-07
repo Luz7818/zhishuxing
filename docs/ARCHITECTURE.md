@@ -82,6 +82,16 @@
 - **降级逻辑住在各适配器里，`settings.py` 只报状态不改变行为。** 留空即：LLM → Mock 模板；
   底图 → Canvas 折线；规划 → 内置枢纽引擎；策略 → `HeuristicPolicy`。新增在线能力要同时提供
   "没有它也能跑"的路径，并把 `degrades_to` 写进注册表。
+- **管理端鉴权是"分域"而不是整站登录。** `ADMIN_PASSWORD` 未设置 = 门禁关闭（历史行为）；
+  设置后仅拦 `app.ADMIN_POST_PATHS` 里的管理动作 POST，乘客端点与 `/mobile` 永远公开。
+  会话令牌 Cookie 与 Bearer 是同一枚（`webapp/auth.py` 签发，12h），**不存在第二套会话格式**；
+  登录失败锁是进程内的，多实例部署要在最外层网关限流。判定顺序照
+  `app.py` 的 `admin_gate` 写，不要凭印象改。
+- **授权(license)只在 serve 启动时拒绝，其余状态只展示。** 状态机在 `licensing.py`：
+  missing(试用)/valid/expiring/grace/expired/invalid；`ensure_serve_allowed()` 只拦
+  `serve`（过期超 14 天宽限，退出码 3），页面/doctor/`/api/settings` 如实展示但从不
+  自行改变功能。license.lic 路径调用时求值（workspace 根，`ZHISHUXING_LICENSE_FILE`
+  可覆盖），不要改回 import 期求值——exe 的 `ZHISHUXING_WORKSPACE` 设置晚于 import。
 - **`analysis/` 是唯一来源。** 字体配置、`moving_average`、CSV 读写、合成数据生成器归一到
   `analysis/{plotting,io_utils,synthetic}.py`；别处再写一份字体会让无头环境重新出现方框字。
 - **`matplotlib.use("Agg")` 在 `analysis/plotting.py` 顶层。** 要绘图的模块必须先 import 它

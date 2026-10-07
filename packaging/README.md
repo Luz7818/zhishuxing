@@ -23,8 +23,10 @@
 | `exe_entry.py` | 浏览器模式入口（onefile 构建）：bootstrap → 端口占用视为已有实例直接开浏览器 → 后台轮询就绪后开浏览器 → 复用 `serve --production`（waitress） | 由 `packaging/build_exe.py --mode onefile` 指定，勿直接运行 |
 | `build_exe.py` | PyInstaller 构建脚本：`--mode onedir`（默认）出桌面模式目录 `dist/zhishuxing/`，`--mode onefile` 出浏览器模式单文件 `dist/zhishuxing.exe`；顺带生成 `app.ico` 与 `_build_version.txt` | 需先 `pip install pyinstaller`（桌面模式另需 `pip install pywebview`）；见下面「构建与组装」 |
 | `package_zip.py` | 把 onedir 产物 + `使用说明.txt` + LICENSE 组装为便携分发包 `dist/zhishuxing-<版本>-win64-portable.zip` | `--skip-build` 直接打包现有产物；见下面「构建与组装」 |
+| `build_deploy.py` | 私有化离线交付包：docker build → `docker save` 后 gzip 成镜像包 → 组装 `dist/zhishuxing-deploy-<版本>.zip`（镜像 + compose + .env.example + LICENSE + eula-template + DEPLOY-PRIVATE + 交付说明） | 需要本机 docker 守护进程；目标机 `docker load` 免网络；见 `docs/DEPLOY-PRIVATE.md` |
+| `deploy-compose.yml` | 交付包内的 compose 模板（镜像名按版本号替换）：数据三卷 + license.lic 挂载位 + env_file 注入 + healthcheck | 由 `build_deploy.py` 读取生成，勿直接运行 |
 | `app.ico` | exe 图标，由 `web/mobile/icon-512.png` 经 pillow 转换生成 | 生成物，勿手改 |
-| `_build_version.txt` | 内置资源版本戳（内容如 `2.4.0`），exe 首次运行据此决定是否重解压资源（版本戳一致则跳过，升级即重建） | 生成物，勿手改 |
+| `_build_version.txt` | 内置资源版本戳（内容为打包时 `pyproject.toml` 的版本号），exe 首次运行据此决定是否重解压资源（版本戳一致则跳过，升级即重建） | 生成物，勿手改 |
 
 ## 构建与组装
 

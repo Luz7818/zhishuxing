@@ -229,3 +229,52 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   `siliconflow_config()`。
 - **文档**:src/README 同步(`__init__` 职责、rl 惰性导出描述、envs.py 早已懒加载的
   过期描述);AGENTS/GET-START 版本样例 2.3.0 → 2.4.0。
+
+## 2026-10-07 · 2.5.0 可发售私有化 v1(离线授权 / 部署验收 / 管理端鉴权 / 离线交付包)
+
+### Added(新增)
+
+- **离线授权机制** `src/zhishuxing/licensing.py`:HMAC-SHA256 签名 + 客户名 + 有效期的
+  `license.lic`;状态机 missing(试用)/valid/expiring(剩≤30天)/grace(过期≤14天宽限)/
+  expired(拒启)/invalid(篡改按试用,如实标注);状态并入 `settings.read_state()` →
+  GET /api/settings、doctor、移动端 keyStatus 三端展示;CLI `license` 子命令(查看/
+  `--file` 激活);`serve` 启动门禁(过期超宽限打印原因、退出码 3);厂商签发工具
+  `scripts/make_license.py`(不进镜像与交付包);桌面顶栏 `#lic-chip` 与移动端授权提醒
+  横幅(`web/mobile/sw.js` CACHE_NAME v8→v9)。HMAC 对称密钥防复制不防逆向,v1 明示边界,
+  升级路径 Ed25519 记 TODO。
+- **部署验收** `src/zhishuxing/verify.py` + CLI `verify` 子命令:本地体检(配置/授权/核心
+  端点/密钥不泄漏/数据目录可写/管理鉴权自检/镜像无 samples 时 WARN)与远程模式(`--url`
+  探测运行实例);PASS/WARN/FAIL 三态 + 末行 `VERIFY PASS` + 退出码 0/1,markdown 验收
+  报告落 `data/outputs/`(容器内 `verify --url` 即部署后验收,客户机免 Python)。
+- **管理端鉴权** `src/zhishuxing/webapp/auth.py` + `app.py` before_request 分域门禁:
+  `ADMIN_PASSWORD` 设置才启用(未设置 = 历史行为不变);保护域仅管理动作 POST 9 条
+  (换导航图/微调/模拟指标/LLM 加载/RL 权重/RL 仿真/面板/报告/改配置),乘客对话/规划、
+  `/mobile`、演示 GET、`/health` 保持公开;PBKDF2 口令校验 + HMAC 会话令牌(Cookie 与
+  Bearer 同一枚,12h)+ 登录失败 5 次锁 10 分钟;`/admin/login` 独立登录页 +
+  `/api/admin/login|logout`;`POST /api/settings` 的 loopback 双闸不放宽。
+- **离线交付包** `packaging/build_deploy.py` + `packaging/deploy-compose.yml`:docker
+  build → save|gzip → 组装 `dist/zhishuxing-deploy-<版本>.zip`(镜像/compose/.env.example/
+  LICENSE/EULA/DEPLOY-PRIVATE/交付说明);镜像名与 tar 对号入座,数据三卷,license 挂载位。
+- **文档** `docs/DEPLOY-PRIVATE.md`(离线部署五步/安全模型/升级回滚/排障)、
+  `docs/eula-template.md`(明示需法务复核);`.env.example` 增 `ADMIN_PASSWORD` 项。
+
+### Changed(变更)
+
+- 版本 2.4.0 → 2.5.0;AGENTS「当前状态」:测试 234、CLI 子命令 11、路由 27/26;
+- `packaging/exe_entry.py`、`desktop_entry.py`:serve 启动前加授权门禁,过期弹原生
+  错误窗(onefile 弹控制台/onedir 弹对话框),退出码 3。
+
+### 验证
+
+- `python -m pytest` 234 passed(含新增 test_licensing 14 例、test_auth 13 例、
+  test_verify 6 例,全部离线确定性);`python -m pyflakes src/ scripts/ tests/` 0 告警;
+- 签发→激活→判定往返(测试客户/365 天 → valid);过期超宽限 `serve` 退出码 3;
+  分域鉴权:未设口令全端点行为不变、设口令后管理 POST 401/Cookie 与 Bearer 放行/
+  锁定生效/公开域不受影响;verify 本地模式出报告、过期授权转 FAIL;
+- **Docker 交付包真机实测(本机 Docker Desktop 29.8.2)**:`build_deploy.py` 出真包
+  `dist/zhishuxing-deploy-2.5.0.zip`(120 MB)→ 删本地镜像后 `docker load` 交付 tar
+  (5.8s)→ `compose up -d` 25s healthy → 容器内 `verify --url` **VERIFY PASS** →
+  验收报告经 `/outputs/` 下载(200)→ 厂商签发 license 拷入容器即生效(WARN 清零,
+  无需重启)→ 宿主机验证管理端鉴权(未登录 401 / Bearer 200)→ `compose down -v`
+  清场。授权有效态 `license` 子命令的"文件:"字段空显示 bug 当场发现并修复
+  (test_licensing 补一条断言钉住)。

@@ -1146,9 +1146,16 @@
         : `${items.length} 项全部已配置`;
       const caps = settings.capabilities || {};
       const degraded = Object.keys(CAPABILITY_LABELS).filter(name => !caps[name]);
-      return degraded.length
+      const degradeText = degraded.length
         ? `<b>当前为离线降级演示</b>${degraded.map(n => CAPABILITY_LABELS[n]).join('、')}未启用,路线仍按枢纽内偏好感知规划给出。`
         : '';
+      const lic = settings.license || {};
+      const licenseText = (lic.status === 'missing' || lic.status === 'invalid')
+        ? '<b>试用模式</b>未激活商业授权,全功能可用。'
+        : (lic.status === 'expiring' || lic.status === 'grace')
+          ? `<b>授权提醒</b>${escapeHtml(lic.message || '')}`
+          : '';
+      return degradeText + (licenseText ? ` ${licenseText}` : '');
     }
     async function loadKeyStatus() {
       try {

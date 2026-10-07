@@ -1,5 +1,8 @@
 # 部署指南(2.3 起以 Docker 为标准路线)
 
+> 离线私有化交付（交付包 `zhishuxing-deploy-<版本>.zip`、目标机免外网、部署验收、授权激活、
+> 升级回滚）见 **[DEPLOY-PRIVATE.md](DEPLOY-PRIVATE.md)**;本篇讲从源码出发的部署路线。
+
 ## 路线 A:Docker(推荐)
 
 前置:安装 Docker;`.env` 按 `.env.example` 填好密钥(全部留空也能跑,全链路离线降级)。

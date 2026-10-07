@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from . import config as cfg
+from . import licensing
 
 # 单个值长度上限：密钥/URL 都远小于此，超出即视为误粘贴或攻击载荷
 MAX_VALUE_LENGTH = 400
@@ -186,6 +187,8 @@ def read_state() -> Dict[str, Any]:
         "ready": not missing,
         "capabilities": capabilities(),
         "offline_demo_ready": True,
+        "license": licensing.license_state(),
+        "admin_auth_enabled": bool((os.environ.get("ADMIN_PASSWORD") or "").strip()),
     }
 
 

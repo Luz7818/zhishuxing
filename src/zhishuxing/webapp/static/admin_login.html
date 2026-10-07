@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>智枢星 · 管理登录</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    background: linear-gradient(160deg, #0f2540 0%, #163a5f 100%); color: #1f2d3d;
+  }
+  .card {
+    width: min(360px, 92vw); background: #fff; border-radius: 14px; padding: 32px 28px;
+    box-shadow: 0 18px 48px rgba(0,0,0,.28);
+  }
+  h1 { margin: 0 0 4px; font-size: 20px; }
+  .sub { margin: 0 0 20px; font-size: 12px; color: #8a97a5; }
+  label { display: block; font-size: 13px; margin: 14px 0 6px; color: #5a6b7b; }
+  input[type=password] {
+    width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #d5dde5;
+    border-radius: 8px; outline: none;
+  }
+  input[type=password]:focus { border-color: #2f6fb2; }
+  button {
+    width: 100%; margin-top: 20px; padding: 11px 0; font-size: 15px; border: 0;
+    border-radius: 8px; background: #2f6fb2; color: #fff; cursor: pointer;
+  }
+  button:disabled { opacity: .6; cursor: default; }
+  #msg { margin: 14px 0 0; font-size: 13px; min-height: 18px; }
+  #msg.err { color: #c0392b; }
+  #msg.ok { color: #1e8449; }
+  .back { display: block; margin-top: 16px; text-align: center; font-size: 13px; color: #2f6fb2; text-decoration: none; }
+</style>
+</head>
+<body>
+<main class="card">
+  <h1>智枢星 · 管理登录</h1>
+  <p class="sub">管理动作（换导航图 / 微调 / RL 权重 / 跑报告 / 改配置）需要管理员会话</p>
+  <form id="form">
+    <label for="password">管理员口令（部署时由 ADMIN_PASSWORD 环境变量设置）</label>
+    <input type="password" id="password" autocomplete="current-password" autofocus>
+    <button type="submit" id="btn">登 录</button>
+  </form>
+  <p id="msg"></p>
+  <a class="back" href="/">← 返回控制台首页</a>
+</main>
+<script>
+const TOKEN_KEY = "zhishuxing_admin_token";
+const $msg = document.getElementById("msg");
+const $btn = document.getElementById("btn");
+
+function say(text, cls) { $msg.textContent = text; $msg.className = cls || ""; }
+
+document.getElementById("form").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  $btn.disabled = true;
+  say("登录中…");
+  try {
+    const resp = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: document.getElementById("password").value }),
+    });
+    const payload = await resp.json().catch(() => ({}));
+    if (resp.ok && payload.ok && payload.data && payload.data.token) {
+      localStorage.setItem(TOKEN_KEY, payload.data.token);
+      say("登录成功，正在跳转…", "ok");
+      setTimeout(() => { location.href = "/"; }, 400);
+      return;
+    }
+    if (payload.data && payload.data.enabled === false) {
+      say("服务未启用管理鉴权（未设置 ADMIN_PASSWORD），无需登录。", "ok");
+      return;
+    }
+    say((payload.error || "登录失败") + (payload.detail ? "：" + payload.detail : ""), "err");
+  } catch (err) {
+    say("网络错误：" + err.message, "err");
+  } finally {
+    $btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

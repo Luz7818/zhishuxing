@@ -13,7 +13,7 @@
 解释「为什么这样走符合你的需求」。引导策略由 MADDPG 多智能体强化学习训练，
 没有训练权重时自动回退启发式并如实标注。
 
-**201 个测试通过 · 9 个 CLI 子命令 · 24 个路由注册（23 条不同路径）· 7 类分析报告（复核：`AGENTS.md` 的「当前状态」）**
+**234 个测试通过 · 11 个 CLI 子命令 · 27 个路由注册（26 条不同路径）· 7 类分析报告（复核：`AGENTS.md` 的「当前状态」）**
 
 ## 30 秒跑通
 
@@ -59,7 +59,7 @@ Windows 下也可直接双击根目录 [launcher.bat](launcher.bat)：未运行�
 没装 `mlagents_envs` 只有 `train` 用不了；没装 `openai` 或没配 LLM 密钥时对话走 Mock 模板，
 响应里如实标注当前是本地模板模式。
 
-## 9 个子命令
+## 11 个子命令
 
 | 命令 | 一句职责 |
 |---|---|
@@ -72,6 +72,8 @@ Windows 下也可直接双击根目录 [launcher.bat](launcher.bat)：未运行�
 | `smoke` | 不占端口的 API 冒烟检查，改完后端最先跑它 |
 | `doctor` | 配置体检：7 项托管配置的状态、当前降级行为；退出码 0 就绪 / 1 有缺失 |
 | `kb-ingest` | 把 txt/md/html 换乘经验清洗入库为 JSONL 语料，`--query` 可当场自检检索 |
+| `license` | 查看授权状态；`--file` 激活授权文件到 workspace（无授权 = 试用模式，全功能可用） |
+| `verify` | 部署验收：本地体检（默认）或 `--url` 探测运行实例；出验收报告，退出码 0 通过 / 1 未通过 |
 
 ## 双端形态
 
@@ -84,8 +86,19 @@ Windows 下也可直接双击根目录 [launcher.bat](launcher.bat)：未运行�
   结构化路线、站内导航 Canvas、客流提示与控制台同源设计；调 `/api/chat(+reset)`、`/api/settings`、
   `/api/navigation/*`、`/api/scenarios`、`/api/dashboard/run`，后端不可用时回退演示数据。
 
-全部 HTTP 路由（24 个注册 / 23 条不同路径）的逐条清单见[上手手册](docs/GET-START.md)第 3.3 节，
+全部 HTTP 路由（27 个注册 / 26 条不同路径）的逐条清单见[上手手册](docs/GET-START.md)第 3.3 节，
 以 `src/zhishuxing/webapp/app.py` 为准。
+
+## 商用交付
+
+- **离线授权**：无授权文件 = 试用模式（全功能可用，界面/doctor 如实标注）；`license.lic` 载明
+  客户与到期日，到期前 30 天提醒、过期后有 14 天宽限。厂商侧用 `scripts/make_license.py` 签发，
+  客户侧 `zhishuxing license` 激活与查看。
+- **管理端鉴权**：`.env` 设置 `ADMIN_PASSWORD` 后，管理动作端点（换导航图/微调/RL 权重/跑报告/
+  改配置）需要登录（入口 `/admin/login`）；乘客对话/规划与 `/mobile` 始终公开。
+- **私有化交付**：`python packaging/build_deploy.py` 出离线 Docker 交付包（目标机只需 Docker、
+  免外网部署），容器内 `zhishuxing verify --url` 做部署验收。全流程见
+  [docs/DEPLOY-PRIVATE.md](docs/DEPLOY-PRIVATE.md)，许可条款模板见 [docs/eula-template.md](docs/eula-template.md)。
 
 ## 目录怎么分
 
@@ -98,9 +111,9 @@ Windows 下也可直接双击根目录 [launcher.bat](launcher.bat)：未运行�
 | `data/` | 知识库语料与入库参考产物；`outputs` `model` `runs` 是运行时目录 |
 | `web/` | 移动端 PWA 静态文件 |
 | `unity/` | Unity 侧智能体脚本与接入说明（不是可构建工程） |
-| `tests/` | pytest 套件，按链路分 14 个文件 |
-| `scripts/` | 品牌图标渲染（PWA 图标与 favicon） |
-| `packaging/` | Windows 交付物打包一条链：构建脚本 + 便携 zip 组装 + PyInstaller 入口与生成资产（桌面版 onedir / 兼容 onefile） |
+| `tests/` | pytest 套件，按链路分 17 个文件 |
+| `scripts/` | 品牌图标渲染与厂商侧授权签发（PWA 图标 / favicon / license 签发工具） |
+| `packaging/` | 交付物打包一条链：Windows exe（桌面版 onedir / 兼容 onefile）+ 便携 zip + 私有化 Docker 交付包 + 构建入口与生成资产 |
 | `legacy/` | 历史归档：迁移前的 Streamlit 原型（`ui/`）与行人仿真向量化基准（`code_optimization/`） |
 
 逐目录说明见各目录的 `README.md`；产物目录见 `.docsignore`。

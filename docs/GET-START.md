@@ -28,10 +28,10 @@ cd zhishuxing
 pip install -e .
 ```
 
-预期输出的末行（重装时会先出现 `Uninstalling zhishuxing-2.4.0`）：
+预期输出的末行（重装时会先出现 `Uninstalling zhishuxing-<旧版本>`）：
 
 ```
-Successfully installed zhishuxing-2.4.0
+Successfully installed zhishuxing-2.5.0
 ```
 
 `-e` 是 editable（源码改了立刻生效，不用重装）。控制台脚本入口注册为 `zhishuxing`，
@@ -51,8 +51,8 @@ pip install -e .[train]   # torch + tensorboard，训练链路
 zhishuxing --help
 ```
 
-看到 9 个子命令即正常（`demo` `train` `analyze` `simulate` `animate` `serve` `smoke` `doctor`
-`kb-ingest`，逐个的作用见第 4 节）。
+看到 11 个子命令即正常（`demo` `train` `analyze` `simulate` `animate` `serve` `smoke` `doctor`
+`kb-ingest` `license` `verify`，逐个的作用见第 4 节）。
 
 ## 3. 五分钟看一遍
 
@@ -155,6 +155,15 @@ RL 智能体、分析报告、设置(顶栏按钮可把侧栏收起为图标栏,
 | `POST /api/chat/reset` | 重置会话 |
 | `GET /api/settings` | 配置状态（值一律掩码，故对局域网只读开放） |
 | `POST /api/settings` | 保存并写回 `.env` + 热重载（仅限本机 loopback 请求） |
+| `POST /api/admin/login` | 管理端登录（设置 `ADMIN_PASSWORD` 后启用）：返回会话令牌并下发 HttpOnly Cookie |
+| `POST /api/admin/logout` | 清除管理会话 Cookie |
+| `GET /admin/login` | 管理端登录页（独立静态页） |
+
+上表中「管理动作端点」——`POST /api/navigation/load`、`/api/llm/*`、`/api/rl/load_policy`、
+`/api/rl/simulate`、`/api/dashboard/run`、`/api/features/run_existing`、`/api/settings`——在
+设置 `ADMIN_PASSWORD` 后需要登录会话（Cookie 或 `Authorization: Bearer`）；未设置时保持
+历史行为全部开放。乘客端点（`/api/chat`、`/api/plan`、`/api/rl/act` 等）与 `/mobile`、
+`/health` 永远公开。授权（license）状态随 `GET /api/settings` 的 `license` 字段三端可见。
 
 ### 3.4 直接问一句
 

@@ -56,6 +56,13 @@ def _serve() -> int:
         print(f"端口 {PORT} 已有服务在运行,直接打开浏览器;如需重启请先退出旧进程")
         webbrowser.open(f"http://127.0.0.1:{PORT}/")
         return 0
+    from zhishuxing import licensing
+
+    try:
+        licensing.ensure_serve_allowed()
+    except licensing.LicenseExpired as exc:
+        show_fatal_error("授权已过期", f"{exc}\n\n续期后把新的 license.lic 放到 workspace 根目录,再重新启动。")
+        return 3
     threading.Thread(target=_open_browser_when_ready, args=(PORT,), daemon=True).start()
     from zhishuxing.cli import main as cli_main
 

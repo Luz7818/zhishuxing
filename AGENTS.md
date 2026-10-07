@@ -69,6 +69,7 @@
 | 版本发布 | `HISTORY.md` 新条目 + `pyproject.toml` 版本号 + tag |
 | 架构决策（契约、降级路径、目录/产物约定变化） | `docs/ARCHITECTURE.md` + `HISTORY.md` 记录缘由 |
 | 命令/入口/端点变化 | `README.md` / `docs/GET-START.md` / 对应子目录 README |
+| 打包/交付/授权内容变化 | `docs/DEPLOY.md`、`docs/DEPLOY-PRIVATE.md`、`docs/eula-template.md` |
 | 增删一级或二级目录 | 仓根 `目录说明.md` + 本文件 |
 | 测试数/端点数/密钥项变化 | 本文件「当前状态」 |
 | 新对话/新任务开始 | 按下方阅读清单阅读 |
@@ -83,7 +84,8 @@
    历史问题守护表在这里）
 4. [docs/GET-START.md](docs/GET-START.md)
 5. [HISTORY.md](HISTORY.md)
-6. 与任务相关的 [docs/CODE-STYLE.md](docs/CODE-STYLE.md)、[docs/TESTING.md](docs/TESTING.md)、[docs/GIT.md](docs/GIT.md)
+6. 与任务相关的 [docs/CODE-STYLE.md](docs/CODE-STYLE.md)、[docs/TESTING.md](docs/TESTING.md)、[docs/GIT.md](docs/GIT.md)；
+   涉及交付/部署/授权另读 [docs/DEPLOY.md](docs/DEPLOY.md)、[docs/DEPLOY-PRIVATE.md](docs/DEPLOY-PRIVATE.md)
 
 阅读完成后**不要写代码**：先做架构评审，输出——项目理解 / 核心模块 / 模块依赖关系 / 潜在风险 /
 建议优化项 / 推荐开发顺序 / 是否发现架构问题——然后等待确认。
@@ -100,16 +102,16 @@
 
 | 项 | 值 | 复核命令 |
 |---|---|---|
-| 测试 | `201 passed`（本机实测 20–50 s 之间浮动，受机器负载影响，别当判据） | `python -m pytest` |
-| 用例分布 | `201 tests collected` | `python -m pytest -o addopts="" --collect-only -q` |
+| 测试 | `234 passed`（本机实测 20–60 s 之间浮动，受机器负载影响，别当判据） | `python -m pytest` |
+| 用例分布 | `234 tests collected` | `python -m pytest -o addopts="" --collect-only -q` |
 | 静态检查 | `0 告警`，退出码 0 | `python -m pyflakes src/ scripts/ tests/` |
 | API 冒烟 | `Web smoke test passed.`，退出码 0 | `zhishuxing smoke` |
 | 配置体检 | 本机配好 3 项必需密钥 → 退出码 0；全新 clone 无 `.env` → 退出码 1 并列缺 3 项 | `zhishuxing doctor` |
 | 7 类报告 | 全部 `OK`，退出码 0 | `zhishuxing analyze --report all` |
-| HTTP 路由 | 24 个注册 / 23 条不同路径（`/api/chat` 与 `/api/settings` 各含 GET+POST） | `grep -c '@app.get(' src/zhishuxing/webapp/app.py` 与 `grep -c '@app.post(' src/zhishuxing/webapp/app.py`，两条之和应为 24 |
-| CLI 子命令 | 9 个 | `grep -cE 'add_parser\("[a-z-]+"' src/zhishuxing/cli.py` |
+| HTTP 路由 | 27 个注册 / 26 条不同路径（仅 `/api/settings` 含 GET+POST） | `grep -c '@app.get(' src/zhishuxing/webapp/app.py` 与 `grep -c '@app.post(' src/zhishuxing/webapp/app.py`，两条之和应为 27 |
+| CLI 子命令 | 11 个 | `grep -cE 'add_parser\("[a-z-]+"' src/zhishuxing/cli.py` |
 | CI | 定义在 `.github/workflows/ci.yml`：ubuntu-latest × Python `3.11` / `3.12`，装 `.[dev]` + CPU 版 torch，先 pyflakes 再 pytest（`MPLBACKEND=Agg`）。**这里不写"最近一次是哪个提交"**——分支每推一次它就变，写进文档同一次提交里就作废了；当前分支 HEAD 的徽章为 `passing`（复核见右）。本机没有 `gh`，但徽章与 Actions 接口对**公开仓都免认证**；要提交号与耗时再用 `/actions/runs`（匿名限 60 次/小时/IP，别拿它轮询） | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/zhishuxing/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`；步骤读 `.github/workflows/ci.yml` |
-| 版本 | `2.4.0` | `python -c "import zhishuxing;print(zhishuxing.__version__)"`，另一份在 `pyproject.toml` 的 `project.version` |
+| 版本 | `2.5.0` | `python -c "import zhishuxing;print(zhishuxing.__version__)"`，另一份在 `pyproject.toml` 的 `project.version` |
 | Python 要求 | `>=3.10`（CI 只跑 3.11/3.12） | `pyproject.toml` 的 `requires-python` |
 | 许可证 | Proprietary，全文在根目录 LICENSE（教学/科研内部使用，第三方需书面授权） | `git ls-files "*LICENSE*"` 恰好 1 行 |
 | 运行时依赖 | `numpy`、`matplotlib`、`flask`、`waitress`、`requests` | `pyproject.toml` 的 `dependencies` |
@@ -128,6 +130,13 @@
   同理 `.env.bak` 被忽略，属正常。
 - **`serve` 默认监听 `127.0.0.1`**：局域网/公网显式传 `--host 0.0.0.0`；密钥写接口按监听地址
   裁决，须显式 `--allow-remote-settings` 才开放（双层防线见 `docs/ARCHITECTURE.md` 关键约定）。
+- **管理端鉴权与离线授权默认都是"宽松态"**：`ADMIN_PASSWORD` 未设置 = 管理动作端点无门禁
+  （开发与本机演示的默认形态，生产部署必设，公开域乘客端点永远不拦）；未放置 `license.lic`
+  = 试用模式全功能可用，授权过期超 14 天宽限后 `serve` 拒启（退出码 3）。复核：
+  `grep -n ADMIN_PASSWORD .env.example` 与 `zhishuxing license`。
+- **license 的 HMAC 密钥就在 `licensing.py` 里**：防"随手复制"不防专业逆向，这是 v1 的明示
+  边界（升级路径 Ed25519 见 TODO）；`scripts/make_license.py` 是厂商侧工具，别 COPY 进
+  Docker 镜像或交付包。
 - **`zhishuxing train` 需要 mlagents_envs**（懒加载，未装时给安装指引）；PyPI 无 1.x 版本，
   只能从 ml-agents 官方仓库 release/18 分支源码装（`rl/envs.py` 报错给完整命令）；
   其余功能不受影响。本机曾有的 `third_party/` 镜像已于 2026-10-07 删除（代码零引用）。

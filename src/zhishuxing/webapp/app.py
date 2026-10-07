@@ -2,8 +2,10 @@
 
 端点契约与历史版本一致（含 RL 端点），新增：
 - POST /api/plan：真实路线规划（engine=amap 高德 / engine=hub 枢纽内 A*+RL）
-- GET  /mobile 与 /mobile_static/<path>：同源服务移动端 PWA（免 CORS、便于 SW 注册）
+- GET  /mobile 与 /mobile/<path>：同源服务移动端 PWA（免 CORS、便于 SW 注册）
 - GET/POST /api/settings：查看与保存本地 .env 密钥配置（写接口仅限本机）
+- GET  /admin/login、POST /api/admin/login|logout：管理端会话（设置 ADMIN_PASSWORD 后启用，
+  只锁管理动作端点；乘客端点与 /mobile 不受影响）
 """
 
 from __future__ import annotations
@@ -14,7 +16,24 @@ from flask import Flask, current_app, jsonify, make_response, render_template, r
 
 from .. import config as cfg
 from .. import settings as settings_store
+from . import auth as admin_auth
 from .service import ZhiShuXingWebService
+
+# 管理动作端点（全部为 POST）：启用鉴权后需要管理员会话。其余端点属公开域
+# （乘客对话/规划、/mobile PWA、演示只读），保持历史行为不变。
+ADMIN_POST_PATHS = frozenset(
+    {
+        "/api/navigation/load",
+        "/api/llm/load",
+        "/api/llm/fine_tune",
+        "/api/llm/simulate_metrics",
+        "/api/rl/load_policy",
+        "/api/rl/simulate",
+        "/api/dashboard/run",
+        "/api/features/run_existing",
+        "/api/settings",  # 叠加在既有 loopback / settings_writable 双闸之上
+    }
+)
 
 
 def create_app(
@@ -42,6 +61,29 @@ def create_app(
 
     def deny(message: str, detail: str, status: int = 403):
         return jsonify({"ok": False, "error": message, "detail": detail}), status
+
+    # ------------------------------------------------------------ 管理端鉴权（ADMIN_PASSWORD 设置后启用）
+
+    admin_guard = admin_auth.new_guard()
+    app.extensions["admin_auth"] = admin_guard   # None = 未设置口令,鉴权关闭(历史行为)
+
+    @app.before_request
+    def admin_gate():
+        """只拦管理动作端点;公开域(乘客/演示/移动端)与未启用鉴权时一律直通。"""
+        if admin_guard is None or request.method != "POST":
+            return None
+        if request.path not in ADMIN_POST_PATHS:
+            return None
+        header = request.headers.get("Authorization", "")
+        token = header[7:].strip() if header.startswith("Bearer ") else request.cookies.get(admin_auth.COOKIE_NAME, "")
+        if admin_auth.parse_token(admin_guard, token):
+            return None
+        return deny(
+            "管理操作需要登录",
+            "该接口属于管理端点：请先在 /admin/login 页面登录，或携带登录返回的 "
+            "Authorization: Bearer <令牌>。乘客端点不受影响。",
+            401,
+        )
 
     # ------------------------------------------------------------ 页面
 
@@ -308,6 +350,43 @@ def create_app(
             return jsonify({"ok": False, "error": str(exc)}), 400
         except Exception as exc:
             return fail(exc)
+
+    # ------------------------------------------------------------ 管理端会话
+
+    @app.post("/api/admin/login")
+    def api_admin_login():
+        if admin_guard is None:
+            return ok({"enabled": False, "message": "未设置 ADMIN_PASSWORD，管理端鉴权未启用，无需登录。"})
+        payload = request.get_json(force=True, silent=True) or {}
+        try:
+            token = admin_auth.authenticate(admin_guard, str(payload.get("password") or ""))
+        except admin_auth.AuthError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 401
+        resp = jsonify(
+            {"ok": True, "data": {"token": token, "expires_at": admin_auth.token_expires_at(token)}}
+        )
+        # Cookie 与 body 里的 token 是同一枚:浏览器用 Cookie,脚本/CI 用 Bearer
+        resp.set_cookie(
+            admin_auth.COOKIE_NAME,
+            token,
+            max_age=admin_auth.SESSION_TTL,
+            httponly=True,
+            samesite="Lax",
+            path="/",
+        )
+        return resp
+
+    @app.post("/api/admin/logout")
+    def api_admin_logout():
+        resp = jsonify({"ok": True, "data": {"logged_out": True}})
+        resp.delete_cookie(admin_auth.COOKIE_NAME, path="/")
+        return resp
+
+    @app.get("/admin/login")
+    def admin_login_page():
+        resp = send_from_directory(str(webapp_dir / "static"), "admin_login.html")
+        resp.headers["Cache-Control"] = "no-cache"
+        return resp
 
     return app
 

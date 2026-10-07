@@ -635,6 +635,31 @@ async function refreshTopbar() {
   // 侧栏 LLM 模式标注
   const llmMode = state.llm.preferReal ? "真实适配器" : "Mock";
   $("side-llm").textContent = `LLM:${llmMode}`;
+
+  // 授权状态 chip:试用/临期/宽限/授权信息如实展示(取自 /api/settings 的只读状态)
+  const settingsState = await api.get("/api/settings").catch(() => null);
+  const licChip = $("lic-chip");
+  if (licChip && settingsState && settingsState.license) {
+    const lic = settingsState.license;
+    licChip.hidden = false;
+    licChip.title = lic.message || "";
+    if (lic.status === "missing" || lic.status === "invalid") {
+      licChip.textContent = "授权:试用版";
+      licChip.classList.add("off");
+    } else if (lic.status === "grace") {
+      licChip.textContent = `授权:宽限 ${-lic.days_left} 天`;
+      licChip.classList.remove("off");
+    } else if (lic.status === "expiring") {
+      licChip.textContent = `授权:剩 ${lic.days_left} 天`;
+      licChip.classList.remove("off");
+    } else {
+      licChip.textContent =
+        lic.expires_at && lic.expires_at !== "永久"
+          ? `授权:${lic.customer} · ${lic.expires_at}`
+          : `授权:${lic.customer} · 永久`;
+      licChip.classList.remove("off");
+    }
+  }
 }
 
 function updatePolicyUI(status) {

@@ -180,3 +180,37 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 - **GET-START kb-ingest 示例改为可直接粘贴**（以演示语料自指，幂等报 changed: 0）。
 - **CHANGELOG.md 兑现删除**：上节声明的「并入后删除」至此执行，内容已逐条在档（复核：
   2.3.0 收纳节含 SILICONFLOW_BASE_URL 等全部条目）。
+
+## 2026-10-06 · v2.4.0 桌面版交付（不走浏览器的原生窗口 + 便携 zip）
+
+### Added(新增)
+
+- **桌面模式交付物**:`packaging/desktop_entry.py` —— PyInstaller onedir 入口,双击 exe 弹出
+  pywebview 原生应用窗口(Edge WebView2 渲染),不再打开浏览器;后台 daemon 线程复用
+  `serve --production`(waitress),品牌 loading 页(侧栏同族渐变 + 主题靛蓝)随端口就绪
+  `load_url` 切入 `/?desktop=1` 控制台;关窗即进程退出。
+- **单实例互斥**:Windows 命名互斥体 `Local\zhishuxing-desktop-singleton`——重复双击不再起
+  第二个后端,而是新开窗口连接既有服务(viewer 模式);后端归首实例进程所有。
+- **WebView2 运行时预检**:winreg 只读查询 Evergreen 运行时,缺失时原生 MessageBox 给出
+  官方下载指引(替代黑控制台);桌面模式的致命错误同样走原生对话框。
+- **便携分发包**:`scripts/package_zip.py` —— onedir 产物 + `使用说明.txt`(快速开始/数据
+  位置/离线说明/常见问题,UTF-8 BOM) + LICENSE 组装为
+  `dist/zhishuxing-<版本>-win64-portable.zip`,解压即用、删除即卸载。
+
+### Changed(变更)
+
+- **packaging/ 引导重构**:workspace 选择、资源解压、端口探测、致命错误兜底抽出为共享
+  `packaging/bootstrap.py`;`exe_entry.py` 改为引用,浏览器模式(onefile)行为不变,降级为
+  兼容回退链路。
+- **构建脚本** `scripts/build_exe.py` 增加 `--mode onedir|onefile`(默认 onedir 桌面模式):
+  桌面模式入口换 `desktop_entry.py` 并 `--collect-all webview/clr_loader/pythonnet` +
+  `--hidden-import clr`;onefile 模式保持原 onefile + `exe_entry.py`。
+- **前端桌面壳适配**:`app.js` 识别 `?desktop=1`(由 desktop_entry 注入)——禁右键菜单、
+  禁 Ctrl+滚轮页面缩放与 Ctrl +/-/0 快捷键,WebView2 窗口行为对齐原生应用。
+- **版本** `2.3.0 → 2.4.0`;`pyproject.toml` 增 `desktop = ["pywebview>=5.1"]` 可选依赖组。
+- **文档**:packaging/README 重写为双模式说明;README 交付章节、`目录说明.md`、本节同步。
+
+### 验证
+
+- WebView2 真窗口冒烟(`loaded` 事件 + JS 求值)通过;onedir exe 冷启动:端口 7860 就绪、
+  loading 页切入控制台、WM_CLOSE 干净退出;pytest 全量回归见当次提交说明。

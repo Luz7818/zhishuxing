@@ -128,6 +128,34 @@ RL 智能体、分析报告、设置(顶栏按钮可把侧栏收起为图标栏,
 **没有 `--host` 时默认监听 `127.0.0.1`(2.2.0 起;此前为 `0.0.0.0`)**（`cli.py` 的 serve 参数默认值），
 即使开发模式打印的是 `127.0.0.1`。只想本机用请显式带上 `--host 127.0.0.1`。
 
+控制台的全部 HTTP 路由（逐条对 `src/zhishuxing/webapp/app.py`）：
+
+| 方法与路径 | 干什么 |
+|---|---|
+| `GET /` | 控制台页面，Jinja 注入前端配置 |
+| `GET /health` | 健康检查与已加载导航图 |
+| `GET /outputs/<file>` | 取报告图、CSV、GIF |
+| `GET /mobile`、`GET /mobile/<file>` | 同源提供 PWA 页面与资源（保证 SW scope 覆盖） |
+| `POST /api/navigation/load` | 按路径加载导航图 |
+| `POST /api/navigation/plan` | A\* 规划，支持必经地标 |
+| `GET /api/navigation/grid` | 完整网格：禁行格、地标、设施语义层与中文标签 |
+| `GET /api/scenarios` | 3 组演示场景（坐标已解析） |
+| `POST /api/llm/load` | 加载 LLM 适配器（Mock / 真实；真实失败时注明 `real_adapter_error`） |
+| `POST /api/llm/fine_tune` | 微调接口，Mock 实现写元数据 JSON |
+| `POST /api/llm/simulate_metrics` | 微调指标曲线（PNG + CSV + 序列） |
+| `GET /api/rl/status` | 扫描训练产物、当前策略来源与加载错误 |
+| `POST /api/rl/load_policy` | 按 agent 加载最新 step 的 actor 权重 |
+| `POST /api/rl/act` | 观测 → 动作推理，无权重回退启发式 |
+| `GET /api/rl/rewards` | 评估奖励曲线（读 `*_env_*.npy`） |
+| `POST /api/rl/simulate` | 多智能体引导仿真 + 轨迹图 |
+| `POST /api/dashboard/run` | 客流热力 + 引导路径面板 |
+| `POST /api/features/run_existing` | 进程内跑完 7 类报告，逐报告返回状态 |
+| `POST /api/plan` | 路线规划：`engine=amap` 走高德，`engine=hub` 走枢纽内偏好 A\* + RL 仿真 |
+| `POST /api/chat` | 对话式换乘助手（需求档案、偏好规划、经验引用） |
+| `POST /api/chat/reset` | 重置会话 |
+| `GET /api/settings` | 配置状态（值一律掩码，故对局域网只读开放） |
+| `POST /api/settings` | 保存并写回 `.env` + 热重载（仅限本机 loopback 请求） |
+
 ### 3.4 直接问一句
 
 在这个服务上（保持终端别关，另开一个终端）：

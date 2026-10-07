@@ -49,6 +49,12 @@ zhishuxing serve --host 127.0.0.1 --port 7860   # 控制台 http://127.0.0.1:786
 
 Windows 下也可直接双击根目录 [启动器.bat](启动器.bat)：未运行则拉起 serve，就绪后自动打开浏览器。
 
+**桌面版（不走浏览器）**：`python scripts/build_exe.py` 构建 onedir 产物 `dist/zhishuxing/`，
+双击其中的 `zhishuxing.exe` 直接弹出原生应用窗口（pywebview + Edge WebView2，本地服务随
+窗口启停）；`python scripts/package_zip.py` 进一步组装便携分发包
+`dist/zhishuxing-<版本>-win64-portable.zip`，解压即用、删除即卸载。构建细节见
+[packaging/README.md](packaging/README.md)。
+
 缺依赖时的降级是设计好的：没装 `torch` 时 RL 的 6 个用例跳过而非失败、策略回退启发式；
 没装 `mlagents_envs` 只有 `train` 用不了；没装 `openai` 或没配 LLM 密钥时对话走 Mock 模板，
 响应里如实标注当前是本地模板模式。
@@ -78,33 +84,8 @@ Windows 下也可直接双击根目录 [启动器.bat](启动器.bat)：未运�
   结构化路线、站内导航 Canvas、客流提示与控制台同源设计；调 `/api/chat(+reset)`、`/api/settings`、
   `/api/navigation/*`、`/api/scenarios`、`/api/dashboard/run`，后端不可用时回退演示数据。
 
-## HTTP 路由（逐条对 `webapp/app.py`）
-
-| 方法与路径 | 干什么 |
-|---|---|
-| `GET /` | 控制台页面，Jinja 注入前端配置 |
-| `GET /health` | 健康检查与已加载导航图 |
-| `GET /outputs/<file>` | 取报告图、CSV、GIF |
-| `GET /mobile`、`GET /mobile/<file>` | 同源提供 PWA 页面与资源（保证 SW scope 覆盖） |
-| `POST /api/navigation/load` | 按路径加载导航图 |
-| `POST /api/navigation/plan` | A\* 规划，支持必经地标 |
-| `GET /api/navigation/grid` | 完整网格：禁行格、地标、设施语义层与中文标签 |
-| `GET /api/scenarios` | 3 组演示场景（坐标已解析） |
-| `POST /api/llm/load` | 加载 LLM 适配器（Mock / 真实；真实失败时注明 `real_adapter_error`） |
-| `POST /api/llm/fine_tune` | 微调接口，Mock 实现写元数据 JSON |
-| `POST /api/llm/simulate_metrics` | 微调指标曲线（PNG + CSV + 序列） |
-| `GET /api/rl/status` | 扫描训练产物、当前策略来源与加载错误 |
-| `POST /api/rl/load_policy` | 按 agent 加载最新 step 的 actor 权重 |
-| `POST /api/rl/act` | 观测 → 动作推理，无权重回退启发式 |
-| `GET /api/rl/rewards` | 评估奖励曲线（读 `*_env_*.npy`） |
-| `POST /api/rl/simulate` | 多智能体引导仿真 + 轨迹图 |
-| `POST /api/dashboard/run` | 客流热力 + 引导路径面板 |
-| `POST /api/features/run_existing` | 进程内跑完 7 类报告，逐报告返回状态 |
-| `POST /api/plan` | 路线规划：`engine=amap` 走高德，`engine=hub` 走枢纽内偏好 A\* + RL 仿真 |
-| `POST /api/chat` | 对话式换乘助手（需求档案、偏好规划、经验引用） |
-| `POST /api/chat/reset` | 重置会话 |
-| `GET /api/settings` | 配置状态（值一律掩码，故对局域网只读开放） |
-| `POST /api/settings` | 保存并写回 `.env` + 热重载（仅限本机 loopback 请求） |
+全部 HTTP 路由（24 个注册 / 23 条不同路径）的逐条清单见[上手手册](docs/GET-START.md)第 3.3 节，
+以 `src/zhishuxing/webapp/app.py` 为准。
 
 ## 目录怎么分
 
@@ -118,7 +99,7 @@ Windows 下也可直接双击根目录 [启动器.bat](启动器.bat)：未运�
 | `web/` | 移动端 PWA 静态文件 |
 | `unity/` | Unity 侧智能体脚本与接入说明（不是可构建工程） |
 | `tests/` | pytest 套件，按链路分 14 个文件 |
-| `scripts/` 与 `packaging/` | 品牌图标渲染、Windows exe 打包脚本，及打包资产（PyInstaller 入口与生成物） |
+| `scripts/` 与 `packaging/` | 品牌图标渲染、Windows 交付物打包脚本（桌面版 onedir + 便携 zip / 兼容 onefile），及打包资产（PyInstaller 入口与生成物） |
 | `code_optimization/` | 行人仿真向量化基准与报告 |
 | `legacy/` | 迁移前的 Streamlit 原型归档 |
 

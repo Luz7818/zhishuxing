@@ -5,6 +5,24 @@
 
 "use strict";
 
+/* 桌面壳适配(?desktop=1,由 packaging/desktop_entry.py 注入):
+   关闭浏览器专属行为,让 WebView2 窗口表现得像原生应用 */
+const IS_DESKTOP = new URLSearchParams(location.search).get("desktop") === "1";
+if (IS_DESKTOP) {
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
+  document.addEventListener(
+    "wheel",
+    (e) => {
+      if (e.ctrlKey) e.preventDefault(); // 阻止 Ctrl+滚轮页面缩放破坏布局
+    },
+    { passive: false },
+  );
+  document.addEventListener("keydown", (e) => {
+    // 阻止 Ctrl +/-/0 缩放快捷键;F12 留给排障
+    if (e.ctrlKey && ["+", "-", "=", "0"].includes(e.key)) e.preventDefault();
+  });
+}
+
 const $ = (id) => document.getElementById(id);
 
 /* ---------------- API 客户端 ---------------- */

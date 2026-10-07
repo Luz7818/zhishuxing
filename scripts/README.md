@@ -1,6 +1,6 @@
 # scripts/ —— 仓库级工具脚本
 
-> 用途：说明这个目录两个脚本各做什么、产物落在哪、为什么它们不在 CI 里跑。
+> 用途：说明这个目录三个脚本各做什么、产物落在哪、为什么它们不在 CI 里跑。
 
 本目录只放**不参与运行时**的开发者工具。所有能被 `zhishuxing` 子命令做到的事都在这里，
 不要往这个目录加功能脚本。
@@ -10,7 +10,8 @@
 | 文件 | 干什么 | 备注 |
 |---|---|---|
 | `render_brand_assets.py` | 从矢量设计参数直接绘制品牌 PNG：PWA 图标与 favicon | 入口脚本，无参数 |
-| `build_exe.py` | 构建 Windows 单文件 exe（PyInstaller），产物 `dist/zhishuxing.exe`；顺带生成 `packaging/app.ico` 与 `packaging/_build_version.txt` | 入口脚本，需先 `pip install pyinstaller`；见下面「build_exe.py」 |
+| `build_exe.py` | 构建 Windows 交付物（PyInstaller）：`--mode onedir`（默认）出桌面模式目录 `dist/zhishuxing/`，`--mode onefile` 出浏览器模式单文件 `dist/zhishuxing.exe`；顺带生成 `packaging/app.ico` 与 `packaging/_build_version.txt` | 入口脚本，需先 `pip install pyinstaller`（桌面模式另需 `pip install pywebview`）；见下面「build_exe.py」 |
+| `package_zip.py` | 把 onedir 产物 + `使用说明.txt` + LICENSE 组装为便携分发包 `dist/zhishuxing-<版本>-win64-portable.zip` | 入口脚本，见下面「package_zip.py」 |
 
 ## render_brand_assets.py
 
@@ -38,17 +39,42 @@ python scripts/render_brand_assets.py
 
 ```bash
 pip install pyinstaller
-python scripts/build_exe.py
+python scripts/build_exe.py               # onedir 桌面模式(默认)
+python scripts/build_exe.py --mode onefile   # onefile 浏览器模式(兼容回退)
 ```
 
-产物 `dist/zhishuxing.exe`（`--onefile --windowed`：平时无黑窗口，致命错误由
-`packaging/exe_entry.py` 现场弹控制台说明）。行为要点：
+两种模式均 `--windowed`（平时无黑窗口，致命错误由各自入口现场可视化说明）：
+
+- **onedir（桌面模式，默认）**：入口 `packaging/desktop_entry.py`，产物 `dist/zhishuxing/`
+  目录。双击其中 `zhishuxing.exe` 弹出 pywebview 原生窗口（Edge WebView2），不打开浏览器。
+  桌面模式要求 `pip install pywebview`，并 `--collect-all webview/clr_loader/pythonnet` +
+  `--hidden-import clr` 收集 WebView2 的 DLL 与运行时配置。供 `package_zip.py` 组装便携 zip。
+- **onefile（浏览器模式）**：入口 `packaging/exe_entry.py`，产物 `dist/zhishuxing.exe`
+  单文件，起服务后自动开浏览器，与 `启动器.bat` 同语义。
+
+两种模式共同的行为要点：
 
 - 图标取 `web/mobile/icon-512.png`，经 pillow 转成 `packaging/app.ico`，转换失败不阻断；
 - `packaging/_build_version.txt` 写入 `pyproject.toml` 的 `version`，exe 首次运行据此决定
   内置资源是否重解压（版本戳一致则跳过，升级即重建）；
 - 装了 `openai` 则真实 LLM 能力进包，没装则 exe 只有 Mock 模式（运行时如实标注）；
-- `torch`/`tensorboard`/`mlagents_envs` 永远排除：训练链路需要 Unity 环境，exe 只做运行态。
+- `torch`/`tensorboard`/`mlagents_envs` 永远排除：训练链路需要 Unity 环境，交付物只做运行态。
+
+## package_zip.py
+
+在**仓库根目录**执行：
+
+```bash
+python scripts/package_zip.py            # 先构建再打包
+python scripts/package_zip.py --skip-build  # 直接打包现有 dist/zhishuxing/
+```
+
+默认先调 `build_exe.py --mode onedir`，然后把 `dist/zhishuxing/` 整目录压缩为
+`dist/zhishuxing-<版本>-win64-portable.zip`，附 `使用说明.txt`（快速开始/数据位置/离线
+说明/常见问题，UTF-8 BOM 写入防旧版记事本乱码）与 `LICENSE`。最终产物：
+
+- 解压到任意可写位置，双击 `zhishuxing\zhishuxing.exe` 即用；
+- 首启在 exe 旁建 `zhishuxing_workspace`；删除整个文件夹即卸载。
 
 ## 两个已知的坑
 
@@ -72,7 +98,8 @@ CI（`.github/workflows/ci.yml`）只做 pyflakes + pytest。这个脚本改的�
   `web/mobile/logo-mark.svg`
   复刻同一套几何（复核：`sed -n '1,7p' scripts/render_brand_assets.py` 的模块 docstring；
   两份 `logo-mark.svg` 目前逐字节相同）；`build_exe.py` 以整个已安装的 `zhishuxing` 包为输入，
-  打包入口取 `packaging/exe_entry.py`。
+  打包入口按模式取 `packaging/desktop_entry.py`（onedir）或 `packaging/exe_entry.py`（onefile）；
+  `package_zip.py` 以 `build_exe.py` 的 onedir 产物为输入。
 - **下游**：`web/mobile/` 的 5 个 PNG 被 `manifest.webmanifest` 的 3 个 `icons`、`sw.js` 的
   `ASSETS` 表和页面本体引用；`src/zhishuxing/webapp/static/assets/favicon-32.png` 被
   `templates/index.html` 引用（复核：`grep -n favicon src/zhishuxing/webapp/templates/index.html`）。
@@ -98,4 +125,4 @@ python -m pytest
   不要"顺手对齐"成清单里的 192。复核：`sed -n '168,174p' scripts/render_brand_assets.py`。
 - 脚本顶部的 `SS = 4`（4 倍超采样）与 `LANCZOS` 缩放是一对：只降 `SS` 会让小尺寸图标的边缘起锯齿。
 - `.github/workflows/ci.yml` 里 `python -m pyflakes src/ scripts/ tests/` 的 `scripts/` 一项：
-  本目录只有两个文件，看着可以从门禁参数里删掉，删了它们就没有任何东西再检查这两个脚本能否 import。
+  本目录只有三个文件，看着可以从门禁参数里删掉，删了它们就没有任何东西再检查这些脚本能否 import。

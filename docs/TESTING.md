@@ -46,7 +46,7 @@ zhishuxing analyze --report all                 # 7 类报告全 OK
 | `configs/hub_default.json` | `zhishuxing smoke`（真的会规划一次 `[1,2]→[28,12]`） |
 | `data/transfer_kb/shenzhen_north/` | `zhishuxing kb-ingest --query "带老人 优先直梯"` 再 `pytest tests/test_kb.py` |
 | `analysis/**` 或报告 | `zhishuxing analyze --report all`（7 行 OK） |
-| `core/animation.py` 的力场或放行窗口 | `python code_optimization/benchmark_animation.py` 并更新 `report.md`（会改写入库 JSON） |
+| `core/animation.py` 的力场或放行窗口 | `python legacy/code_optimization/benchmark_animation.py` 并更新 `report.md`（会改写入库 JSON） |
 | `unity/HubTransferAgent.cs` | 无自动化：按 `unity/README.md` 契约与 `rl/envs.py` 手工核对 |
 | 任何一级目录结构 | `python check_docs.py zhishuxing`（在 `Project/文档标准/` 执行） |
 

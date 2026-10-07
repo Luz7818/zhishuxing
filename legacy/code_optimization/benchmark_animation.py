@@ -1,7 +1,7 @@
 """行人仿真 step() 性能基准：基线 vs v1（成对距离矩阵向量化） vs v2（v1+活跃集压缩）。
 
-运行：python code_optimization/benchmark_animation.py
-输出：控制台对比 + code_optimization/benchmark_results.json
+运行：python legacy/code_optimization/benchmark_animation.py
+输出：控制台对比 + legacy/code_optimization/benchmark_results.json
 """
 
 from __future__ import annotations

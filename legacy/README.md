@@ -1,10 +1,15 @@
-# legacy/ —— 历史原型归档
+# legacy/ —— 历史归档（原型与性能基准）
 
 > 用途：说明这里留着什么、为什么留着、以及为什么它不参与测试与静态检查范围之外的任何门禁。
 
 `legacy/ui/` 是 v2 重构前的 **Streamlit 单页原型**。它的逻辑已经逐段迁进
 `src/zhishuxing/planning/amap.py`（OD 提取、地理编码、换乘规划、折线解析）与
 `src/zhishuxing/webapp/`（界面与交互），这里只保留原始形态用于对照"迁移前是什么样"。
+
+`legacy/code_optimization/`（2026-10-07 并入，同类归档收拢）是行人仿真向量化的
+**性能基准存档**：两个基准脚本 + 入库的 `benchmark_results.json` 与报告，测的是
+`src/zhishuxing/core/animation.py` 的 `step()` 向量化收益。复测命令与判据见
+[code_optimization/README.md](code_optimization/README.md)。
 
 ## 文件清单
 
@@ -22,12 +27,14 @@
 | 子目录 | 负责 |
 |---|---|
 | `ui/` | 迁移前的 Streamlit 原型：两页 `jiaohu*.py`（其余本机遗留已于 2026-10-05 清理，见上表） |
+| `code_optimization/` | 行人仿真向量化基准存档：基准脚本 ×2 + 入库结果 + 报告；细节见其 [README](code_optimization/README.md) |
 
-`legacy/` 下只有 `ui/` 这一个二级目录，没有第三层。复核：`find legacy -mindepth 1 -maxdepth 1 -type d`。
+`legacy/` 下有 `ui/` 与 `code_optimization/` 两个二级目录，没有第三层。复核：`find legacy -mindepth 1 -maxdepth 1 -type d`。
 
 ## 和谁打交道
 
-- **上游**：没有。它是 2026-02 参赛时期的成品快照，之后不再接收改动，也没有脚本往里写。
+- **上游**：`ui/` 没有上游——它是 2026-02 参赛时期的成品快照，之后不再接收改动，也没有脚本往里写；
+  `code_optimization/` 的基准对象是 `src/zhishuxing/core/animation.py` 的 `step()`（只读对照，不改它）。
 - **下游**：只被人读 —— `AGENTS.md` 的「迁移映射（旧 → 新）」表拿它当对照物。代码层面零依赖：
   `grep -rn "streamlit" src tests scripts --include="*.py"` 无输出（退出码 1），
   streamlit 也不在任何依赖组里（复核：`python -c "import importlib.metadata as m;print(m.requires('zhishuxing'))"`）。
@@ -51,6 +58,9 @@
 f-string；复核：`python -m pyflakes legacy/ui/jiaohu_sj.py`），
 纳入检查只会逼人为归档代码做无意义改动。
 
+`code_optimization/` 同理不在门禁范围（归档口径一致），但它的基准脚本可以直接复跑：
+`python legacy/code_optimization/benchmark_animation.py`（跑完 `git diff` 判断是否只是计时抖动）。
+
 ## 关于密钥的一件事
 
 本机副本 `ui/config_direct.py`（已随 2026-10-05 清理删除）最后核对时已无密钥字面量。
@@ -64,5 +74,7 @@ f-string；复核：`python -m pyflakes legacy/ui/jiaohu_sj.py`），
 
 - 不要"顺手清理"这两个 `.py`：它们是迁移映射的对照物，删掉后 `AGENTS.md` 里
   「旧 → 新」那条表就无从核对。
+- 不要删 `code_optimization/benchmark_results.json` 里的入库基准数字：它是 `report.md` 与
+  `src/zhishuxing/core/animation.py` 注释引用的性能证据；重跑会重写它，判读见其 README。
 - 不要把这里的代码 import 回 `src/`：需要那段逻辑就照 `planning/amap.py` 的写法重写并补测试。
 - 不要为了通过某个扫描工具把 `config_direct.py` 加进跟踪，它被排除正是为了断掉这条路径。

@@ -55,11 +55,11 @@
 | `scripts/` | 工具脚本：品牌 PNG 图标渲染（`render_brand_assets.py`）与 Windows exe 打包（`build_exe.py`） | 渲染需要 Pillow（已在 dev 组）；打包需要 pyinstaller |
 | `packaging/` | Windows 单文件 exe 的打包资产：`exe_entry.py` 打包入口 + `app.ico`、`_build_version.txt` 两个生成物 | 后两者由 `build_exe.py` 生成，勿手改 |
 | `tests/` | pytest 套件 | `test_settings.py` 一个文件占 98 个用例 |
-| `code_optimization/` | 行人仿真向量化基准与报告 | 跑基准会重写入库的 `benchmark_results.json` |
+| `legacy/code_optimization/` | 行人仿真向量化基准与报告 | 跑基准会重写入库的 `benchmark_results.json` |
 | `legacy/ui/` | 迁移前的 Streamlit 原型 | 不参与测试，也不在 pyflakes 门禁里 |
 | `docs/DEPLOY.md` | Docker 优先的部署手册 | — |
 
-`unity/README.md`（Unity 接入）与 `code_optimization/report.md`（性能基准）是各自主题的深度
+`unity/README.md`（Unity 接入）与 `legacy/code_optimization/report.md`（性能基准）是各自主题的深度
 文档，保留独立文件；其余总览性内容不要在三处复述。
 
 ## 关键约定（违反会出问题的）
@@ -135,7 +135,7 @@ v2 重构是把历史散装脚本平移进包，不是重写。左列**仓库里
 
 ## 子目录说明索引
 
-各一级目录的板块说明：`code_optimization/`、`configs/`、`data/`、`legacy/`、`scripts/`、
+各一级目录的板块说明：`configs/`、`data/`、`legacy/`、`packaging/`、`scripts/`、
 `src/`、`tests/`、`unity/`、`web/` 各自有 `README.md`；`docs/` 是文档目录本身。
 
 ## 已知架构问题

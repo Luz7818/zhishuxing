@@ -1,6 +1,6 @@
 """性能优化基线：与历史 animate_transfer_env.py 逐行一致的原始 HubTransferAnimator。
 
-仅保留 step()/congestion_index() 及其依赖，供 code_optimization/benchmark_animation.py
+仅保留 step()/congestion_index() 及其依赖，供 legacy/code_optimization/benchmark_animation.py
 作为基线对照。优化后的实现位于 src/zhishuxing/core/animation.py。
 """
 

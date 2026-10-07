@@ -2,7 +2,7 @@
 
 ## Baseline Performance
 
-- Implementation: `animate_transfer_env.py` 原始 `HubTransferAnimator`（冻结副本：`code_optimization/baseline_animation.py`）
+- Implementation: `animate_transfer_env.py` 原始 `HubTransferAnimator`（冻结副本：`legacy/code_optimization/baseline_animation.py`）
 - 热点：`_local_density()`（n 次 O(n) 循环）、`_social_repulse()`（每 agent 一次 O(n)）、`congestion_index()`（n 次 O(n)）
 - Input size: 44 人 × 1000 帧（默认）；500 人 × 300 帧（扩展性）
 - Baseline time: **0.68 s**（默认）/ **7.16 s**（大规模）
@@ -67,6 +67,6 @@
 ## 复现方式
 
 ```bash
-python code_optimization/benchmark_animation.py
-# 输出 code_optimization/benchmark_results.json
+python legacy/code_optimization/benchmark_animation.py
+# 输出 legacy/code_optimization/benchmark_results.json
 ```

@@ -50,7 +50,7 @@
 | `flow.py` | 按释放时间沿路径撒乘客 + 随机扩散，产出归一化的动态客流矩阵 | `system.py` |
 | `simulation.py` | 行人级多智能体引导仿真：观测 `[dx,dy,vx,vy,3×邻近相对位置]`（`OBS_DIM=10`）、动作 `[前进,转向]` 且转向按整档 90° 量化；策略经 `PolicyProtocol` 注入，`HeuristicPolicy` 是内置回退 | `rl/runtime.py`、`cli.py simulate`、`service.py` |
 | `system.py` | `ZhiShuXingSystem` 编排：导航 + 客流 + 引导文案 + 面板渲染 + 一次跑完 7 类报告 | `service.py`、`cli.py demo` |
-| `animation.py` | 社会力微观行人模型与 GIF 动图；`step()` 已向量化（基准见 `../code_optimization/README.md`） | `analysis/reports.py`、`cli.py animate` |
+| `animation.py` | 社会力微观行人模型与 GIF 动图；`step()` 已向量化（基准见 `../legacy/code_optimization/README.md`） | `analysis/reports.py`、`cli.py animate` |
 
 ## `zhishuxing/rl/` —— 多智能体强化学习
 

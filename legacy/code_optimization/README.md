@@ -1,4 +1,4 @@
-# code_optimization/ —— 行人仿真性能基准
+# legacy/code_optimization/ —— 行人仿真性能基准
 
 > 用途：说明 `core/animation.py` 那 19x 加速是从哪来、怎么复测、以及复测会改写哪个入库文件。
 
@@ -22,7 +22,7 @@ Python 循环改成 NumPy 向量化，并留下一份"冻结的旧实现"作为�
 | 44 人 × 1000 帧（默认） | 0.682 s | 0.035 s | 19.25x |
 | 500 人 × 300 帧 | 7.162 s | 0.825 s | 8.69x |
 
-复核：`code_optimization/benchmark_results.json` 里两个 case 的 `speedup_core` 字段。
+复核：`legacy/code_optimization/benchmark_results.json` 里两个 case 的 `speedup_core` 字段。
 
 加速比在大规模下反而下降，原因写在 `report.md`：向量化把 O(n²) 的成对距离矩阵本身变成了地板。
 再往上的规模要换空间哈希网格邻居检索（`report.md` 末尾列为"未实施"）。
@@ -44,12 +44,12 @@ Python 循环改成 NumPy 向量化，并留下一份"冻结的旧实现"作为�
 ## 复测
 
 ```bash
-python code_optimization/benchmark_animation.py
+python legacy/code_optimization/benchmark_animation.py
 ```
 
 在仓库根执行。它把控制台摘要与 `benchmark_results.json` 一起更新。
 因为 `benchmark_results.json` 是入库文件，跑之前先 `git status` 确认干净，
-跑完 `git diff code_optimization/benchmark_results.json` 判断改动是否只是计时抖动。
+跑完 `git diff legacy/code_optimization/benchmark_results.json` 判断改动是否只是计时抖动。
 
 数值会随机器波动（`report.md` 里 v2 独立实现是 19.53x、移植版 19.25x，同一台机器上的两次计时），
 所以别把加速比当回归门禁 —— 它没有阈值断言，只是基准记录。
@@ -60,19 +60,19 @@ python code_optimization/benchmark_animation.py
 - **下游**：`analysis/reports.py` 的 `run_animation_report()` 与 `zhishuxing animate` 用移植后的实现。
 - 改了 `core/animation.py` 的力场、放行窗口或卡滞阈值（>18 帧）之后，这里的结果就过期了，
   要么重测要么在 `report.md` 里注明基线对应的实现版本。
-- **改这里之后要跑**：`python code_optimization/benchmark_animation.py`（仓库根执行，见上面「复测」）。
+- **改这里之后要跑**：`python legacy/code_optimization/benchmark_animation.py`（仓库根执行，见上面「复测」）。
 
 ## 别动
 
 - `benchmark_animation.py` 开头两行 `sys.path.insert`（16 行插本目录、19 行插 `src/`）：把对照组与
   被测实现钉死在本仓库文件上。删掉 19 行后，环境里若有另一份非 editable 安装的 `zhishuxing`，
-  基准测的就是那份拷贝。复核：`sed -n '16,20p' code_optimization/benchmark_animation.py`。
+  基准测的就是那份拷贝。复核：`sed -n '16,20p' legacy/code_optimization/benchmark_animation.py`。
 - `baseline_animation.py` 的慢是功能不是缺陷：它是历史实现的冻结副本，唯一价值就是当对照组。
   删掉它 `benchmark_animation.py` 直接 ImportError，`benchmark_results.json` 里所有 `speedup_*`
   与 `equivalence` 字段都失去来源。
 - `benchmark_results.json` 看着像该 gitignore 的产物，其实**是入库文件**，本目录「结果」表与
-  `report.md` 的数字都以它为准。复核：`git ls-files code_optimization`。
+  `report.md` 的数字都以它为准。复核：`git ls-files legacy/code_optimization`。
 - `__pycache__/` 出现在这里是跑基准的副产物，`.gitignore` 第 2 行已挡住，
-  不用手工清理、也不要提交。复核：`git check-ignore -v code_optimization/__pycache__`。
+  不用手工清理、也不要提交。复核：`git check-ignore -v legacy/code_optimization/__pycache__`。
 - 本目录**不在** `python -m pyflakes src/ scripts/ tests/` 的参数里，改这里的 `.py` 不会有门禁替你
   检查；唯一的验证就是上面那条重跑基准的命令能否跑到退出码 0。

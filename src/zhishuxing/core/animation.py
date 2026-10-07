@@ -6,7 +6,7 @@
 性能：step() 已向量化（成对距离矩阵 + 墙体斥力广播 + 阶段目标查表 +
 活跃集压缩），44人×1000帧约 17x 加速、500人×300帧约 8x 加速；
 社会力改为帧首快照（群体仿真标准做法），统计行为与原实现等价，
-基准数据见 code_optimization/report.md。
+基准数据见 legacy/code_optimization/report.md。
 """
 
 from __future__ import annotations

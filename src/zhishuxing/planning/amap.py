@@ -260,9 +260,6 @@ def build_route_tips(transit: Dict, prefs: Optional[Dict[str, Any]] = None) -> L
 def plan_route(
     question: str,
     prefs: Optional[Dict[str, Any]] = None,
-    llm_api_key: Optional[str] = None,
-    llm_model: Optional[str] = None,
-    llm_base_url: Optional[str] = None,
 ) -> Dict[str, Any]:
     """完整真实规划链路：OD 提取 → 地理编码 → 换乘规划 → 详情/提醒构建。
 
@@ -278,13 +275,13 @@ def plan_route(
         raise ValueError("未配置 AMAP_REST_KEY 环境变量，无法使用真实路线规划。")
 
     llm_conf = cfg.siliconflow_config()
-    llm_key = llm_api_key or llm_conf["api_key"]
+    llm_key = llm_conf["api_key"]
     if llm_key:
         od_data = call_llm_extract_od(
             question,
             api_key=llm_key,
-            model=llm_model or llm_conf["model"],
-            base_url=llm_base_url or llm_conf["base_url"],
+            model=llm_conf["model"],
+            base_url=llm_conf["base_url"],
         )
         od_source = "llm"
     else:

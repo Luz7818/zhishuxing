@@ -5,7 +5,7 @@
 
 包以 src-layout 打包（`pip install -e .`），入口 `zhishuxing = zhishuxing.cli:main`（复核：
 `pyproject.toml` 的 `[project.scripts]`）。`zhishuxing/__init__.py` 里的 `__version__` 与
-`pyproject.toml` 的 `version` 各自写了一份，当前都是 `2.3.0`（复核：
+`pyproject.toml` 的 `version` 各自写了一份，当前都是 `2.4.0`（复核：
 `python -c "import zhishuxing;print(zhishuxing.__version__)"`）。
 
 ## 文件清单
@@ -17,7 +17,7 @@
 
 | 文件 | 干什么 | 被谁调用 |
 |---|---|---|
-| `__init__.py` | 重导出 core/llm/rl 的公开符号，定义 `__version__` | 所有 `from zhishuxing import X` 的地方 |
+| `__init__.py` | 只定义 `__version__`（桶导出已删：全仓符号一律从具体子模块导入） | `AGENTS.md` 的版本复核命令 |
 | `config.py` | 推导 workspace 根与全部产物路径；解析 `.env`；暴露 `amap_config()` / `siliconflow_config()` | 几乎每个模块（`import .. as cfg`） |
 | `settings.py` | 7 项托管配置的注册表、掩码回读、写入校验、`.env` 原子写与热重载、loopback 判定 | `webapp/app.py` 的 `/api/settings`、`cli.py` 的 `doctor` |
 | `cli.py` | 9 个子命令的 argparse 定义与派发，每个 `cmd_*` 内部才 import 重依赖 | 控制台脚本 `zhishuxing`；`tests/test_cli.py` |
@@ -54,7 +54,7 @@
 
 ## `zhishuxing/rl/` —— 多智能体强化学习
 
-`rl/__init__.py` 用惰性导出，`import zhishuxing` 不会连带导入 `torch` / `mlagents_envs`。
+各子包 `__init__.py` 是空壳：全仓调用方都从具体子模块导入，`import zhishuxing` 也不会连带导入 `torch` / `mlagents_envs`（可选依赖隔离见 `docs/ARCHITECTURE.md`）。
 
 | 文件 | 干什么 | 被谁调用 |
 |---|---|---|
@@ -62,7 +62,7 @@
 | `agents.py` | MADDPG 与 MATD3 两套更新逻辑（TD3 三技巧为独立类路径），`--algorithm` 真正生效 | `runner.py` |
 | `networks.py` | `Actor` / `Critic_MADDPG` / `Critic_MATD3`；`runtime.py` 按 `fc1.weight` / `fc3.weight` 形状反推网络尺寸，所以权重目录不必带训练脚本 | `agents.py`、`runtime.py` |
 | `buffer.py` | 按 agent 分槽的环形经验回放 | `runner.py` |
-| `envs.py` | Unity ML-Agents 的 gym 风格封装；**模块顶层就 `from mlagents_envs...`**，缺包时 import 即报错 | `runner.py` |
+| `envs.py` | Unity ML-Agents 的 gym 风格封装；`mlagents_envs` 走 `_mlagents_imports()` 懒加载，缺包时调用即报错并给源码安装指引 | `runner.py` |
 | `runner.py` | 训练/评估双环境主循环、噪声线性衰减、按 `evaluate_freq` 落 npy 与权重 | `cli.py train` |
 
 ## `zhishuxing/llm/` —— 对话式换乘引导

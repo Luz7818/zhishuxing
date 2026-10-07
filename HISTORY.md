@@ -214,3 +214,18 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 
 - WebView2 真窗口冒烟(`loaded` 事件 + JS 求值)通过;onedir exe 冷启动:端口 7860 就绪、
   loading 页切入控制台、WM_CLOSE 干净退出;pytest 全量回归见当次提交说明。
+
+## 2026-10-07 · 代码简洁清理（桶导出/重复方法/死参数收口）
+
+- **包级桶导出删除**:`src/zhishuxing/__init__.py` 只保留 docstring 与 `__version__`,
+  6 个子包 `__init__.py` 清空——全仓 grep 证实符号一律从具体子模块导入
+  (`from zhishuxing.core.navigation import ...` 等),桶从未被消费;
+  `import zhishuxing` 不再连带加载 core/llm/rl。**`__version__` 补齐为 `2.4.0`**
+  (2.4.0 升版时只改了 pyproject,漏了这份)。
+- **`HubTransferAnimator` 死方法删除**:`_local_density()` 与 `_social_forces()` 与
+  `step()` 内联计算逐行重复(内联版复用 `_pairwise()` 结果,方法版会重算),全仓零调用。
+- **`amap.plan_route` 死参数删除**:`llm_api_key/llm_model/llm_base_url` 三个形参从未被
+  传入(唯一调用方 `service.plan_route` 只传 `question/prefs`),LLM 配置本就全部来自
+  `siliconflow_config()`。
+- **文档**:src/README 同步(`__init__` 职责、rl 惰性导出描述、envs.py 早已懒加载的
+  过期描述);AGENTS/GET-START 版本样例 2.3.0 → 2.4.0。

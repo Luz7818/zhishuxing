@@ -28,10 +28,10 @@ cd zhishuxing
 pip install -e .
 ```
 
-预期输出的末行（重装时会先出现 `Uninstalling zhishuxing-2.3.0`）：
+预期输出的末行（重装时会先出现 `Uninstalling zhishuxing-2.4.0`）：
 
 ```
-Successfully installed zhishuxing-2.3.0
+Successfully installed zhishuxing-2.4.0
 ```
 
 `-e` 是 editable（源码改了立刻生效，不用重装）。控制台脚本入口注册为 `zhishuxing`，

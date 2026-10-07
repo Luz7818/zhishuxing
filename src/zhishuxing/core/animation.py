@@ -207,17 +207,6 @@ class HubTransferAnimator:
         dist = np.sqrt(np.einsum("ijk,ijk->ij", diff, diff, optimize=True))
         return diff, dist
 
-    def _local_density(self):
-        _, dist = self._pairwise()
-        return np.sum((dist < 5.2) & (dist > 1e-6), axis=1).astype(np.float32)
-
-    def _social_forces(self):
-        diff, dist = self._pairwise()
-        mask = (dist > 1e-6) & (dist < 4.8)
-        inv = np.where(mask, 1.0 / (dist + 1e-4), 0.0).astype(np.float32)
-        rep = np.einsum("ijk,ij->ik", diff, inv, optimize=True)
-        return (rep * 0.08).astype(np.float32)
-
     def _wall_repulse_all(self, pts):
         """pts: (m,2) → (m,2) 墙体斥力（对 11 块墙体广播）。"""
         wx, wy = self._wall_xy[:, 0], self._wall_xy[:, 1]

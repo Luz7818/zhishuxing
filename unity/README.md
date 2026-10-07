@@ -14,7 +14,7 @@ Python 侧的训练循环、算法与运行时都在 `src/zhishuxing/rl/`；Unit
 | 文件 | 干什么 | 与 Python 侧的对应关系 |
 |---|---|---|
 | `HubTransferAgent.cs` | 挂在智能体 GameObject 上的 `Agent` 子类（133 行）：`CollectObservations()` 拼「目标相对位置 (dx, dz) + 自身速度 (vx, vz) + 邻近行人相对位置」；`OnActionReceived()` 把 `a[0]` 当前进/后退、`a[1]` 当转向；`Heuristic()` 供键盘演示 | 观测与动作语义对齐 `src/zhishuxing/rl/envs.py`；内置网格仿真的同一套契约见 `src/zhishuxing/core/simulation.py`（那里 `OBS_DIM = 4 + 2×3`） |
-| `package.json` | UPM 本地包清单，Package Manager「Add package from disk」的入口；依赖 `com.unity.ml-agents@2.2.1-exp.1`（release 18 分支，与 `third_party/` 镜像同源） | 2.2.0 起存在 |
+| `package.json` | UPM 本地包清单，Package Manager「Add package from disk」的入口；依赖 `com.unity.ml-agents@2.2.1-exp.1`（release/18 分支，与 Python 侧训练依赖同源） | 2.2.0 起存在 |
 | `HubTransferAgent.asmdef` | 程序集定义，以 UPM 包导入后脚本自动编译进工程 | 同上 |
 | `README.md` | 本文档：挂载步骤、参数对齐、奖励建议、训练启动与产物位置 | — |
 
@@ -28,8 +28,8 @@ Python 侧的训练循环、算法与运行时都在 `src/zhishuxing/rl/`；Unit
 推荐直接以包形式导入你的 ML-Agents 工程（脚本不再需要手工拷贝）：
 
 1. Unity 编辑器 → `Window → Package Manager → + → Add package from disk...`
-2. 选择仓库里的 `unity/package.json`（依赖 `com.unity.ml-agents@2.2.1-exp.1`，即 release 18 分支；
-   与 `third_party/` 镜像同源，先装 Python 侧依赖再进 Unity）
+2. 选择仓库里的 `unity/package.json`（依赖 `com.unity.ml-agents@2.2.1-exp.1`，即 release/18 分支；
+   与 Python 侧训练依赖同源，先装 Python 侧依赖再进 Unity）
 3. 导入后按下面「场景挂载」配好场景即可；注意本包**仍不是可独立打开的 Unity 工程** ——
    工程文件（场景/ProjectSettings）依旧需要你自建，见 README「已知做不到什么」。
 
@@ -75,11 +75,13 @@ Python 侧的训练循环、算法与运行时都在 `src/zhishuxing/rl/`；Unit
 
 ## 4. Python 侧启动
 
-先装训练依赖（`mlagents_envs` 在 PyPI 上没有 1.x 版本，必须从源码装，本机镜像见 `third_party/`）：
+先装训练依赖（`mlagents_envs` 在 PyPI 上没有 1.x 版本，必须从 ml-agents 官方仓库
+release/18 分支源码安装）：
 
 ```bash
 pip install -e .[train]
-pip install ./third_party/ml-agents-develop/ml-agents-develop/ml-agents-envs
+git clone https://github.com/Unity-Technologies/ml-agents   # 切到 release/18 分支
+pip install ./ml-agents/release_18/ml-agents-envs
 ```
 
 在**仓库根目录**执行（PowerShell 与 bash 同一条命令）：
@@ -145,5 +147,6 @@ zhishuxing analyze --report reward
   `sed -n '92,96p' unity/HubTransferAgent.cs`。
 - 本目录**没有** `.meta`、`Assets/`、`ProjectSettings/`：这不是漏交文件，而是刻意只放模板。
   不要在这里造 Unity 工程文件来"让它能构建"，也不要为它写 CI。
-- 第 4 节那两条 `pip install ./third_party/...`：`third_party/` 是本机镜像、不入库，
-  新克隆的仓库里那两条会失败。它们是环境准备说明，不是可以删掉的死路径。
+- 第 4 节的源码安装步骤装的是 GitHub 上游 release/18 分支。2026-10-07 已删除本机
+  `third_party/ml-agents-develop/` 镜像（约 284 MB，代码零引用，曾在此提供离线安装源），
+  此后安装一律走官方仓库 clone，不要在仓库内重建镜像目录。

@@ -33,7 +33,7 @@ zhishuxing analyze --report all                 # 7 类报告全 OK
 - `test_settings.py` 钉着 `.env` 写回的五道闸与 loopback 判定——放宽任何一道都是回归。
 - 测试会写 `data/outputs/`（未跟踪，跑完 `git status` 仍干净）；不要把某张图当基线提交进
   `samples/`，除非 README 真要引用它。
-- `legacy/` 与 `third_party/` 不参与测试与 pyflakes（有意，见 `docs/ARCHITECTURE.md` 关键约定）。
+- `legacy/` 不参与测试与 pyflakes（有意，见 `docs/ARCHITECTURE.md` 关键约定）。
 
 ## 改动后的验证
 

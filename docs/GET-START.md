@@ -263,7 +263,8 @@ cp .env.example .env
 
 ```bash
 pip install -e .[train]
-pip install ./third_party/ml-agents-develop/ml-agents-develop/ml-agents-envs
+git clone https://github.com/Unity-Technologies/ml-agents   # 切到 release/18 分支
+pip install ./ml-agents/release_18/ml-agents-envs
 zhishuxing train --mlagents_file "D:\Builds\HubTransfer\HubTransfer.exe" --behavior_name HubAgent --episode_limit 200 --max_train_steps 500000 --evaluate_freq 5000
 ```
 
@@ -379,7 +380,7 @@ ServiceWorker 的 scope 也正好覆盖页面。
 | 设置了页把某项清空后在线能力突然没了 | 清空写入 `KEY=` 并热重载，等效抹掉该进程内这把密钥 | 重新填值，或从 `.env.bak`（每次写入前的备份）恢复后重启 |
 | `高德地图初始化失败`，页面回退成折线 | 填了 `AMAP_JS_KEY` 但没填 `AMAP_SECURITY_CODE` | 两个必须成对，且服务平台类型要选对（Web端 JS API） |
 | `/api/plan` 返回 400 `未配置 AMAP_REST_KEY 环境变量，无法使用真实路线规划。` | `engine=amap` 需要 Web 服务 Key | 配 `AMAP_REST_KEY`，或改用 `engine=hub`（内置枢纽引擎，离线可用） |
-| `ModuleNotFoundError: No module named 'mlagents_envs'`（跑 `train` 时） | PyPI 无 1.x 版本 | 从源码装：`pip install ./third_party/ml-agents-develop/ml-agents-develop/ml-agents-envs` |
+| `ModuleNotFoundError: No module named 'mlagents_envs'`（跑 `train` 时） | PyPI 无 1.x 版本 | 从源码装：clone ml-agents 官方仓库切 release/18 分支，`pip install ./ml-agents/release_18/ml-agents-envs` |
 | `zhishuxing analyze --report reward` 报 `未找到 *_env_*.npy 奖励文件` | `data/outputs/` 与 `data/samples/` 里都没有奖励数组 | 正常 clone 时应能回退到 `samples/` 的 3 个样本；被删了就从备份或重跑训练取回 |
 | `[reward] FAILED`、`[animation] FAILED` 之类出现在 analyze 输出里 | 单个报告异常被吞住继续跑，退出码最后统一给 1 | 看该行括号里的原因；多数是 `data/outputs/` 目录权限或 matplotlib 字体问题 |
 | 打开 `/mobile` 返回 404 | 设了 `ZHISHUXING_WORKSPACE` 指向别的目录，那边没有 `web/mobile/` | 回仓库根起服务，或把 `web/` 一并拷过去 |

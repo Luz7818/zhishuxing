@@ -128,7 +128,8 @@
 - **`serve` 默认监听 `127.0.0.1`**：局域网/公网显式传 `--host 0.0.0.0`；密钥写接口按监听地址
   裁决，须显式 `--allow-remote-settings` 才开放（双层防线见 `docs/ARCHITECTURE.md` 关键约定）。
 - **`zhishuxing train` 需要 mlagents_envs**（懒加载，未装时给安装指引）；PyPI 无 1.x 版本，
-  只能从 `third_party/` 镜像源码装；其余功能不受影响。
+  只能从 ml-agents 官方仓库 release/18 分支源码装（`rl/envs.py` 报错给完整命令）；
+  其余功能不受影响。本机曾有的 `third_party/` 镜像已于 2026-10-07 删除（代码零引用）。
 - **测试与 smoke 会写 `data/outputs/`**（未跟踪）；不要把某张图当基线提交进 `samples/`。
 - **对话会话已持久化**（2.3）：内存是第一读写层，SQLite 写穿到 `data/runs/sessions.db`，
   重启按 session_id 惰性回填，30 天不活跃自动清理。

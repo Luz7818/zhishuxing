@@ -57,7 +57,6 @@
 | `tests/` | pytest 套件 | `test_settings.py` 一个文件占 98 个用例 |
 | `code_optimization/` | 行人仿真向量化基准与报告 | 跑基准会重写入库的 `benchmark_results.json` |
 | `legacy/ui/` | 迁移前的 Streamlit 原型 | 不参与测试，也不在 pyflakes 门禁里 |
-| `third_party/` | ml-agents 与 MARL 的上游镜像 | gitignore，本机参考用 |
 | `docs/DEPLOY.md` | Docker 优先的部署手册 | — |
 
 `unity/README.md`（Unity 接入）与 `code_optimization/report.md`（性能基准）是各自主题的深度
@@ -89,8 +88,9 @@
   再 pyplot，否则无头环境挂起。
 - **产物命名不能改。** `*_env_*_number_*_seed_*.npy` 与 `*_actor_number_*_step_*k_agent_*.pth`
   是读写双方契约，改了等于让既有训练产物失效。
-- **`legacy/` 与 `third_party/` 不参与测试**（同名函数歧义 / 上游镜像自带几百份 README），
-  都在 `.docsignore` 与门禁之外。
+- **`legacy/` 不参与测试**（同名函数歧义），在 `.docsignore` 与门禁之外。
+  `third_party/` 上游镜像目录已于 2026-10-07 删除（代码零引用，训练依赖改从 ml-agents
+  官方仓库源码安装）；`.gitignore` 仍排除该名，防止镜像被误提交。
 - **不要在本仓写真实密钥。** 密钥取值无默认值，空串按未配置处理。
 
 ## 迁移映射（旧 → 新）
@@ -136,8 +136,7 @@ v2 重构是把历史散装脚本平移进包，不是重写。左列**仓库里
 ## 子目录说明索引
 
 各一级目录的板块说明：`code_optimization/`、`configs/`、`data/`、`legacy/`、`scripts/`、
-`src/`、`tests/`、`unity/`、`web/` 各自有 `README.md`；`third_party/` 在 `.docsignore`
-（上游镜像）；`docs/` 是文档目录本身。
+`src/`、`tests/`、`unity/`、`web/` 各自有 `README.md`；`docs/` 是文档目录本身。
 
 ## 已知架构问题
 

@@ -12,7 +12,7 @@
 |---|---|---|
 | `README.md` | 本说明 | 唯一的根级文件（复核：`find data -maxdepth 1 -type f`） |
 | `real/` | 真实客流数据约定目录(2.2.0):heatmap/transfer/efficiency 自动发现消费 | 格式与命名见 [real/README.md](real/README.md);真实 CSV 不入库,模板入库 |
-| `transfer_kb/` 的 23 个文件 | 22 篇语料 + 1 份入库语料 `corpus.jsonl` | 语料命名 `NN_主题.md`，一文件一篇；23 复核 `git ls-files data/transfer_kb \| wc -l` |
+| `transfer_kb/` 的 23 个文件 | 22 篇语料 + 1 份入库语料 `corpus.jsonl` | 语料命名 `NN_english_slug.md`（2026-10-07 起由中文名英文化），一文件一篇；23 复核 `git ls-files data/transfer_kb \| wc -l` |
 | `samples/` 的 18 个文件 | 报告与演示的参考产物 | 带 `_simulated` 后缀的 6 个出自固定种子合成数据；18 复核 `git ls-files data/samples \| wc -l` |
 
 `data/` 下入库文件合计 46 个（复核：`git ls-files data` 计数）。`outputs/`、`model/`、`runs/`
@@ -36,7 +36,7 @@
 
 | 路径 | 内容 |
 |---|---|
-| `shenzhen_north/*.md` | 22 篇演示语料（复核：`ls data/transfer_kb/shenzhen_north` 计数），一文件一篇，`NN_主题.md` 命名 |
+| `shenzhen_north/*.md` | 22 篇演示语料（复核：`ls data/transfer_kb/shenzhen_north` 计数），一文件一篇，`NN_english_slug.md` 命名（2026-10-07 起由中文名英文化，文件名只做标识，检索靠语料的 title/tags） |
 | `corpus.jsonl` | 入库后的 BM25 检索语料，22 行，字段 `id`、`hub`、`title`、`source`、`tags`、`content`（复核：`wc -l data/transfer_kb/corpus.jsonl`） |
 
 `corpus.jsonl` 是 `zhishuxing kb-ingest` 的产物，不要手改：它的 `id` 规则是

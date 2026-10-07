@@ -337,9 +337,9 @@ zhishuxing kb-ingest --query "带老人 优先直梯"
   "out": "...\data\transfer_kb\corpus.jsonl"
 }
 语料 22 条,检索自检「带老人 优先直梯」:
-  [7.583] 老人出行建议 <- 21_老人出行建议.md
-  [5.122] 带小孩出行建议 <- 20_带小孩出行建议.md
-  [3.098] 直梯与无障碍电梯分布 <- 03_直梯与无障碍电梯分布.md
+  [7.583] 老人出行建议 <- 21_senior_travel_tips.md
+  [5.122] 带小孩出行建议 <- 20_traveling_with_children.md
+  [3.098] 直梯与无障碍电梯分布 <- 03_elevators_and_accessible_lifts.md
 ```
 
 `changed: 0` 说明源文档与语料已一致——入库是幂等的，按 `hub:相对路径:段序号` 覆盖写。

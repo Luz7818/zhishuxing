@@ -9,7 +9,7 @@
   后台起 waitress 服务 → 窗口切入控制台）。双击 exe 弹出**原生应用窗口，不打开浏览器**，
   pywebview 走 Windows 自带的 Edge WebView2 渲染。
 - **浏览器模式（onefile，兼容回退）**：`exe_entry.py` 是打包入口，起服务后自动打开系统
-  浏览器，与 `启动器.bat` 同语义。保留用于最小交付与问题排查。
+  浏览器，与 `launcher.bat` 同语义。保留用于最小交付与问题排查。
 
 `app.ico` 与 `_build_version.txt` 是构建脚本写入的入库资产。两个入口共用 `bootstrap.py`
 的引导逻辑（workspace 选择、资源解压、端口探测、致命错误兜底）。

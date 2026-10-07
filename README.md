@@ -47,7 +47,7 @@ zhishuxing analyze --report all   # 7 类报告，全 OK 时退出码 0
 zhishuxing serve --host 127.0.0.1 --port 7860   # 控制台 http://127.0.0.1:7860，PWA /mobile
 ```
 
-Windows 下也可直接双击根目录 [启动器.bat](启动器.bat)：未运行则拉起 serve，就绪后自动打开浏览器。
+Windows 下也可直接双击根目录 [launcher.bat](launcher.bat)：未运行则拉起 serve，就绪后自动打开浏览器。
 
 **桌面版（不走浏览器）**：`python scripts/build_exe.py` 构建 onedir 产物 `dist/zhishuxing/`，
 双击其中的 `zhishuxing.exe` 直接弹出原生应用窗口（pywebview + Edge WebView2，本地服务随

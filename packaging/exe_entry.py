@@ -7,7 +7,7 @@
 1. bootstrap 先选定可写 workspace 并设置 ZHISHUXING_WORKSPACE——config.py 在 import 时求值,
    任何 zhishuxing 导入都必须发生在设置之后;
 2. 首次运行把内置资源解压到 workspace(版本戳一致则跳过,升级即重建);
-3. 端口 7860 已被占用时视为已有实例,直接开浏览器退出(与 启动器.bat 同语义);
+3. 端口 7860 已被占用时视为已有实例,直接开浏览器退出(与 launcher.bat 同语义);
 4. 后台线程轮询端口就绪后自动开浏览器;
 5. 复用 CLI 的 serve --production(waitress);
 6. 致命错误时现场分配控制台展示原因——构建用 --windowed,平时无黑窗口。

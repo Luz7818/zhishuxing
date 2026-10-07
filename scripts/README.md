@@ -50,7 +50,7 @@ python scripts/build_exe.py --mode onefile   # onefile 浏览器模式(兼容回
   桌面模式要求 `pip install pywebview`，并 `--collect-all webview/clr_loader/pythonnet` +
   `--hidden-import clr` 收集 WebView2 的 DLL 与运行时配置。供 `package_zip.py` 组装便携 zip。
 - **onefile（浏览器模式）**：入口 `packaging/exe_entry.py`，产物 `dist/zhishuxing.exe`
-  单文件，起服务后自动开浏览器，与 `启动器.bat` 同语义。
+  单文件，起服务后自动开浏览器，与 `launcher.bat` 同语义。
 
 两种模式共同的行为要点：
 

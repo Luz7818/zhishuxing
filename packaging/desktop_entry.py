@@ -120,7 +120,7 @@ def run_server() -> None:
 def main() -> int:
     global _LOG_PATH
     if not getattr(sys, "frozen", False):
-        print("本入口仅供打包后的 exe 使用;源码开发请执行 zhishuxing serve 后用 启动器.bat 调试")
+        print("本入口仅供打包后的 exe 使用;源码开发请执行 zhishuxing serve 后用 launcher.bat 调试")
         return 2
     try:
         workspace = bootstrap()

@@ -743,7 +743,7 @@
               <div class="mode-tab active" data-mode="map" role="button" tabindex="0">3D 地图导航</div>
               <div class="mode-tab" data-mode="ar" role="button" tabindex="0">AR 实景导航</div>
             </div>
-            <img src="./地图.png" class="result-image" id="navImage" alt="导航模式预览图">
+            <img src="./map.png" class="result-image" id="navImage" alt="导航模式预览图">
           </div>
 
           <div class="card section-card" id="profileCard" style="display:none">
@@ -1578,7 +1578,7 @@
           '<text x="50%" y="58%" fill="#64748b" font-size="15" text-anchor="middle" font-family="sans-serif">将 AR.gif 放入 web/mobile/ 即可启用</text></svg>'
         );
       };
-      navImage.src = mode === 'map' ? './地图.png' : './AR.gif';
+      navImage.src = mode === 'map' ? './map.png' : './AR.gif';
     }
 
     /* ---------------- 站内导航(网格 Canvas) ---------------- */

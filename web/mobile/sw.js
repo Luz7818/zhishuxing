@@ -1,8 +1,8 @@
-const CACHE_NAME = "zhishuxing-mobile-v7";
+const CACHE_NAME = "zhishuxing-mobile-v8";
 const ASSETS = [
   "./mobile_app.html",
   "./manifest.webmanifest",
-  "./地图.png",
+  "./map.png",
   "./icon-192.png",
   "./icon-512.png",
   "./icon-maskable-512.png",

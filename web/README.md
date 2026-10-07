@@ -15,10 +15,10 @@
 |---|---|---|
 | `mobile_app.html` | 单文件 PWA：对话流（气泡消息/需求档案/经验引用/动作信封）、结构化路线、站内导航 Canvas、客流提示、三态深色模式 | 2058 行（复核：`wc -l web/mobile/mobile_app.html`），样式与脚本内联；入口 URL 是 `/mobile` |
 | `manifest.webmanifest` | 安装清单：名称、`start_url`、主题色 `#4f46e5`、3 个图标 | `start_url` 指向同目录的 `mobile_app.html` |
-| `sw.js` | ServiceWorker：预缓存 9 个静态资源，`/api/` 与 `/outputs/` 走网络优先 | 缓存名 `zhishuxing-mobile-v7`，改了静态资源要一起升版本号 |
+| `sw.js` | ServiceWorker：预缓存 9 个静态资源，`/api/` 与 `/outputs/` 走网络优先 | 缓存名 `zhishuxing-mobile-v8`，改了静态资源要一起升版本号 |
 | `icon-192.png`、`icon-512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`、`splash-logo.png` | 安装与启动屏图标 | **生成物**：`python scripts/render_brand_assets.py` |
 | `logo-mark.svg`、`favicon.svg` | 矢量标识与标签页图标 | 手工维护，是上面 PNG 的设计来源 |
-| `地图.png` | 「地图导航」模式下的站内示意图 | 被 `mobile_app.html` 与 `sw.js` 的预缓存列表引用 |
+| `map.png` | 「地图导航」模式下的站内示意图（原中文名 `地图.png`，2026-10-07 随文件名 ASCII 化改为现名） | 被 `mobile_app.html` 与 `sw.js` 的预缓存列表引用 |
 
 ## 子目录
 
@@ -84,14 +84,15 @@ python -m pytest tests/test_api.py -k mobile -o addopts="" -q
 
 ## 别动
 
-- `地图.png` 这个中文文件名：`mobile_app.html` 第 971 行的 `<img>`、第 1290 行的 `navImage.src`
-  赋值，加上 `sw.js` 第 5 行的预缓存项，**三处**都写死了它。改英文名要同时改三处，
-  漏一处的表现是破图或 SW 缓存 miss。复核：`grep -n "地图.png" web/mobile/mobile_app.html web/mobile/sw.js`。
-- `sw.js` 第 1 行的 `CACHE_NAME`（当前 `zhishuxing-mobile-v7`）：增删静态资源不升这个版本号，
+- `map.png`（2026-10-07 前为中文名 `地图.png`，改名时三处引用同步）：`mobile_app.html`
+  第 746 行的 `<img>`、第 1581 行的 `navImage.src` 赋值，加上 `sw.js` 第 5 行的预缓存项，
+  **三处**都写死了它。再改这个文件名要同时改三处并升 `CACHE_NAME`，
+  漏一处的表现是破图或 SW 缓存 miss。复核：`grep -n "map.png" web/mobile/mobile_app.html web/mobile/sw.js`。
+- `sw.js` 第 1 行的 `CACHE_NAME`（当前 `zhishuxing-mobile-v8`）：增删静态资源不升这个版本号，
   已经装到手机上的 PWA 会一直命中旧缓存，表现是"改了没生效"。复核：`sed -n '1p' web/mobile/sw.js`。
-- `AR.gif`：本机文件、不入库，却被第 1290 行当正常资源引用，靠 `onerror` 分支出占位说明。
-  删本机那个文件没影响，删 `onerror` 那段就是新克隆破图。复核：
-  `sed -n '1280,1291p' web/mobile/mobile_app.html`。
+- `AR.gif`：本机文件、不入库，却被第 1581 行当正常资源引用，靠 `onerror` 分支（1571–1579 行）
+  出占位说明。删本机那个文件没影响，删 `onerror` 那段就是新克隆破图。复核：
+  `sed -n '1570,1582p' web/mobile/mobile_app.html`。
 - `tests/test_api.py` 第 260 行的 `assert "VR.png" not in sw_text`：`VR.png`、`图标.png`
   这两张本机图唯一的"引用点"就是这条**反向**断言，防止它们被重新塞进预缓存清单。
   别把它当冗余断言删掉。

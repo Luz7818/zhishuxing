@@ -278,3 +278,13 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   无需重启)→ 宿主机验证管理端鉴权(未登录 401 / Bearer 200)→ `compose down -v`
   清场。授权有效态 `license` 子命令的"文件:"字段空显示 bug 当场发现并修复
   (test_licensing 补一条断言钉住)。
+
+## 2026-10-21 · 更正:存量乘客档案恢复失败留痕
+
+- `llm/assistant.py` 从 SQLite 恢复序列化档案 dict 的路径里,`except Exception: pass` 按
+  「解析失败即无档案」设计(对不可信存量数据防御本身是对的),但零痕迹——档案损坏只会
+  表现为「对话怎么都不记得偏好」,无从排查。
+- 修法:捕获后打印 `[profile] 存量乘客档案恢复失败,按无档案处理:<type>: <msg>`(一行,
+  与 webapp/service.py `_autoload_real_llm` 的「降级可见」约定一致),行为不变。
+- 验证:pyflakes 0(src/scripts/tests)、`python -m pytest -o addopts="" -q` 234 passed
+  (测试数与基线一致)。

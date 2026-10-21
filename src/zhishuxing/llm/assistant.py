@@ -110,8 +110,8 @@ class TransferAssistant:
                     source=str(stored_profile.get("source") or "rule"),
                 ).normalize()
                 profile = stored.merge(profile)
-            except Exception:
-                pass
+            except Exception as exc:  # 存量档案损坏按无档案处理,但留痕避免静默吞错
+                print(f"[profile] 存量乘客档案恢复失败,按无档案处理:{type(exc).__name__}: {exc}")
         session["profile"] = profile
 
         route_payload: Dict[str, Any] = {}

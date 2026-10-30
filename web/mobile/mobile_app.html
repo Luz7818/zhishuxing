@@ -1298,7 +1298,7 @@
         return;
       }
       list.innerHTML = state.history.map((item, i) => `
-        <div class="history-row">
+        <div class="history-row" style="animation-delay:${Math.min(i, 8) * 40}ms">
           <div class="h-text">${escapeHtml(item.text)}<div class="h-meta">${escapeHtml(item.time)}</div></div>
           <button class="tiny-btn" data-history-index="${i}">再问一次</button>
         </div>`).join('');

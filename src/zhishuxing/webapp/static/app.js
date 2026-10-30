@@ -443,7 +443,7 @@ function drawLineChart(canvas, series, opts = {}) {
     series.forEach((s, si) => {
       const color = s.color || CHART_COLORS[si % CHART_COLORS.length];
       ctx.strokeStyle = color;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = s.width || 2;
       ctx.beginPath();
       const n = s.y.length;
       const upto = Math.max(2, Math.ceil(n * progress));
@@ -991,6 +991,18 @@ async function loadLatestPolicy() {
   return status;
 }
 
+/* 奖励曲线最近一次绘制的数据,供图例悬停高亮重绘 */
+let rewardSeriesCache = [];
+
+function highlightRewardSeries(activeIdx) {
+  const canvas = $("rewardCanvas");
+  if (!canvas || !rewardSeriesCache.length) return;
+  const series = rewardSeriesCache.map((s, i) => (activeIdx === -1 || i === activeIdx
+    ? { ...s, width: i === activeIdx ? 3 : 2 }
+    : { ...s, color: "rgba(110,127,160,.22)", width: 1.5 }));
+  drawLineChart(canvas, series, { animate: false });
+}
+
 async function refreshRewards() {
   const data = await api.get("/api/rl/rewards");
   const series = (data.series || []).map((s, i) => ({
@@ -1001,17 +1013,24 @@ async function refreshRewards() {
   }));
   const canvas = $("rewardCanvas");
   if (!series.length) {
+    rewardSeriesCache = [];
     drawChartEmpty(canvas, "暂无 *_env_*.npy 奖励数据（训练后自动出现）");
     $("rewardLegend").innerHTML = "";
     return;
   }
+  rewardSeriesCache = series;
   drawLineChart(canvas, series);
   $("rewardLegend").innerHTML = series
     .map(
       (s, i) =>
-        `<span class="key"><span class="swatch" style="background:${CHART_COLORS[i % CHART_COLORS.length]}"></span>${s.name}</span>`
+        `<button class="key legend-key" data-series="${i}" type="button" title="悬停高亮该曲线"><span class="swatch" style="background:${CHART_COLORS[i % CHART_COLORS.length]}"></span>${esc(s.name)}</button>`
     )
     .join("");
+  /* 图例悬停高亮对应曲线,移出恢复(多 seed 对比时快速分辨) */
+  $$("#rewardLegend .legend-key").forEach((key) => {
+    key.addEventListener("mouseenter", () => highlightRewardSeries(Number(key.dataset.series)));
+    key.addEventListener("mouseleave", () => highlightRewardSeries(-1));
+  });
 }
 
 function initRL() {

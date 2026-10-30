@@ -462,7 +462,7 @@ function drawChartEmpty(canvas, text) {
   ctx.fillText(text, canvas.width / 2, canvas.height / 2);
 }
 
-function drawPolyline(canvas, coords, labels = {}) {
+function drawPolyline(canvas, coords, labels = {}, progress = 1) {
   const ctx = canvas.getContext("2d");
   const W = canvas.width;
   const H = canvas.height;
@@ -494,7 +494,8 @@ function drawPolyline(canvas, coords, labels = {}) {
   ctx.shadowColor = "rgba(56,189,248,0.6)";
   ctx.shadowBlur = 8;
   ctx.beginPath();
-  coords.forEach(([lon, lat], i) => {
+  const upto = Math.max(2, Math.ceil(coords.length * progress));
+  coords.slice(0, upto).forEach(([lon, lat], i) => {
     const [x, y] = toXY([lon, lat]);
     if (i === 0) ctx.moveTo(x, y);
     else ctx.lineTo(x, y);
@@ -520,6 +521,24 @@ function drawPolyline(canvas, coords, labels = {}) {
   };
   pin(coords[0], "#22d3ee", labels.origin || "起点");
   pin(coords[coords.length - 1], "#34d399", labels.destination || "终点");
+}
+
+/* 回退折线的描线入场:与 drawLineChart 同一语言(0.56s ease-out,新请求取消旧帧) */
+const polylineAnims = new WeakMap();
+
+function animatePolyline(canvas, coords, labels) {
+  const prev = polylineAnims.get(canvas);
+  if (prev) cancelAnimationFrame(prev);
+  if (reduceMotion()) { drawPolyline(canvas, coords, labels, 1); return; }
+  const t0 = performance.now();
+  const dur = 560;
+  const frame = (now) => {
+    const t = Math.min(1, (now - t0) / dur);
+    drawPolyline(canvas, coords, labels, 1 - Math.pow(1 - t, 3));
+    if (t < 1) polylineAnims.set(canvas, requestAnimationFrame(frame));
+    else polylineAnims.delete(canvas);
+  };
+  polylineAnims.set(canvas, requestAnimationFrame(frame));
 }
 
 /* ---------------- 高德 JS API 底图 ---------------- */
@@ -809,6 +828,20 @@ function animateRoute() {
   requestAnimationFrame(frame);
 }
 
+/* 任意网格画布的描线动画(对话分析卡的小图用);卡片被替换后自动停笔 */
+function animateGridCanvas(canvas, view, duration = 560) {
+  if (reduceMotion()) { view.progress = 1; drawGrid(canvas, state.nav.grid, view); return; }
+  const t0 = performance.now();
+  const frame = (now) => {
+    if (!canvas.isConnected) return;
+    const t = Math.min(1, (now - t0) / duration);
+    view.progress = 1 - Math.pow(1 - t, 3);
+    drawGrid(canvas, state.nav.grid, view);
+    if (t < 1) requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
 function selectPoint(selectEl, point, label) {
   const value = point.join(",");
   let opt = [...selectEl.options].find((o) => o.value === value);
@@ -1016,11 +1049,13 @@ function renderGroupRows() {
 }
 
 function initFlow() {
-  $("btnGroupReset").addEventListener("click", async () => {
-    flowGroups = await api.get("/api/scenarios");
-    renderGroupRows();
-    toast("已恢复默认场景");
-  });
+  $("btnGroupReset").addEventListener("click", () =>
+    withBusy($("btnGroupReset"), " 恢复中", async () => {
+      flowGroups = await api.get("/api/scenarios");
+      renderGroupRows();
+      toast("已恢复默认场景");
+    })
+  );
 
   $("btnPanel").addEventListener("click", () =>
     withBusy($("btnPanel"), " 生成中", async () => {
@@ -1096,7 +1131,7 @@ function initPlan() {
         const drawFallback = (reason) => {
           container.style.display = "none";
           canvas.style.display = "";
-          drawPolyline(canvas, result.polyline, labels);
+          animatePolyline(canvas, result.polyline, labels);
           note.textContent = `离线折线示意 · ${reason}`;
         };
         if (window.ZSX_CONFIG && window.ZSX_CONFIG.amapJsKey) {
@@ -1250,11 +1285,11 @@ function renderChatAnalysis(data) {
 
   const canvas = $("chatRouteCanvas");
   if (canvas) {
-    drawGrid(canvas, state.nav.grid, {
+    animateGridCanvas(canvas, {
       route: data.route.route,
       start: data.route.route[0],
       goal: data.route.route[data.route.route.length - 1],
-      progress: 1,
+      progress: 0,
     });
   }
 }

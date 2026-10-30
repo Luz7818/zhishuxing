@@ -83,7 +83,8 @@ Windows 下也可直接双击根目录 [launcher.bat](launcher.bat)：未运行�
   分析报告、设置 7 个视图;智能换乘助手为页面底部对话 Dock(输入条常驻,面板可展开收起),
   侧栏可收起为图标栏。地图优先走高德 JS API 真实底图,未配 Key 或加载失败自动回退 Canvas 折线并注明原因。
 - **移动端 PWA** `http://127.0.0.1:7860/mobile`：同源托管，可安装、ServiceWorker 离线缓存；对话流、
-  结构化路线、站内导航 Canvas、客流提示与控制台同源设计；调 `/api/chat(+reset)`、`/api/settings`、
+  结构化路线、站内导航 Canvas、客流提示与控制台同源设计；支持语音输入（Web Speech）、
+  系统分享、触感反馈与应用内「安装到主屏」引导（个人中心）；调 `/api/chat(+reset)`、`/api/settings`、
   `/api/navigation/*`、`/api/scenarios`、`/api/dashboard/run`，后端不可用时回退演示数据。
 
 全部 HTTP 路由（27 个注册 / 26 条不同路径）的逐条清单见[上手手册](docs/GET-START.md)第 3.3 节，

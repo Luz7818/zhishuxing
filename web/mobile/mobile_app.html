@@ -507,7 +507,10 @@
     }
     .scenario-card b { display: block; font-size: 12.5px; font-weight: 700; letter-spacing: -.01em; line-height: 1.4; }
     .scenario-card span { display: block; margin-top: 3px; font-size: 10.5px; color: var(--t4); }
-    .scenario-card:hover { border-color: var(--primary); }
+    .scenario-card { transition: border-color .18s var(--ease-out), transform .18s var(--ease-out), box-shadow .18s var(--ease-out); }
+    @media (hover: hover) and (pointer: fine) {
+      .scenario-card:hover { border-color: var(--primary); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    }
     #navCanvas { width: 100%; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface-2); display: block; }
     .nav-result { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 13px; font-weight: 500; color: var(--t2); }
     .nav-result .ic { width: 15px; height: 15px; color: var(--ok); }

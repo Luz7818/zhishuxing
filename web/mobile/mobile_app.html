@@ -256,7 +256,8 @@
     @keyframes pulseBar { 0%, 100% { transform: scaleY(.5); opacity: .55; } 50% { transform: scaleY(1); opacity: 1; } }
     .tier-ok { background: var(--ok-soft); color: var(--ok); }
     .tier-warn { background: var(--warn-soft); color: var(--warn); }
-    .tier-bad { background: var(--bad-soft); color: var(--bad); }
+    .tier-bad { background: var(--bad-soft); color: var(--bad); box-shadow: 0 0 12px rgba(239, 68, 68, .28); animation: tierPulse 2s ease-in-out infinite; }
+    @keyframes tierPulse { 50% { box-shadow: 0 0 18px rgba(239, 68, 68, .45); } }
     .crowd-nums { display: flex; gap: 18px; margin-bottom: 8px; }
     .crowd-nums div span { display: block; font-size: 11px; color: var(--t3); }
     .crowd-nums div b { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
@@ -287,7 +288,7 @@
       white-space: pre-line; word-break: break-word; width: fit-content; max-width: 100%;
     }
     .msg.assistant .bubble { background: var(--surface); border: 1px solid var(--line); border-top-left-radius: 6px; box-shadow: var(--shadow-xs); }
-    .msg.user .bubble { background: var(--grad); color: #fff; border-bottom-right-radius: 6px; box-shadow: var(--grad-glow); cursor: pointer; }
+    .msg.user .bubble { background: var(--grad); color: #fff; border-bottom-right-radius: 6px; box-shadow: var(--grad-glow), inset 0 1px 0 rgba(255, 255, 255, .25); cursor: pointer; }
     .bubble-typing { display: inline-flex; gap: 4px; padding: 14px 14px; }
     .bubble-typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--t3); animation: dotBlink 1.1s infinite; }
     .bubble-typing i:nth-child(2) { animation-delay: .18s; }
@@ -337,7 +338,11 @@
     .welcome-card > :nth-child(3) { animation-delay: .14s; }
     .welcome-card > :nth-child(4) { animation-delay: .2s; }
     .welcome-card > :nth-child(5) { animation-delay: .26s; }
-    .welcome-mark { width: 58px; height: 58px; margin: 0 auto 12px; border-radius: 18px; background: var(--grad); color: #fff; display: grid; place-items: center; box-shadow: var(--grad-glow); }
+    .welcome-mark { width: 58px; height: 58px; margin: 0 auto 12px; border-radius: 18px; background: var(--grad); color: #fff; display: grid; place-items: center; box-shadow: var(--grad-glow); position: relative; overflow: hidden; }
+    .welcome-mark::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .38) 50%, transparent 66%);
+      transform: translateX(-150%); animation: markSheen 2.6s var(--ease-out) 1.1s 1 both; }
+    @keyframes markSheen { to { transform: translateX(150%); } }
     .welcome-mark .ic { width: 28px; height: 28px; }
     .welcome-card h3 { font-size: 18px; font-weight: 900; letter-spacing: -.02em; }
     .welcome-card p { margin-top: 6px; font-size: 12.5px; line-height: 1.7; color: var(--t3); }
@@ -389,6 +394,12 @@
     }
     .send-btn:disabled { filter: grayscale(.4); opacity: .6; }
     .send-btn .ic { width: 18px; height: 18px; }
+    /* CTA 心跳:柔和的呼吸辉光,默认视线自然落在发送键 */
+    .send-btn { animation: glowBreath 3.4s ease-in-out infinite; }
+    @keyframes glowBreath {
+      0%, 100% { box-shadow: var(--grad-glow); }
+      50% { box-shadow: 0 8px 24px -6px rgba(99, 102, 241, .68), var(--grad-glow); }
+    }
     /* 请求进行中:发送键变加载环(状态就发生在被按的那颗键上,视线不用去找) */
     .send-btn.loading .ic { display: none; }
     .send-btn.loading::after {
@@ -435,6 +446,11 @@
       box-shadow: var(--grad-glow); border: 3px solid var(--surface);
     }
     .od-perf .perf-ico .ic { width: 15px; height: 15px; }
+    .od-perf .perf-ico { animation: icoBreath 3s ease-in-out infinite; }
+    @keyframes icoBreath {
+      0%, 100% { box-shadow: var(--grad-glow); }
+      50% { box-shadow: 0 8px 20px -6px rgba(99, 102, 241, .75), var(--grad-glow); }
+    }
 
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
     .kpi { padding: 11px 6px 10px; text-align: center; position: relative; overflow: hidden; }
@@ -614,6 +630,7 @@
     }
     .nav-item.has-dot .nv-dot { opacity: 1; transform: scale(1); }
     .nav-item.active { color: var(--primary); font-weight: 700; }
+    .nav-item.active .nv-ico .ic { filter: drop-shadow(0 0 7px rgba(99, 102, 241, .55)); }
     .nav-item.active .nv-ico { background: transparent; transform: translateY(-1px); }
     .nav-item:active .nv-ico { transform: scale(.92); }
     /* 滑动高亮药丸:在 tab 之间以弹簧曲线滑移(单一高亮元素,不是每项各自淡入) */

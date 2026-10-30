@@ -1,4 +1,4 @@
-const CACHE_NAME = "zhishuxing-mobile-v11";
+const CACHE_NAME = "zhishuxing-mobile-v13";
 const ASSETS = [
   "./mobile_app.html",
   "./manifest.webmanifest",

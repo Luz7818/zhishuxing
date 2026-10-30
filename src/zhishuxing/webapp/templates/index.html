@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/favicon-32.png" />
   <link rel="apple-touch-icon" href="/static/assets/logo-mark.svg" />
-  <link rel="stylesheet" href="/static/style.css?v=6.2" />
+  <link rel="stylesheet" href="/static/style.css?v=6.3" />
   <script>document.documentElement.classList.add("js");</script>
   <script>
     /* 服务端注入的运行配置：高德 JS Key 仅在配置了环境变量时存在 */
@@ -68,6 +68,12 @@
       </div>
       <div class="hero-foot reveal">全链路离线可演示<span class="sep">·</span>Mock 确定性降级<span class="sep">·</span>高德真实路线双引擎<span class="sep">·</span>PWA 乘客端</div>
     </div>
+    <!-- 活体动线:光点沿换乘路径巡航(纯 CSS offset-path,reduced-motion 下自动消失) -->
+    <div class="hub-lines hub-hero" aria-hidden="true">
+      <i style="offset-path:path('M -60 640 C 260 600, 380 300, 640 320 S 1120 480, 1580 380');animation-duration:15s;animation-delay:-3s"></i>
+      <i style="offset-path:path('M -60 240 C 240 280, 420 520, 700 560 S 1180 660, 1580 580');animation-duration:12s;animation-delay:-7s"></i>
+      <i style="offset-path:path('M 1580 200 C 1240 240, 1040 460, 760 500 S 260 560, -60 500');animation-duration:19s;animation-delay:-13s"></i>
+    </div>
   </div>
 </div>
 
@@ -94,7 +100,7 @@
     <div class="side-foot">
       <div class="sys-status"><span class="dot" id="health-dot"></span><span id="health-text">连接中…</span></div>
       <div class="meta-row">
-        <span id="side-ver">v2.7.0</span><span class="msep">·</span><span id="side-llm" title="LLM 适配器模式">LLM:—</span>
+        <span id="side-ver">v2.8.0</span><span class="msep">·</span><span id="side-llm" title="LLM 适配器模式">LLM:—</span>
         <button id="theme-toggle" class="theme-btn" title="切换明暗主题" aria-label="切换明暗主题"><svg class="ic t-moon" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-moon"/></svg><svg class="ic t-sun" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-sun"/></svg></button>
       </div>
     </div>
@@ -493,6 +499,13 @@
   </div>
 </div>
 
+<!-- ===== 活体动线(工作台):欢迎页盖住时不可见,进入工作台后显现 ===== -->
+<div class="hub-lines" aria-hidden="true">
+  <i style="offset-path:path('M -60 640 C 260 600, 380 300, 640 320 S 1120 480, 1580 380');animation-duration:17s;animation-delay:-5s"></i>
+  <i style="offset-path:path('M -60 240 C 240 280, 420 520, 700 560 S 1180 660, 1580 580');animation-duration:13s;animation-delay:-9s"></i>
+  <i style="offset-path:path('M 1580 200 C 1240 240, 1040 460, 760 500 S 260 560, -60 500');animation-duration:21s;animation-delay:-15s"></i>
+</div>
+
 <!-- ===== 命令面板 ===== -->
 <div class="cmdk-mask hidden" id="cmdk-mask">
   <div class="cmdk">
@@ -558,6 +571,6 @@
 </div>
 
 <div id="toastHost"></div>
-<script src="/static/app.js?v=6.2"></script>
+<script src="/static/app.js?v=6.3"></script>
 </body>
 </html>

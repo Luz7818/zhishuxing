@@ -1204,3 +1204,20 @@ html[data-theme="dark"] .main {
   .hstat { transition: transform .2s var(--ease-out), border-color .2s var(--ease-out), background .2s var(--ease-out); }
   .hstat:hover { transform: translateY(-2px); border-color: rgba(129, 140, 248, .32); background: rgba(255, 255, 255, .08); }
 }
+
+/* ============================================================
+   v6.2 交互瞄准与微动(2026-10-31)—— 枢纽网格悬停准星(JS 重绘) ·
+   主按钮图标悬停微动 · 折叠原始数据展开淡入 · 引擎钮悬停缩放
+   ============================================================ */
+
+/* 主按钮悬停:图标向行动方向轻推(磁性物理的内层位移) */
+.btn .ic { transition: transform .18s var(--ease-out); }
+.btn:hover:not(:disabled) .ic { transform: translateX(1.5px); }
+
+/* 折叠的原始数据展开时轻淡入,不硬蹦 */
+@keyframes rawIn { from { opacity: 0; transform: translateY(-3px); } }
+details.raw[open] pre { animation: rawIn .22s var(--ease-out); }
+
+/* Dock 引擎钮悬停:图标微放大 */
+.dock-engine-btn .ic { transition: transform .18s var(--ease-out); }
+.dock-engine-btn:hover .ic { transform: scale(1.1); }

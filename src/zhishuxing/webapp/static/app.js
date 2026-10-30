@@ -327,6 +327,19 @@ function drawGrid(canvas, grid, view) {
     });
   });
 
+  // 悬停准星格:拾取起终点的瞄准提示(鼠标悬停时由 repaintNav 重绘)
+  if (view && view.hover) {
+    const [hx, hy] = view.hover;
+    if (hx >= 0 && hy >= 0 && hx < grid.width && hy < grid.height) {
+      ctx.fillStyle = "rgba(56,189,248,.13)";
+      roundRect(ctx, ox + hx * cell + 1.5, oy + hy * cell + 1.5, cell - 3, cell - 3, 4);
+      ctx.fill();
+      ctx.strokeStyle = "rgba(56,189,248,.5)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    }
+  }
+
   // 地标
   Object.entries(grid.landmarks).forEach(([key, [lx, ly]]) => {
     const cx = ox + lx * cell + cell / 2;
@@ -864,20 +877,29 @@ function selectPoint(selectEl, point, label) {
   selectEl.value = value;
 }
 
+/* 指针事件 → 网格坐标(点击与悬停准星共用);不在界内返回 null */
+function cellFromEvent(event, canvas, grid) {
+  const rect = canvas.getBoundingClientRect();
+  const cx = ((event.clientX - rect.left) * canvas.width) / rect.width;
+  const cy = ((event.clientY - rect.top) * canvas.height) / rect.height;
+  const cell = Math.min((canvas.width - 30) / grid.width, (canvas.height - 30) / grid.height);
+  const ox = (canvas.width - cell * grid.width) / 2;
+  const oy = (canvas.height - cell * grid.height) / 2;
+  const gx = Math.floor((cx - ox) / cell);
+  const gy = Math.floor((cy - oy) / cell);
+  if (gx < 0 || gy < 0 || gx >= grid.width || gy >= grid.height) return null;
+  return [gx, gy];
+}
+
 function initNavigation() {
   const canvas = $("navCanvas");
+  canvas.style.cursor = "crosshair";
   canvas.addEventListener("click", (event) => {
     const grid = state.nav.grid;
     if (!grid) return;
-    const rect = canvas.getBoundingClientRect();
-    const cx = ((event.clientX - rect.left) * canvas.width) / rect.width;
-    const cy = ((event.clientY - rect.top) * canvas.height) / rect.height;
-    const cell = Math.min((canvas.width - 30) / grid.width, (canvas.height - 30) / grid.height);
-    const ox = (canvas.width - cell * grid.width) / 2;
-    const oy = (canvas.height - cell * grid.height) / 2;
-    const gx = Math.floor((cx - ox) / cell);
-    const gy = Math.floor((cy - oy) / cell);
-    if (gx < 0 || gy < 0 || gx >= grid.width || gy >= grid.height) return;
+    const hit = cellFromEvent(event, canvas, grid);
+    if (!hit) return;
+    const [gx, gy] = hit;
     if (grid.blocked.some(([bx, by]) => bx === gx && by === gy)) {
       toast("该格为阻挡区域，无法选择", "err");
       return;
@@ -896,6 +918,25 @@ function initNavigation() {
       selectPoint($("navGoal"), point, label);
     }
     repaintNav();
+  });
+
+  /* 悬停准星:高亮当前格,拾取起终点的瞄准感(触屏不触发,无副作用) */
+  canvas.addEventListener("mousemove", (event) => {
+    const grid = state.nav.grid;
+    if (!grid) return;
+    const hit = cellFromEvent(event, canvas, grid);
+    const hover = state.nav.hover;
+    const same = hit === hover || (hit && hover && hit[0] === hover[0] && hit[1] === hover[1]);
+    if (!same) {
+      state.nav.hover = hit;
+      repaintNav();
+    }
+  });
+  canvas.addEventListener("mouseleave", () => {
+    if (state.nav.hover) {
+      state.nav.hover = null;
+      repaintNav();
+    }
   });
 
   $("btnNavReload").addEventListener("click", () =>

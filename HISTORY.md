@@ -288,3 +288,64 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   与 webapp/service.py `_autoload_real_llm` 的「降级可见」约定一致),行为不变。
 - 验证:pyflakes 0(src/scripts/tests)、`python -m pytest -o addopts="" -q` 234 passed
   (测试数与基线一致)。
+
+## 2026-10-31 · 2.6.0 前端体验精修(移动端 PWA + Web 控制台)
+
+### Added(新增 · 移动端 PWA)
+
+- **语音输入(Web Speech API)**:输入条新增麦克风键,识别实时填入输入框但不自动发送
+  (让乘客先确认听到什么);不支持/无权限的浏览器入口不出现或如实提示,无硬依赖
+- **PWA 安装引导**:个人中心新增「安装到主屏」,`beforeinstallprompt` 触发才露出,
+  standalone 运行时自动隐藏;`appinstalled` 后入口消失
+- **系统分享**:路线分享优先走 `navigator.share` 系统面板,不支持/用户取消再退回复制
+- **触感反馈**:发送与路线落地时 `navigator.vibrate` 轻震(iOS 无此 API 静默忽略)
+- **点气泡重问**:点击自己的历史气泡把原文填回输入框重新编辑
+
+### Fixed(修复 · 移动端 PWA)
+
+- **对话页输入条被悬浮胶囊底栏盖住(存量 bug)**:底栏改悬浮胶囊(60px+10px)时
+  `#chatPage` 的 composer 底距没跟上,输入条(含麦克风键)整体被压在底栏之下;
+  现 composer-wrap 底距对齐滚动页的 96px 基准(浏览器实测确认)
+- 输入框长 placeholder 折行挤出 Windows 原生滚动条箭头:placeholder 缩短 +
+  `scrollbar-width: none`(高度自适应仍由 autosize 负责)
+
+### Changed(变更 · 移动端 PWA 动画/质感)
+
+- 客流卡展开/收起改 `grid-template-rows 0fr→1fr` 过渡:高度连续、可中断,
+  替代 display:none 硬切(快速连点不再闪跳)
+- 「3D/AR 导航模式」与「主题三态分段」改滑动药丸指示器(与底部导航同一语言);
+  页面隐藏时定位自动跳过,resize/切页即时落位
+- 规划结果整组错峰入场(车票→KPI→预览→步骤,约 60ms 阶梯);欢迎卡分层入场;
+  历史弹层行微错峰;恢复历史消息不再重放入场动画(只让新消息动)
+- KPI/客流数字等宽排印(`font-variant-numeric: tabular-nums`);主按钮按压阴影收紧;
+  发送键请求中变加载环;底部弹层加 iOS 式抓握条
+- **新路线红点**:路线落地且用户不在路线页时「路线」tab 点亮红点,进入即消
+- route-mini 卡补键盘 Enter/Space 支持;mode-tab 补键盘支持
+- `sw.js` 缓存 `v9` → `v10`;`web/README.md` 行数/缓存名/行号引用同步
+
+### Added(新增 · Web 控制台)
+
+- **折线图描线入场**(奖励曲线/微调指标):坐标轴常驻、折线自左向右 0.56s ease-out
+  落笔;同画布新数据到达即取消旧帧,reduced-motion 直出终态
+- **画廊图片点击放大**(新标签页原图,`cursor: zoom-in`)
+- 命令面板(Ctrl+K)图标从 emoji 统一为 sprite 体系;`icons.svg` 新增 `i-phone`,
+  引用版本号 `?v=5.8` → `?v=6.0`,`style.css`/`app.js` 引用升 `?v=6.0`
+
+### Changed(变更 · Web 控制台)
+
+- KPI/规划/仿真/导航结果数值更新加轻换位 tick(与顶栏标题 swap 同语言)
+- 站内路径落笔改 easeOutCubic(先快后慢,与移动端同语言)
+- 待回复消息加内联 spinner;规划参数弹窗支持 Escape 关闭(与 cmdk/LLM 面板同习惯)
+
+### Changed(变更 · 管理登录页)
+
+- `admin_login.html` 品牌对齐控制台:靛蓝紫渐变主按钮/焦点环、logo 徽标、
+  卡片入场、错误 shake、登录中 spinner、reduced-motion 降级
+
+### 验证
+
+- `python -m pytest` 234 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
+  `zhishuxing smoke` 通过;`tests/test_api.py -k mobile` 通过
+- 浏览器实测(Chrome + 本机 serve):移动端对话流/客流卡展开/路线页 mode-tabs 药丸/
+  高德真实底图/设置页 seg 药丸/输入条修复后布局全部走查通过;控制台欢迎页/
+  命令面板 sprite 图标/RL 奖励曲线描线动画走查通过

@@ -1119,3 +1119,25 @@ html.no-vt #app.app-shell:not(.hidden) { animation: shellIn .32s var(--ease-out)
 @starting-style {
   .chat-dock-body:not([hidden]) { opacity: 0; transform: translateY(12px) scale(.988); }
 }
+
+/* ============================================================
+   v6.0 体验精修(2026-10-31)—— 折线图描线入场(JS 逐帧驱动)·
+   KPI/结果数值换位 tick · 待回复消息内联 spinner ·
+   命令面板图标统一 sprite 体系 · 画廊图片点击放大
+   ============================================================ */
+
+/* 数值换位:文本变化时轻上浮淡入一次(setTick 挂类) */
+@keyframes tickIn { from { opacity: 0; transform: translateY(4px); } }
+.tick { animation: tickIn .24s var(--ease-out); }
+
+/* 待回复消息:内联 spinner(靛蓝着色,与按钮白圈区分) */
+.chat-msg.pending { display: inline-flex; align-items: center; gap: 8px; }
+.spinner-inline { width: 12px; height: 12px; flex: none; border-radius: 50%;
+                  border: 2px solid rgba(79,70,229,.22); border-top-color: var(--primary);
+                  animation: spin .7s linear infinite; }
+
+/* 命令面板项图标:随 ck-ico 徽托取色 */
+.cmdk-item .ck-ico .ic { width: 15px; height: 15px; }
+
+/* 画廊图片:可点击放大(新标签页原图) */
+.output-frame img { cursor: zoom-in; }

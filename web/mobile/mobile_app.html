@@ -343,7 +343,9 @@
     .lb .ic { width: 13px; height: 13px; }
     .lb-rail { background: var(--grad); }
 
-    .composer-wrap { padding: 8px 12px calc(10px + env(safe-area-inset-bottom)); background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); border-top: 1px solid var(--line); }
+    /* 底距让开悬浮胶囊底栏(60px 高 + 10px 悬浮 + 26px 呼吸 = 96px),
+       与滚动页 .page 的 96px 底距同一基准;缺了它输入条会被底栏盖住 */
+    .composer-wrap { padding: 8px 12px calc(96px + env(safe-area-inset-bottom)); background: var(--glass); -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%); border-top: 1px solid var(--line); }
     .quick-row { display: flex; gap: 7px; overflow-x: auto; padding: 2px 2px 9px; scrollbar-width: none; }
     .quick-row::-webkit-scrollbar { display: none; }
     .quick-chip {
@@ -360,7 +362,10 @@
       border-radius: 14px; padding: 10px 13px; font: inherit; font-size: 14px; line-height: 1.5;
       max-height: 96px; caret-color: var(--primary);
       transition: border-color .18s var(--ease-out), box-shadow .18s var(--ease-out);
+      /* 长内容滚动时不露 Windows 原生滚动条箭头,靠高度自适应反馈 */
+      scrollbar-width: none;
     }
+    #chatInput::-webkit-scrollbar { display: none; }
     #chatInput::placeholder { color: var(--t4); }
     #chatInput:focus { border-color: var(--primary); box-shadow: var(--ring); }
     .send-btn {
@@ -755,7 +760,7 @@
           <div class="composer">
             <button class="icon-btn" id="btnLocate" title="定位当前位置" aria-label="定位当前位置"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-locate"/></svg></button>
             <button class="icon-btn" id="btnMic" title="语音输入" aria-label="语音说出你的换乘需求" hidden><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-mic"/></svg></button>
-            <textarea id="chatInput" rows="1" placeholder="说出你的换乘需求,例如:赶时间、优先直梯、途经卫生间…" aria-label="换乘需求输入"></textarea>
+            <textarea id="chatInput" rows="1" placeholder="说出你的换乘需求…" aria-label="换乘需求输入"></textarea>
             <button class="send-btn" id="btnSend" aria-label="发送"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-send"/></svg></button>
           </div>
         </div>

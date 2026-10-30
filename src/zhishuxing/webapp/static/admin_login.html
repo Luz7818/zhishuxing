@@ -5,44 +5,82 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>智枢星 · 管理登录</title>
 <style>
-  :root { color-scheme: light; }
+  /* 与控制台同源的品牌令牌:靛蓝紫渐变主操作 + 靛蓝着色阴影(2026-10-31 对齐 v6.0) */
+  :root { color-scheme: light;
+    --grad: linear-gradient(135deg, #4f46e5, #7c3aed);
+    --grad-glow: 0 6px 16px -4px rgba(79, 70, 229, .45);
+    --ring: 0 0 0 3px rgba(79, 70, 229, .16);
+    --ease-out: cubic-bezier(.23, 1, .32, 1); }
   * { box-sizing: border-box; }
   body {
     margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-    font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
-    background: linear-gradient(160deg, #0f2540 0%, #163a5f 100%); color: #1f2d3d;
+    font-family: "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    background:
+      radial-gradient(900px 420px at 12% -8%, rgba(99,102,241,.20), transparent 62%),
+      radial-gradient(760px 380px at 92% 108%, rgba(6,182,212,.12), transparent 60%),
+      linear-gradient(165deg, #0b1020 0%, #141b33 100%);
+    color: #1f2d3d;
+    -webkit-font-smoothing: antialiased;
   }
   .card {
-    width: min(360px, 92vw); background: #fff; border-radius: 14px; padding: 32px 28px;
-    box-shadow: 0 18px 48px rgba(0,0,0,.28);
+    width: min(372px, 92vw); background: #fff; border-radius: 18px; padding: 32px 30px 26px;
+    box-shadow: 0 24px 64px -16px rgba(5, 8, 20, .55), inset 0 1px 0 rgba(255,255,255,.8);
+    animation: cardIn .4s var(--ease-out) both;
   }
-  h1 { margin: 0 0 4px; font-size: 20px; }
-  .sub { margin: 0 0 20px; font-size: 12px; color: #8a97a5; }
-  label { display: block; font-size: 13px; margin: 14px 0 6px; color: #5a6b7b; }
+  @keyframes cardIn { from { opacity: 0; transform: translateY(12px) scale(.985); } }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; filter: drop-shadow(0 4px 10px rgba(99,102,241,.4)); }
+  .brand b { font-size: 15px; letter-spacing: .2px; }
+  .brand span { display: block; font-size: 11px; color: #8a97a5; }
+  h1 { margin: 0 0 4px; font-size: 20px; letter-spacing: -.01em; }
+  .sub { margin: 0 0 8px; font-size: 12px; color: #8a97a5; line-height: 1.6; }
+  label { display: block; font-size: 13px; margin: 16px 0 6px; color: #5a6b7b; font-weight: 600; }
   input[type=password] {
-    width: 100%; padding: 10px 12px; font-size: 15px; border: 1px solid #d5dde5;
-    border-radius: 8px; outline: none;
+    width: 100%; padding: 11px 13px; font-size: 15px; border: 1px solid #d5dde5;
+    border-radius: 10px; outline: none; caret-color: #4f46e5;
+    box-shadow: inset 0 1px 2px rgba(15,23,40,.045);
+    transition: border-color .15s var(--ease-out), box-shadow .15s var(--ease-out);
   }
-  input[type=password]:focus { border-color: #2f6fb2; }
+  input[type=password]:focus { border-color: #a5b0fc; box-shadow: var(--ring); }
   button {
-    width: 100%; margin-top: 20px; padding: 11px 0; font-size: 15px; border: 0;
-    border-radius: 8px; background: #2f6fb2; color: #fff; cursor: pointer;
+    width: 100%; margin-top: 20px; padding: 11px 0; font-size: 15px; font-weight: 600; border: 0;
+    border-radius: 10px; background: var(--grad); color: #fff; cursor: pointer;
+    box-shadow: var(--grad-glow), inset 0 1px 0 rgba(255,255,255,.22);
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: filter .15s var(--ease-out), transform .12s var(--ease-out), box-shadow .15s var(--ease-out);
   }
+  button:hover:not(:disabled) { filter: brightness(1.06); }
+  button:active:not(:disabled) { transform: scale(.98); box-shadow: 0 2px 8px -2px rgba(79,70,229,.5); }
   button:disabled { opacity: .6; cursor: default; }
-  #msg { margin: 14px 0 0; font-size: 13px; min-height: 18px; }
-  #msg.err { color: #c0392b; }
+  .spinner { width: 14px; height: 14px; flex: none; border-radius: 50%;
+             border: 2px solid rgba(255,255,255,.35); border-top-color: #fff;
+             animation: spin .7s linear infinite; display: none; }
+  button.loading .spinner { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #msg { margin: 14px 0 0; font-size: 13px; min-height: 18px; line-height: 1.6; }
+  #msg.err { color: #c0392b; animation: shake .3s var(--ease-out); }
   #msg.ok { color: #1e8449; }
-  .back { display: block; margin-top: 16px; text-align: center; font-size: 13px; color: #2f6fb2; text-decoration: none; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 65% { transform: translateX(3px); } }
+  .back { display: block; margin-top: 16px; text-align: center; font-size: 13px; color: #4f46e5; text-decoration: none; }
+  .back:hover { text-decoration: underline; }
+  @media (prefers-reduced-motion: reduce) {
+    .card, #msg.err { animation: none; }
+    button, input { transition: none; }
+  }
 </style>
 </head>
 <body>
 <main class="card">
-  <h1>智枢星 · 管理登录</h1>
+  <div class="brand">
+    <img src="/static/assets/logo-mark.svg" alt="智枢星标识" />
+    <div><b>智枢星</b><span>综合枢纽智慧换乘引导系统</span></div>
+  </div>
+  <h1>管理登录</h1>
   <p class="sub">管理动作（换导航图 / 微调 / RL 权重 / 跑报告 / 改配置）需要管理员会话</p>
   <form id="form">
     <label for="password">管理员口令（部署时由 ADMIN_PASSWORD 环境变量设置）</label>
     <input type="password" id="password" autocomplete="current-password" autofocus>
-    <button type="submit" id="btn">登 录</button>
+    <button type="submit" id="btn"><span class="spinner"></span>登 录</button>
   </form>
   <p id="msg"></p>
   <a class="back" href="/">← 返回控制台首页</a>
@@ -52,11 +90,19 @@ const TOKEN_KEY = "zhishuxing_admin_token";
 const $msg = document.getElementById("msg");
 const $btn = document.getElementById("btn");
 
-function say(text, cls) { $msg.textContent = text; $msg.className = cls || ""; }
+function say(text, cls) {
+  $msg.className = "";
+  $msg.textContent = text;
+  if (cls) {
+    void $msg.offsetWidth;   // 先回流再挂类:连续出错时 shake 每次都重放
+    $msg.className = cls;
+  }
+}
 
 document.getElementById("form").addEventListener("submit", async (event) => {
   event.preventDefault();
   $btn.disabled = true;
+  $btn.classList.add("loading");
   say("登录中…");
   try {
     const resp = await fetch("/api/admin/login", {
@@ -80,6 +126,7 @@ document.getElementById("form").addEventListener("submit", async (event) => {
     say("网络错误：" + err.message, "err");
   } finally {
     $btn.disabled = false;
+    $btn.classList.remove("loading");
   }
 });
 </script>

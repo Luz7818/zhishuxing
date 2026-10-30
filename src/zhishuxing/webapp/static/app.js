@@ -60,7 +60,7 @@ function toast(message, type = "ok") {
   const el = document.createElement("div");
   el.className = `toast ${type}`;
   const icon = type === "err" ? "i-alert" : "i-check";
-  el.innerHTML = `<span class="t-ico ${type === "err" ? "err" : "ok"}"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#${icon}"/></svg></span><span></span>`;
+  el.innerHTML = `<span class="t-ico ${type === "err" ? "err" : "ok"}"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#${icon}"/></svg></span><span></span>`;
   el.lastElementChild.textContent = message;
   host.appendChild(el);
   setTimeout(() => {
@@ -79,6 +79,15 @@ async function withBusy(btn, runningText, fn) {
     btn.disabled = false;
     btn.innerHTML = original;
   }
+}
+
+/* 数值换位:文本变化时轻上浮淡入一次(与顶栏标题 swap 同语言) */
+function setTick(el, text) {
+  if (!el || el.textContent === String(text)) return;
+  el.textContent = text;
+  el.classList.remove("tick");
+  void el.offsetWidth;
+  el.classList.add("tick");
 }
 
 function showRaw(preId, data) {
@@ -368,11 +377,13 @@ function drawGrid(canvas, grid, view) {
 
 const CHART_COLORS = ["#38bdf8", "#f59e0b", "#34d399", "#a78bfa", "#f87171"];
 
+/* 同一画布的描线动画互斥:新数据到达即取消旧帧,不叠加 */
+const chartAnims = new WeakMap();
+
 function drawLineChart(canvas, series, opts = {}) {
   const ctx = canvas.getContext("2d");
   const W = canvas.width;
   const H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
 
   const pad = { l: 52, r: 14, t: 14, b: 30 };
   const allY = series.flatMap((s) => s.y);
@@ -388,34 +399,54 @@ function drawLineChart(canvas, series, opts = {}) {
     H - pad.b - ((yi - yMin) / (yMax - yMin)) * (H - pad.t - pad.b),
   ];
 
-  ctx.strokeStyle = "rgba(126,168,220,0.12)";
-  ctx.fillStyle = "#6e7fa0";
-  ctx.font = '11px "Microsoft YaHei"';
-  ctx.textAlign = "right";
-  for (let i = 0; i <= 4; i++) {
-    const yv = yMin + ((yMax - yMin) * i) / 4;
-    const [, py] = toPx(xMin, yv);
-    ctx.beginPath();
-    ctx.moveTo(pad.l, py);
-    ctx.lineTo(W - pad.r, py);
-    ctx.stroke();
-    ctx.fillText(yv.toFixed(opts.yDecimals !== undefined ? opts.yDecimals : 1), pad.l - 8, py + 4);
-  }
-
-  series.forEach((s, si) => {
-    const color = s.color || CHART_COLORS[si % CHART_COLORS.length];
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    const n = s.y.length;
-    for (let i = 0; i < n; i++) {
-      const xi = s.x ? s.x[i] : i;
-      const [px, py] = toPx(xi, s.y[i]);
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
+  const render = (progress) => {
+    ctx.clearRect(0, 0, W, H);
+    ctx.strokeStyle = "rgba(126,168,220,0.12)";
+    ctx.fillStyle = "#6e7fa0";
+    ctx.font = '11px "Microsoft YaHei"';
+    ctx.textAlign = "right";
+    for (let i = 0; i <= 4; i++) {
+      const yv = yMin + ((yMax - yMin) * i) / 4;
+      const [, py] = toPx(xMin, yv);
+      ctx.beginPath();
+      ctx.moveTo(pad.l, py);
+      ctx.lineTo(W - pad.r, py);
+      ctx.stroke();
+      ctx.fillText(yv.toFixed(opts.yDecimals !== undefined ? opts.yDecimals : 1), pad.l - 8, py + 4);
     }
-    ctx.stroke();
-  });
+
+    series.forEach((s, si) => {
+      const color = s.color || CHART_COLORS[si % CHART_COLORS.length];
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const n = s.y.length;
+      const upto = Math.max(2, Math.ceil(n * progress));
+      for (let i = 0; i < Math.min(n, upto); i++) {
+        const xi = s.x ? s.x[i] : i;
+        const [px, py] = toPx(xi, s.y[i]);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+    });
+  };
+
+  const prev = chartAnims.get(canvas);
+  if (prev) cancelAnimationFrame(prev);
+
+  /* 描线入场:约 0.56s ease-out,坐标轴常驻、折线自左向右落笔;
+     reduced-motion 或显式 animate:false 时直接画终态 */
+  if (opts.animate === false || reduceMotion()) { render(1); return; }
+  const t0 = performance.now();
+  const dur = 560;
+  const frame = (now) => {
+    const t = Math.min(1, (now - t0) / dur);
+    render(1 - Math.pow(1 - t, 3));
+    if (t < 1) chartAnims.set(canvas, requestAnimationFrame(frame));
+    else chartAnims.delete(canvas);
+  };
+  chartAnims.set(canvas, requestAnimationFrame(frame));
 }
 
 function ctxClear(canvas) {
@@ -616,10 +647,10 @@ async function refreshTopbar() {
     if (ws && !ws.dataset.loaded) {
       ws.dataset.loaded = "1";
       ws.innerHTML = `
-        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-idcard"/></svg></span><div class="hs-txt"><b class="num">4 维</b><span>优先级 · 硬约束 · 软偏好 · 画像</span></div></div>
-        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-elevator"/></svg></span><div class="hs-txt"><b class="num">4 类</b><span>直梯/扶梯/楼梯/拥挤设施建模</span></div></div>
-        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-book"/></svg></span><div class="hs-txt"><b class="num">22 篇</b><span>站内换乘经验语料</span></div></div>
-        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-hub"/></svg></span><div class="hs-txt"><b class="num">2 引擎</b><span>枢纽偏好规划 + 高德真实路线</span></div></div>`;
+        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-idcard"/></svg></span><div class="hs-txt"><b class="num">4 维</b><span>优先级 · 硬约束 · 软偏好 · 画像</span></div></div>
+        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-elevator"/></svg></span><div class="hs-txt"><b class="num">4 类</b><span>直梯/扶梯/楼梯/拥挤设施建模</span></div></div>
+        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-book"/></svg></span><div class="hs-txt"><b class="num">22 篇</b><span>站内换乘经验语料</span></div></div>
+        <div class="hstat"><span class="hs-ico"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-hub"/></svg></span><div class="hs-txt"><b class="num">2 引擎</b><span>枢纽偏好规划 + 高德真实路线</span></div></div>`;
     }
   } catch (_) {
     $("health-dot").classList.add("off");
@@ -665,11 +696,11 @@ async function refreshTopbar() {
 function updatePolicyUI(status) {
   $("policyChip").textContent = `策略:${status.policy_source}`;
 
-  $("kpiPolicy").textContent = status.policy_source;
-  $("kpiSteps").textContent = status.latest_step_k ? `${status.latest_step_k}k` : "—";
+  setTick($("kpiPolicy"), status.policy_source);
+  setTick($("kpiSteps"), status.latest_step_k ? `${status.latest_step_k}k` : "—");
   $("kpiStepsFoot").textContent = status.latest_step_k ? `检查点 step_${status.latest_step_k}k` : "检查点加载后显示";
-  $("kpiCheckpoints").textContent = status.checkpoint_count;
-  $("kpiRewards").textContent = status.reward_files.length;
+  setTick($("kpiCheckpoints"), status.checkpoint_count);
+  setTick($("kpiRewards"), status.reward_files.length);
   $("stTorch").textContent = status.torch_available ? `可用 · ${status.torch_version}` : "未安装（启发式回退）";
 
   const table = $("rlCkptTable");
@@ -770,9 +801,10 @@ function animateRoute() {
   const started = performance.now();
   const duration = 620;
   function frame(now) {
-    view.progress = Math.min(1, (now - started) / duration);
+    const t = Math.min(1, (now - started) / duration);
+    view.progress = 1 - Math.pow(1 - t, 3);   // easeOutCubic:落笔先快后慢
     repaintNav();
-    if (view.progress < 1) requestAnimationFrame(frame);
+    if (t < 1) requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
 }
@@ -851,13 +883,18 @@ function initNavigation() {
       animateRoute();
       $("navResultEmpty").style.display = "none";
       $("navResult").style.display = "";
-      $("navLen").textContent = `${result.length} 格`;
-      $("navVia").textContent = state.nav.via.size ? [...state.nav.via].map(lmName).join("、") : "无";
+      setTick($("navLen"), `${result.length} 格`);
+      setTick($("navVia"), state.nav.via.size ? [...state.nav.via].map(lmName).join("、") : "无");
       showRaw("navRaw", result.route);
       toast(`规划完成：路径长度 ${result.length} 格`);
       $("plan-params-mask").classList.add("hidden");   // 规划成功即收起参数弹窗,结果看地图左下悬浮卡
     })
   );
+
+  /* Escape 关闭规划参数弹窗(与 cmdk / LLM 面板同一习惯) */
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") $("plan-params-mask").classList.add("hidden");
+  });
 }
 
 /* ---------------- RL 智能体 ---------------- */
@@ -941,13 +978,13 @@ function initRL() {
       $("simEmpty").style.display = "none";
       $("simResult").style.display = "";
       const rate = Math.round((result.agents_arrived / result.agents_total) * 100);
-      $("simArrive").textContent = `${rate}%`;
-      $("simAvg").textContent = result.avg_transfer_steps ?? "未到达";
-      $("simBase").textContent = result.free_flow_baseline_steps;
-      $("simCong").textContent = result.congestion_peak;
-      $("simColl").textContent = result.collision_events;
-      $("simExec").textContent = result.steps_executed;
-      $("simPolicy").textContent = result.policy_source;
+      setTick($("simArrive"), `${rate}%`);
+      setTick($("simAvg"), result.avg_transfer_steps ?? "未到达");
+      setTick($("simBase"), result.free_flow_baseline_steps);
+      setTick($("simCong"), result.congestion_peak);
+      setTick($("simColl"), result.collision_events);
+      setTick($("simExec"), result.steps_executed);
+      setTick($("simPolicy"), result.policy_source);
       setImage("simImage", "simImageFrame", result.image_url);
       toast(`仿真完成：到达 ${result.agents_arrived}/${result.agents_total}`);
     })
@@ -1037,10 +1074,10 @@ function initPlan() {
       });
       $("planEmpty").style.display = "none";
       $("planResult").style.display = "";
-      $("planDur").textContent = result.duration_sec ? `${Math.round(result.duration_sec / 60)} 分` : "—";
-      $("planCost").textContent = result.cost !== undefined && result.cost !== null ? `${result.cost} 元` : "—";
-      $("planSeg").textContent = result.segments !== undefined ? `${result.segments} 次` : "—";
-      $("planEngineUsed").textContent = `${result.engine === "amap" ? "高德" : "枢纽"} · ${result.od_source}`;
+      setTick($("planDur"), result.duration_sec ? `${Math.round(result.duration_sec / 60)} 分` : "—");
+      setTick($("planCost"), result.cost !== undefined && result.cost !== null ? `${result.cost} 元` : "—");
+      setTick($("planSeg"), result.segments !== undefined ? `${result.segments} 次` : "—");
+      setTick($("planEngineUsed"), `${result.engine === "amap" ? "高德" : "枢纽"} · ${result.od_source}`);
       $("planOD").textContent = `${result.origin_text} → ${result.destination_text}${result.city ? `（${result.city}）` : ""}`;
       renderPlanProfile(result.profile);
 
@@ -1104,7 +1141,12 @@ function appendChatMessage(role, text, pending) {
   const box = $("chatMessages");
   const el = document.createElement("div");
   el.className = `chat-msg ${role}${pending ? " pending" : ""}`;
-  el.textContent = text;
+  if (pending) {
+    el.innerHTML = `<span class="spinner-inline"></span><span></span>`;
+    el.lastElementChild.textContent = text;
+  } else {
+    el.textContent = text;
+  }
   box.appendChild(el);
   box.scrollTop = box.scrollHeight;
   return el;
@@ -1178,18 +1220,18 @@ function renderChatAnalysis(data) {
         ${kvBits.length ? `<div class="kv" style="margin-bottom:12px">${kvBits.join("")}</div>` : ""}
         <div class="grid-2">
           <div>
-            <h3 style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-road"/></svg>路线方案</h3>
+            <h3 style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-road"/></svg>路线方案</h3>
             <ol class="list">${(r.details || ["暂无分段详情"]).map((d) => `<li>${d}</li>`).join("")}</ol>
             ${r.engine === "hub" && Array.isArray(r.route) && r.route.length > 1 && state.nav.grid
               ? `<div class="canvas-box"><canvas id="chatRouteCanvas" width="620" height="290"></canvas></div>`
               : ""}
           </div>
           <div>
-            <h3 style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-bulb"/></svg>出行提醒</h3>
+            <h3 style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-bulb"/></svg>出行提醒</h3>
             <ul class="list">${(r.tips || ["无"]).map((t) => `<li>${t}</li>`).join("")}</ul>
             ${
               data.kb_refs && data.kb_refs.length
-                ? `<h3 style="margin-top:16px"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=5.8#i-book"/></svg>站内换乘经验引用</h3><ul class="list">${data.kb_refs
+                ? `<h3 style="margin-top:16px"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-book"/></svg>站内换乘经验引用</h3><ul class="list">${data.kb_refs
                     .map(
                       (k) =>
                         `<li>《${k.title}》<span style="color:var(--t3);font-size:12px"> · 相关度 ${k.score} · ${k.source}</span></li>`
@@ -1407,11 +1449,15 @@ function initReports() {
         gallery.innerHTML = images
           .map(
             (f) =>
-              `<figure class="output-frame show" style="margin:0"><img src="/outputs/${f.split(/[\\/]/).pop()}?t=${Date.now()}" loading="lazy" /><figcaption>${f.split(
+              `<figure class="output-frame show" style="margin:0"><img src="/outputs/${f.split(/[\\/]/).pop()}?t=${Date.now()}" loading="lazy" title="点击放大查看" /><figcaption>${f.split(
                 /[\\/]/
               ).pop()}</figcaption></figure>`
           )
           .join("");
+        /* 画廊图点击放大:新标签页打开原图(轻量,不引入 lightbox 依赖) */
+        $$("#gallery img").forEach((img) =>
+          img.addEventListener("click", () => window.open(img.src, "_blank"))
+        );
       }
       toast(`报告完成：${okCount}/${total}`);
     })
@@ -1862,28 +1908,30 @@ let cmdkItems = [];
 let cmdkSel = 0;
 
 async function cmdkActions() {
+  /* 图标与全站 sprite 体系统一(不再用 emoji);新增 symbol 时 icons.svg 需升版本号 */
+  const ico = (id) => `<svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#${id}"/></svg>`;
   const navs = [
-    ["overview", "概览", "📊"],
-    ["plan", "路线规划", "🧭"],
-    ["navigation", "枢纽导航", "🗺️"],
-    ["flow", "客流面板", "🌡️"],
-    ["rl", "RL 智能体", "🤖"],
-    ["reports", "分析报告", "📑"],
-    ["settings", "设置（密钥配置）", "🔧"],
-  ].map(([tab, label, ico]) => ({
-    ico, label, cat: "页面",
+    ["overview", "概览", "i-overview"],
+    ["plan", "路线规划", "i-plan"],
+    ["navigation", "枢纽导航", "i-hub"],
+    ["flow", "客流面板", "i-flow"],
+    ["rl", "RL 智能体", "i-rl"],
+    ["reports", "分析报告", "i-reports"],
+    ["settings", "设置（密钥配置）", "i-sliders"],
+  ].map(([tab, label, iconId]) => ({
+    ico: ico(iconId), label, cat: "页面",
     run: () => { if ($("app").classList.contains("hidden")) enterApp(); switchTab(tab); },
   }));
   const cmds = [
-    { ico: "💬", label: "智能换乘助手(底部对话)", cat: "命令",
+    { ico: ico("i-chat"), label: "智能换乘助手(底部对话)", cat: "命令",
       run: () => { if ($("app").classList.contains("hidden")) enterApp(); setDockOpen(true); $("chatInput").focus(); } },
-    { ico: "☾", label: "切换明暗主题", cat: "命令",
+    { ico: ico("i-moon"), label: "切换明暗主题", cat: "命令",
       run: () => applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark") },
-    { ico: "⤓", label: "加载最新策略权重", cat: "命令",
+    { ico: ico("i-download"), label: "加载最新策略权重", cat: "命令",
       run: () => { if ($("app").classList.contains("hidden")) enterApp(); switchTab("rl"); setTimeout(() => $("btnRLPolicy").click(), 250); } },
-    { ico: "📑", label: "运行全部报告", cat: "命令",
+    { ico: ico("i-reports"), label: "运行全部报告", cat: "命令",
       run: () => { if ($("app").classList.contains("hidden")) enterApp(); switchTab("reports"); setTimeout(() => $("btnReportsAll").click(), 250); } },
-    { ico: "📱", label: "打开移动端 PWA", cat: "命令", run: () => window.open("/mobile", "_blank") },
+    { ico: ico("i-phone"), label: "打开移动端 PWA", cat: "命令", run: () => window.open("/mobile", "_blank") },
   ];
   return [...navs, ...cmds];
 }

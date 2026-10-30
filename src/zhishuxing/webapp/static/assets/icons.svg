@@ -191,5 +191,8 @@
     <rect x="29" y="27.5" width="9" height="9" rx="2.2" stroke-opacity=".55"/>
     <path d="M31.6 33.9v-3.4M30.6 31.5l1-1 1 1M35.4 30.1v3.4M34.4 32.5l1 1 1-1" stroke-opacity=".55"/>
   </g></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="7" y="2.8" width="10" height="18.4" rx="2.6"/><path d="M10.2 5.2h3.6"/><path d="M10.6 18.6h2.8"/>
+  </g></symbol>
   </defs>
 </svg>

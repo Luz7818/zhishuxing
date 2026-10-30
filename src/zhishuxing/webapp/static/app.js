@@ -98,6 +98,16 @@ function setImage(imgId, frameId, url) {
   const img = $(imgId);
   img.src = `${url}?t=${Date.now()}`;
   $(frameId).classList.add("show");
+  bindImgFade(img);
+}
+
+/* 输出图加载淡入:缓存命中直接显示,网络加载时避免破图/半图突兀 */
+function bindImgFade(img) {
+  if (img.complete && img.naturalWidth) { img.classList.remove("img-fade", "img-in"); return; }
+  img.classList.add("img-fade");
+  img.classList.remove("img-in");
+  img.addEventListener("load", () => img.classList.add("img-in"), { once: true });
+  img.addEventListener("error", () => img.classList.remove("img-fade"), { once: true });
 }
 
 /* ---------------- 视图与主题(仿 harness:欢迎页 → 应用壳,tab 切换) ---------------- */
@@ -1490,9 +1500,10 @@ function initReports() {
           )
           .join("");
         /* 画廊图点击放大:新标签页打开原图(轻量,不引入 lightbox 依赖) */
-        $$("#gallery img").forEach((img) =>
-          img.addEventListener("click", () => window.open(img.src, "_blank"))
-        );
+        $$("#gallery img").forEach((img) => {
+          img.addEventListener("click", () => window.open(img.src, "_blank"));
+          bindImgFade(img);
+        });
       }
       toast(`报告完成：${okCount}/${total}`);
     })
@@ -2081,6 +2092,14 @@ function boot() {
     item.addEventListener("click", () => switchTab(item.dataset.tab)));
   showView("welcome");
   refreshTopbar(); // 欢迎页统计与服务状态(应用壳元素隐藏但已存在)
+  /* 顶栏滚动投影:主区内容滑到顶栏之下时加深(被动监听,阈值切换) */
+  const scrollArea = $("scroll-area");
+  const topbar = document.querySelector(".topbar");
+  if (scrollArea && topbar) {
+    scrollArea.addEventListener("scroll", () => {
+      topbar.classList.toggle("scrolled", scrollArea.scrollTop > 8);
+    }, { passive: true });
+  }
 }
 
 /* 欢迎页下半屏内容滚动显现:只播一次,进过视口即标记,不打扰回读 */

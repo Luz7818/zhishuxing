@@ -1148,3 +1148,59 @@ html.no-vt #app.app-shell:not(.hidden) { animation: shellIn .32s var(--ease-out)
   .toast { background: #10172b; backdrop-filter: none; }
   .cmdk-mask, .llm-panel-mask { backdrop-filter: none; background: rgba(8,12,24,.72); }
 }
+
+/* ============================================================
+   v6.1 氛围与微交互层(2026-10-31)—— 品牌「动线」底图母题 ·
+   顶栏滚动投影 · 画廊图悬停/加载淡入 · Toast 图标弹入 ·
+   按压物理补全(侧栏项/地图钮/命令面板项/顶栏 chip)
+   ============================================================ */
+
+/* ---- 底图加一层极淡的「换乘动线」母题:虚线路径 + 站点圆标 ----
+   与 KPI 顶线、四步串联线同一设计语言;纯静态层,零动画成本。
+   叠在极光底光之上、点阵纹理之下(v3.1 规则尾部追加,同特异性后者胜) */
+.main {
+  background-image:
+    radial-gradient(1100px 420px at 18% -8%, rgba(79, 70, 229, .07), transparent 62%),
+    radial-gradient(900px 380px at 88% -12%, rgba(6, 182, 212, .06), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720' fill='none'%3E%3Cpath d='M-40 560 C 140 520, 210 240, 400 260 S 640 420, 780 350' stroke='%234f46e5' stroke-opacity='.055' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Cpath d='M-40 180 C 120 210, 200 420, 360 450 S 620 520, 780 480' stroke='%2306b6d4' stroke-opacity='.05' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Ccircle cx='400' cy='260' r='6' stroke='%234f46e5' stroke-opacity='.09' stroke-width='2.4'/%3E%3Ccircle cx='360' cy='450' r='6' stroke='%2306b6d4' stroke-opacity='.08' stroke-width='2.4'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='%234f46e5' fill-opacity='.05'/%3E%3C/svg%3E");
+  background-attachment: fixed;
+  background-size: auto, auto, 720px 720px, 24px 24px;
+  background-position: 0 0, 0 0, 78% 34%, 0 0;
+}
+html[data-theme="dark"] .main {
+  background-image:
+    radial-gradient(1100px 420px at 18% -8%, rgba(129, 140, 248, .09), transparent 62%),
+    radial-gradient(900px 380px at 88% -12%, rgba(34, 211, 238, .07), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720' fill='none'%3E%3Cpath d='M-40 560 C 140 520, 210 240, 400 260 S 640 420, 780 350' stroke='%23818cf8' stroke-opacity='.07' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Cpath d='M-40 180 C 120 210, 200 420, 360 450 S 620 520, 780 480' stroke='%2322d3ee' stroke-opacity='.06' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Ccircle cx='400' cy='260' r='6' stroke='%23818cf8' stroke-opacity='.11' stroke-width='2.4'/%3E%3Ccircle cx='360' cy='450' r='6' stroke='%2322d3ee' stroke-opacity='.1' stroke-width='2.4'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='%23818cf8' fill-opacity='.055'/%3E%3C/svg%3E");
+}
+
+/* ---- 顶栏滚动投影:内容滑到顶栏之下时加深,材料分层(与移动端 .scrolled 同款) ---- */
+.topbar { transition: background-color .22s var(--ease-out), border-color .22s var(--ease-out), box-shadow .25s var(--ease-out); }
+.topbar.scrolled { box-shadow: 0 10px 28px -18px rgba(58, 55, 106, .35); }
+
+/* ---- 画廊图片:悬停轻抬 + 加载淡入(JS 挂 img-fade/img-in) ---- */
+.output-frame img { transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out), opacity .45s var(--ease-out); }
+#gallery .output-frame img:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.output-frame img.img-fade { opacity: 0; }
+.output-frame img.img-fade.img-in { opacity: 1; }
+
+/* ---- Toast 图标弹入:新 toast 的状态徽章轻轻一跳 ---- */
+@keyframes iconPop { from { transform: scale(.4); opacity: 0; } }
+.toast .t-ico { animation: iconPop .28s var(--ease-out) both; }
+
+/* ---- 按压物理补全 ---- */
+.nav-item:active .nv-ico { transform: scale(.88); }
+.map-btn { transition: border-color .15s var(--ease-out), color .15s var(--ease-out), transform .12s var(--ease-out); }
+.map-btn:active { transform: scale(.96); }
+.cmdk-item:active { transform: scale(.99); }
+.topbar-cmdk:active { transform: scale(.98); }
+.chip { transition: background-color .18s var(--ease-out), border-color .18s var(--ease-out), color .18s var(--ease-out); }
+.chip:hover { border-color: var(--line-2); color: var(--t2); }
+
+/* ---- 欢迎页统计卡悬停:轻抬 + 边缘微光(仅精确指针) ---- */
+@media (hover: hover) and (pointer: fine) {
+  .hstat { transition: transform .2s var(--ease-out), border-color .2s var(--ease-out), background .2s var(--ease-out); }
+  .hstat:hover { transform: translateY(-2px); border-color: rgba(129, 140, 248, .32); background: rgba(255, 255, 255, .08); }
+}

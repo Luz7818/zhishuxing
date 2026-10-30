@@ -1141,3 +1141,10 @@ html.no-vt #app.app-shell:not(.hidden) { animation: shellIn .32s var(--ease-out)
 
 /* 画廊图片:可点击放大(新标签页原图) */
 .output-frame img { cursor: zoom-in; }
+
+/* 用户偏好"减少透明度":毛玻璃层退为实色(移动端 PWA 同款降级) */
+@media (prefers-reduced-transparency: reduce) {
+  .topbar, .chat-dock, .dock-head { background: var(--surface); backdrop-filter: none; }
+  .toast { background: #10172b; backdrop-filter: none; }
+  .cmdk-mask, .llm-panel-mask { backdrop-filter: none; background: rgba(8,12,24,.72); }
+}

@@ -139,10 +139,12 @@ function showView(name) {
       swap();
       moveNavPill(true);
     });
-    transition.finished.then(
-      () => root.classList.remove("vt-enter"),
-      () => root.classList.remove("vt-enter")
-    );
+    transition.finished.then(() => {
+      root.classList.remove("vt-enter");
+      /* 快照期间 getBoundingClientRect 可能读到过渡态布局(如窄屏断点宽度),
+         按交换完成后的真实布局再定位一次,覆盖任何失真值 */
+      moveNavPill(true);
+    }, () => root.classList.remove("vt-enter"));
   } else {
     swap();
     /* 无 View Transition 的浏览器:给工作台一次轻入场作为回退(reduced-motion 下保持瞬时) */

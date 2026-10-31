@@ -13,7 +13,7 @@
 
 | 文件 | 干什么 | 备注 |
 |---|---|---|
-| `mobile_app.html` | 单文件 PWA：对话流（气泡消息/需求档案/经验引用/动作信封）、结构化路线、站内导航 Canvas、客流提示、三态深色模式；语音输入（Web Speech）、系统分享、PWA 安装引导、触感反馈 | 2288 行（复核：`wc -l web/mobile/mobile_app.html`），样式与脚本内联；入口 URL 是 `/mobile` |
+| `mobile_app.html` | 单文件 PWA：对话流（气泡消息/需求档案/经验引用/动作信封）、结构化路线、站内导航 Canvas、客流提示、三态深色模式；语音输入（Web Speech）、系统分享、PWA 安装引导、触感反馈；「星穹站台」背景（天穹纵深/四球呼吸光层/胶片颗粒/光点巡航） | 2389 行（复核：`wc -l web/mobile/mobile_app.html`），样式与脚本内联；入口 URL 是 `/mobile` |
 | `manifest.webmanifest` | 安装清单：名称、`start_url`、主题色 `#4f46e5`、3 个图标 | `start_url` 指向同目录的 `mobile_app.html` |
 | `sw.js` | ServiceWorker：预缓存 9 个静态资源，`/api/` 与 `/outputs/` 走网络优先 | 缓存名 `zhishuxing-mobile-v10`，改了静态资源要一起升版本号 |
 | `icon-192.png`、`icon-512.png`、`icon-maskable-512.png`、`apple-touch-icon.png`、`splash-logo.png` | 安装与启动屏图标 | **生成物**：`python scripts/render_brand_assets.py` |

@@ -44,8 +44,11 @@
       --glass: rgba(255, 255, 255, .74);
       --glass-line: rgba(255, 255, 255, .55);
       --sk1: #edf0f7; --sk2: #f8f9fc;
-      --aurora-1: rgba(24, 184, 198, .13);
-      --aurora-2: rgba(79, 70, 229, .12);
+      /* 星穹站台:四颗网格光球(左上青/右上靛/右中紫/左下青绿) */
+      --orb-cyan: rgba(24, 184, 198, .11);
+      --orb-indigo: rgba(79, 70, 229, .10);
+      --orb-violet: rgba(124, 58, 237, .09);
+      --orb-teal: rgba(6, 182, 212, .11);
       --dot: rgba(79, 70, 229, .09);
     }
     html[data-theme="dark"] {
@@ -69,8 +72,10 @@
       --glass-line: rgba(255, 255, 255, .08);
       --card-hi: inset 0 1px 0 rgba(255, 255, 255, .05);
       --sk1: #1a2340; --sk2: #232c4a;
-      --aurora-1: rgba(6, 182, 212, .09);
-      --aurora-2: rgba(99, 102, 241, .14);
+      --orb-cyan: rgba(24, 184, 198, .15);
+      --orb-indigo: rgba(99, 102, 241, .17);
+      --orb-violet: rgba(139, 92, 246, .16);
+      --orb-teal: rgba(6, 182, 212, .15);
       --dot: rgba(148, 163, 255, .08);
     }
 
@@ -80,28 +85,71 @@
     html, body { height: 100%; }
     body {
       font-family: "Noto Sans SC", -apple-system, system-ui, "PingFang SC", "Microsoft YaHei", sans-serif;
-      background:
-        radial-gradient(1100px 480px at 8% -10%, var(--aurora-1), transparent 60%),
-        radial-gradient(900px 420px at 96% -4%, var(--aurora-2), transparent 62%),
-        var(--bg);
+      /* 天穹纵深:顶部深 → 中部过渡 → 底部微亮(光球层叠在它之上) */
+      background: linear-gradient(180deg, #f3f5fc 0%, #f1f4fb 48%, #edf1fa 100%);
       color: var(--t1);
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
     }
+    html[data-theme="dark"] body {
+      background: linear-gradient(180deg, #0a0f1f 0%, #0c1222 52%, #0e1530 100%);
+    }
     ::selection { background: rgba(79, 70, 229, .22); }
-    /* 点阵网格底纹:低密度「枢纽地图」质感,叠在极光底光上 */
+    /* 星穹光层:四球对角流动,整体缓慢呼吸(纯 opacity 合成动画)
+       左下青绿球特意藏在毛玻璃输入条/底栏后面,磨砂玻璃透出流动颜色 */
     body::before {
       content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background-image: radial-gradient(var(--dot) 1px, transparent 1.3px);
-      background-size: 22px 22px;
+      background:
+        radial-gradient(680px 460px at -6% -8%, var(--orb-cyan), transparent 62%),
+        radial-gradient(640px 440px at 106% -10%, var(--orb-indigo), transparent 62%),
+        radial-gradient(600px 520px at 112% 46%, var(--orb-violet), transparent 64%),
+        radial-gradient(560px 460px at -10% 110%, var(--orb-teal), transparent 66%);
+      animation: orbBreath 11s ease-in-out infinite alternate;
     }
-    /* 「动线」母题:极淡的虚线换乘路径 + 站点圆标,与控制台底图同一语言 */
+    @keyframes orbBreath { from { opacity: .8; } to { opacity: 1; } }
+    /* 纹理层:点阵网格(全局平铺) + 动线母题(右下),两层合并进同一个伪元素 */
     body::after {
       content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720' fill='none'%3E%3Cpath d='M-40 560 C 140 520, 210 240, 400 260 S 640 420, 780 350' stroke='%234f46e5' stroke-opacity='.07' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Cpath d='M-40 180 C 120 210, 200 420, 360 450 S 620 520, 780 480' stroke='%2306b6d4' stroke-opacity='.06' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Ccircle cx='400' cy='260' r='6' stroke='%234f46e5' stroke-opacity='.11' stroke-width='2.4'/%3E%3Ccircle cx='360' cy='450' r='6' stroke='%2306b6d4' stroke-opacity='.1' stroke-width='2.4'/%3E%3C/svg%3E") no-repeat 84% 62% / min(88vw, 560px) auto;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720' fill='none'%3E%3Cpath d='M-40 560 C 140 520, 210 240, 400 260 S 640 420, 780 350' stroke='%234f46e5' stroke-opacity='.08' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Cpath d='M-40 180 C 120 210, 200 420, 360 450 S 620 520, 780 480' stroke='%2306b6d4' stroke-opacity='.07' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Ccircle cx='400' cy='260' r='6' stroke='%234f46e5' stroke-opacity='.12' stroke-width='2.4'/%3E%3Ccircle cx='360' cy='450' r='6' stroke='%2306b6d4' stroke-opacity='.11' stroke-width='2.4'/%3E%3C/svg%3E"),
+        radial-gradient(var(--dot) 1px, transparent 1.3px);
+      background-size: min(88vw, 560px) auto, 22px 22px;
+      background-position: 84% 64%, 0 0;
+      background-repeat: no-repeat, repeat;
     }
     html[data-theme="dark"] body::after {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720' fill='none'%3E%3Cpath d='M-40 560 C 140 520, 210 240, 400 260 S 640 420, 780 350' stroke='%23a5b4fc' stroke-opacity='.08' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Cpath d='M-40 180 C 120 210, 200 420, 360 450 S 620 520, 780 480' stroke='%2322d3ee' stroke-opacity='.07' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Ccircle cx='400' cy='260' r='6' stroke='%23a5b4fc' stroke-opacity='.13' stroke-width='2.4'/%3E%3Ccircle cx='360' cy='450' r='6' stroke='%2322d3ee' stroke-opacity='.11' stroke-width='2.4'/%3E%3C/svg%3E");
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720' fill='none'%3E%3Cpath d='M-40 560 C 140 520, 210 240, 400 260 S 640 420, 780 350' stroke='%23a5b4fc' stroke-opacity='.09' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Cpath d='M-40 180 C 120 210, 200 420, 360 450 S 620 520, 780 480' stroke='%2322d3ee' stroke-opacity='.08' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='3 12'/%3E%3Ccircle cx='400' cy='260' r='6' stroke='%23a5b4fc' stroke-opacity='.14' stroke-width='2.4'/%3E%3Ccircle cx='360' cy='450' r='6' stroke='%2322d3ee' stroke-opacity='.12' stroke-width='2.4'/%3E%3C/svg%3E"),
+        radial-gradient(var(--dot) 1px, transparent 1.3px);
+    }
+    /* 胶片颗粒:与控制台同源,overlay 混合;置于内容之上、弹层之下 */
+    html::after {
+      content: ""; position: fixed; inset: 0; z-index: 5; pointer-events: none;
+      opacity: .045; mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 160px 160px;
+    }
+    /* 光点巡航:低透明度光点沿路径滑行,穿过毛玻璃时化作一团柔光 */
+    .hub-lines { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .hub-lines i {
+      position: absolute; left: 0; top: 0; width: 7px; height: 7px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(190, 199, 255, .95), rgba(99, 102, 241, .4) 55%, transparent 72%);
+      box-shadow: 0 0 12px 3px rgba(99, 102, 241, .3);
+      offset-rotate: 0deg;
+      opacity: 0;
+      animation: hubTravel linear infinite;
+    }
+    .hub-lines i:nth-child(2) {
+      width: 5px; height: 5px;
+      background: radial-gradient(circle, rgba(165, 243, 252, .9), rgba(34, 211, 238, .35) 55%, transparent 72%);
+      box-shadow: 0 0 10px 2px rgba(34, 211, 238, .26);
+    }
+    @keyframes hubTravel {
+      0% { offset-distance: 0%; opacity: 0; }
+      12% { opacity: .42; }
+      55% { opacity: .3; }
+      88% { opacity: .2; }
+      100% { offset-distance: 100%; opacity: 0; }
     }
 
     .ic { width: 18px; height: 18px; flex: none; }
@@ -123,9 +171,20 @@
     .splash {
       position: fixed; inset: 0; z-index: 90;
       display: grid; place-items: center; text-align: center; color: #fff;
-      background: var(--grad);
+      /* 星穹场景:双光球 + 品牌渐变,启动屏即「穿过枢纽」的第一眼 */
+      background:
+        radial-gradient(500px 400px at 16% -6%, rgba(255, 255, 255, .16), transparent 60%),
+        radial-gradient(560px 460px at 90% 112%, rgba(34, 211, 238, .3), transparent 62%),
+        var(--grad);
       transition: opacity .45s var(--ease-out), visibility .45s;
     }
+    /* 启动屏动线:超大虚线母题斜贯,像站在枢纽大厅看导向光带 */
+    .splash::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720' fill='none'%3E%3Cpath d='M-40 560 C 140 520, 210 240, 400 260 S 640 420, 780 350' stroke='%23ffffff' stroke-opacity='.14' stroke-width='2.6' stroke-linecap='round' stroke-dasharray='3 14'/%3E%3Cpath d='M-40 180 C 120 210, 200 420, 360 450 S 620 520, 780 480' stroke='%23ffffff' stroke-opacity='.1' stroke-width='2.6' stroke-linecap='round' stroke-dasharray='3 14'/%3E%3Ccircle cx='400' cy='260' r='6' stroke='%23ffffff' stroke-opacity='.2' stroke-width='2.6'/%3E%3Ccircle cx='360' cy='450' r='6' stroke='%23ffffff' stroke-opacity='.16' stroke-width='2.6'/%3E%3C/svg%3E") no-repeat 50% 46% / min(150vw, 720px) auto;
+    }
+    .splash-hint { animation: splashUp .5s var(--ease-out) .36s both, hintBreath 2.4s ease-in-out 1s infinite; }
+    @keyframes hintBreath { 0%, 100% { opacity: .85; } 50% { opacity: .4; } }
     .splash.hide { opacity: 0; visibility: hidden; pointer-events: none; }
     .splash-inner { animation: popIn .5s var(--ease-out) both; }
     .splash-mark {
@@ -739,6 +798,12 @@
       <p>AI 交通枢纽智慧换乘助手</p>
       <div class="splash-hint">点击任意位置进入</div>
     </div>
+  </div>
+
+  <!-- 光点巡航:沿动线滑行,穿过毛玻璃时化作柔光(reduced-motion 下不出现) -->
+  <div class="hub-lines" aria-hidden="true">
+    <i style="offset-path:path('M -40 760 C 100 730, 210 640, 350 660 S 460 700, 540 690');animation-duration:17s;animation-delay:-4s"></i>
+    <i style="offset-path:path('M -40 300 C 90 250, 200 200, 330 240 S 470 320, 540 300');animation-duration:23s;animation-delay:-14s"></i>
   </div>
 
   <div class="app" id="app">

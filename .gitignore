@@ -62,3 +62,6 @@ config_local.py
 # 旧版品牌大图（已被 scripts/render_brand_assets.py 生成的图标替代，无引用）
 web/mobile/VR.png
 web/mobile/图标.png
+
+# 本机 AI 工作备忘(不入库)
+.workbuddy/

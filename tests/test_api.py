@@ -93,6 +93,19 @@ def test_navigation_load_and_plan(client):
     assert bad.status_code == 400
 
 
+def test_navigation_load_whitelist_rejects_paths_outside_configs(client):
+    """ZX-12:file_path 只接受 configs/ 目录,防换 token 后探测盘上任意路径。"""
+    outside = client.post("/api/navigation/load", json={"file_path": "README.md"})
+    assert outside.status_code == 400
+    assert "configs" in outside.get_json()["error"]
+
+    traversal = client.post(
+        "/api/navigation/load",
+        json={"file_path": str(cfg.paths.configs.parent / "README.md")},
+    )
+    assert traversal.status_code == 400
+
+
 def test_rl_endpoints(client):
     status = client.get("/api/rl/status")
     assert status.status_code == 200
@@ -120,6 +133,26 @@ def test_rewards_endpoint(client):
     assert "series_count" in data
 
 
+def test_rewards_endpoint_memoizes_until_fingerprint_changes(service, monkeypatch):
+    """ZX-09:数据指纹未变即复用上次响应,不再每次读 NPY 重绘 PNG。"""
+    first = service.rl_rewards()
+
+    calls = {"n": 0}
+    real_series = service.rl.reward_series
+
+    def counting_series(*args, **kwargs):
+        calls["n"] += 1
+        return real_series(*args, **kwargs)
+
+    monkeypatch.setattr(service.rl, "reward_series", counting_series)
+    assert service.rl_rewards() == first          # 指纹未变:命中缓存,未读 NPY
+    assert calls["n"] == 0
+
+    monkeypatch.setattr(service.rl, "reward_fingerprint", lambda: ("changed",))
+    service.rl_rewards()
+    assert calls["n"] == 1                        # 指纹变化:重新加载并重绘
+
+
 def test_dashboard_endpoint(client, service):
     groups = service.default_groups()
     resp = client.post("/api/dashboard/run", json={"groups": groups, "title": "pytest"})
@@ -145,6 +178,8 @@ def test_llm_endpoints(client):
     data = metrics.get_json()["data"]
     assert client.get(data["image_url"]).status_code == 200
     assert client.get(data["csv_url"]).status_code == 200
+    # ZX-11:模拟实验不冒充真实型号
+    assert data["model_id"] == "demo-mock"
 
 
 def test_plan_hub_engine(client):

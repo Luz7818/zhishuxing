@@ -150,7 +150,12 @@ def create_app(
             file_path = payload.get("file_path", "")
             if not file_path:
                 return jsonify({"error": "缺少 file_path"}), 400
-            return ok(service.load_navigation(file_path))
+            # 路径白名单(ZX-12):只接受 configs/ 目录下的枢纽文件,防换 token 后探测盘上任意路径
+            allowed_root = cfg.paths.configs.resolve()
+            candidate = Path(file_path).resolve()
+            if allowed_root not in candidate.parents:
+                return jsonify({"error": "file_path 必须位于 configs/ 目录"}), 400
+            return ok(service.load_navigation(str(candidate)))
         except Exception as exc:
             return fail(exc)
 

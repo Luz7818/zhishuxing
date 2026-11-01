@@ -1555,8 +1555,8 @@ function initReports() {
         gallery.style.display = "";
         gallery.innerHTML = images
           .map(
-            (f) =>
-              `<figure class="output-frame show" style="margin:0"><img src="/outputs/${esc(f.split(/[\\/]/).pop())}?t=${Date.now()}" loading="lazy" title="点击放大查看" /><figcaption>${esc(f.split(
+            (f, i) =>
+              `<figure class="output-frame show" style="margin:0;--gi:${i}"><img src="/outputs/${esc(f.split(/[\\/]/).pop())}?t=${Date.now()}" loading="lazy" title="点击放大查看" /><figcaption>${esc(f.split(
                 /[\\/]/
               ).pop())}</figcaption></figure>`
           )

@@ -223,6 +223,13 @@ class MADDPGRuntime:
 
     # ------------------------------------------------------------------ 奖励数据
 
+    def reward_fingerprint(self) -> tuple:
+        """奖励数据指纹(文件名/大小/mtime):供调用方做渲染记忆化,数据未变则复用产物。"""
+        return tuple(
+            (path.name, path.stat().st_size, path.stat().st_mtime_ns)
+            for path in self._reward_files()
+        )
+
     def reward_series(self, max_points: int = 200) -> Dict:
         series: List[Dict] = []
         for path in self._reward_files():

@@ -48,6 +48,8 @@ class ZhiShuXingWebService:
         self.default_nav = cfg.paths.navigation_config
         self.default_dataset = cfg.paths.configs / "sample_instruction_data.jsonl"
         self.loaded_navigation = ""
+        # /api/rl/rewards 渲染记忆化(ZX-09):指纹 -> 上次响应,只留最新一份
+        self._rewards_cache: Dict[tuple, Dict[str, Any]] = {}
 
         self._ensure_ready()
         self.kb = TransferKB.load_default()
@@ -150,7 +152,8 @@ class ZhiShuXingWebService:
             monotonic=True,
         )
         return {
-            "model_id": "qwen3.8-27b",
+            # 模拟实验不冒充真实型号(ZX-11):型号名如实标注演示模拟
+            "model_id": "demo-mock",
             "dataset": "爬取的小红书换乘语料（模拟）",
             "epochs": int(params.get("epochs", 30)),
             "seed": int(params.get("seed", 42)),
@@ -215,6 +218,11 @@ class ZhiShuXingWebService:
         return self.rl.act(observations)
 
     def rl_rewards(self) -> Dict[str, Any]:
+        # 数据指纹未变即复用上次响应(ZX-09):公开 GET 不再每次读全部 NPY 并重绘 PNG
+        fingerprint = self.rl.reward_fingerprint()
+        cached = self._rewards_cache.get(fingerprint)
+        if cached is not None:
+            return cached
         # 全量序列只加载一次:reward_series 的结果同时喂给渲染与响应体
         payload = self.rl.reward_series()
         rendered = self.rl.render_reward_curve(series_payload=payload)
@@ -226,6 +234,7 @@ class ZhiShuXingWebService:
             result["error"] = rendered["error"]
         if rendered.get("image"):
             result["image_url"] = f"/outputs/{Path(rendered['image']).name}"
+        self._rewards_cache = {fingerprint: result}   # 只留最新指纹,旧产物随训练推进自然淘汰
         return result
 
     def rl_simulate(

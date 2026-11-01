@@ -40,6 +40,8 @@
       --ease-out: cubic-bezier(.23, 1, .32, 1);
       --ease-drawer: cubic-bezier(.32, .72, 0, 1);
       --ease-spring: cubic-bezier(.34, 1.26, .64, 1);
+      /* 时长阶梯:按压 < 悬停/焦点 < 入场/弹层 < 抽屉/大面板(与控制台同源) */
+      --dur-1: .12s; --dur-2: .18s; --dur-3: .24s; --dur-4: .3s;
       --card-hi: inset 0 1px 0 rgba(255, 255, 255, .8);
       --glass: rgba(255, 255, 255, .74);
       --glass-line: rgba(255, 255, 255, .55);
@@ -90,9 +92,15 @@
       color: var(--t1);
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
+      line-height: 1.75; hanging-punctuation: allow-end; /* 中文正文行高与标点悬挂(Safari) */
     }
     html[data-theme="dark"] body {
       background: linear-gradient(180deg, #0a0f1f 0%, #0c1222 52%, #0e1530 100%);
+    }
+    /* 天穹渐变 oklch 插值:大面积渐变的过渡段更平滑,防 banding(不支持的浏览器保持上行 sRGB) */
+    @supports (background: linear-gradient(in oklch, red, blue)) {
+      body { background: linear-gradient(in oklch, #f3f5fc 0%, #f1f4fb 48%, #edf1fa 100%); }
+      html[data-theme="dark"] body { background: linear-gradient(in oklch, #0a0f1f 0%, #0c1222 52%, #0e1530 100%); }
     }
     ::selection { background: rgba(79, 70, 229, .22); }
     /* 星穹光层:四球对角流动,整体缓慢呼吸(纯 opacity 合成动画)
@@ -157,7 +165,7 @@
     button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
     button:focus-visible, select:focus-visible, textarea:focus-visible, input:focus-visible { outline: none; box-shadow: var(--ring); }
     /* Apple 式按压反馈:highlight 在按下瞬间(不等到 click) */
-    button { transition: transform .12s var(--ease-out), filter .15s var(--ease-out), background .18s var(--ease-out), color .18s var(--ease-out), border-color .18s var(--ease-out); }
+    button { transition: transform var(--dur-1) var(--ease-out), filter var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out), color var(--dur-2) var(--ease-out), border-color var(--dur-2) var(--ease-out); }
     button:active { transform: scale(.97); }
 
     /* ---------- 动效基元 ---------- */
@@ -255,15 +263,15 @@
     /* 首屏入场只跑一次:page-first 由 JS 在首次切换时移除。若把常驻动画挂在
        .active 上,切页结束后移除 anim-in 类会使动画名回退、pageIn 重新触发,
        页面会在 ~360ms 处再闪一下 */
-    .page.page-first { animation: pageIn .28s var(--ease-out) both; }
+    .page.page-first { animation: pageIn var(--dur-3) var(--ease-out) both; }
     #chatPage.active { display: flex; flex-direction: column; padding: 0; }
     /* 方向感知的双页滑动:旧页滑出、新页滑入,方向与 tab 顺序一致(空间连续性) */
-    .page.anim-in-fwd  { animation: pageInR .32s var(--ease-drawer) both; z-index: 2; }
-    .page.anim-in-back { animation: pageInL .32s var(--ease-drawer) both; z-index: 2; }
+    .page.anim-in-fwd  { animation: pageInR var(--dur-4) var(--ease-drawer) both; z-index: 2; }
+    .page.anim-in-back { animation: pageInL var(--dur-4) var(--ease-drawer) both; z-index: 2; }
     .page.anim-out-fwd, .page.anim-out-back { display: block !important; pointer-events: none; z-index: 1; }
     #chatPage.anim-out-fwd, #chatPage.anim-out-back { display: flex !important; flex-direction: column; }
-    .page.anim-out-fwd  { animation: pageOutL .32s var(--ease-drawer) both; }
-    .page.anim-out-back { animation: pageOutR .32s var(--ease-drawer) both; }
+    .page.anim-out-fwd  { animation: pageOutL var(--dur-4) var(--ease-drawer) both; }
+    .page.anim-out-back { animation: pageOutR var(--dur-4) var(--ease-drawer) both; }
     @keyframes pageInR { from { opacity: 0; transform: translateX(64px); } }
     @keyframes pageInL { from { opacity: 0; transform: translateX(-64px); } }
     @keyframes pageOutL { to { opacity: 0; transform: translateX(-64px); } }
@@ -293,15 +301,15 @@
     .chat-bottom { flex: none; }
 
     .crowd-card { margin-bottom: 12px; overflow: hidden; }
-    .crowd-head { display: flex; align-items: center; gap: 8px; padding: 11px 14px; cursor: pointer; user-select: none; transition: background .15s var(--ease-out); }
+    .crowd-head { display: flex; align-items: center; gap: 8px; padding: 11px 14px; cursor: pointer; user-select: none; transition: background var(--dur-2) var(--ease-out); }
     .crowd-head:active { background: var(--surface-2); }
     .crowd-head .ic { width: 16px; height: 16px; color: var(--primary); }
     .crowd-head b { font-size: 13.5px; font-weight: 700; }
-    .crowd-head .crowd-chev { margin-left: auto; color: var(--t4); transition: transform .2s var(--ease-out); }
+    .crowd-head .crowd-chev { margin-left: auto; color: var(--t4); transition: transform var(--dur-2) var(--ease-out); }
     .crowd-card.open .crowd-chev { transform: rotate(90deg); }
     /* 展开/收起走 grid-template-rows 0fr→1fr 过渡:高度连续可中断,快速连点不闪跳
        (display:none 硬切没有过渡窗口,还会打断滚动位置) */
-    .crowd-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .34s var(--ease-drawer); }
+    .crowd-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows var(--dur-4) var(--ease-drawer); }
     .crowd-card.open .crowd-body { grid-template-rows: 1fr; }
     /* 底距放在裁切层内:收起时随 0fr 轨道一起被裁掉,展开时骨架屏/数据都有底边距 */
     .crowd-inner { overflow: hidden; min-height: 0; padding: 0 14px 12px; }
@@ -329,7 +337,7 @@
       background-size: 200% 100%; animation: shimmer 1.2s linear infinite;
     }
 
-    .msg { display: flex; gap: 8px; margin: 14px 0; animation: msgIn .26s var(--ease-out) both; }
+    .msg { display: flex; gap: 8px; margin: 14px 0; animation: msgIn var(--dur-3) var(--ease-out) both; }
     /* 恢复历史消息时整批重挂,不重放入场动画(只让新消息动) */
     .msg.static { animation: none; }
     .msg .avatar {
@@ -437,7 +445,7 @@
     #chatInput {
       flex: 1; min-width: 0; resize: none; border: 1px solid var(--line);
       background: var(--surface); color: var(--t1);
-      border-radius: 14px; padding: 10px 13px; font: inherit; font-size: 14px; line-height: 1.5;
+      border-radius: 14px; padding: 10px 13px; font: inherit; font-size: 16px; line-height: 1.5; /* ≥16px 防 iOS 聚焦缩放 */
       max-height: 96px; caret-color: var(--primary);
       transition: border-color .18s var(--ease-out), box-shadow .18s var(--ease-out);
       /* 长内容滚动时不露 Windows 原生滚动条箭头,靠高度自适应反馈 */
@@ -544,6 +552,19 @@
     .status-tag.demo { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
 
     .empty-hint { text-align: center; color: var(--t4); font-size: 13px; padding: 46px 20px; line-height: 1.8; }
+    /* 空态插画(与控制台 v6.4 同语言):实线描线,虚线淡入;reduced-motion 直出终态 */
+    .empty-hint .art { display: block; width: 64px; height: 64px; margin: 0 auto 10px; color: var(--primary); }
+    .empty-hint .art svg { width: 100%; height: 100%; display: block; }
+    .empty-hint .art .acc { color: var(--accent); }
+    .empty-hint .art .draw { stroke-dasharray: 100 100; stroke-dashoffset: 100; animation: artDraw .7s var(--ease-out) forwards; }
+    .empty-hint .art .d2 { animation-delay: .12s; }
+    .empty-hint .art .fade { opacity: 0; animation: artFade .45s var(--ease-out) .3s forwards; }
+    @keyframes artDraw { to { stroke-dashoffset: 0; } }
+    @keyframes artFade { to { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      .empty-hint .art .draw { animation: none; stroke-dashoffset: 0; }
+      .empty-hint .art .fade { animation: none; opacity: 1; }
+    }
     .empty-hint .ic { width: 34px; height: 34px; color: var(--line-2); margin-bottom: 10px; }
 
     .btn-primary {
@@ -564,7 +585,7 @@
     .nav-field { flex: 1; min-width: 0; }
     .nav-field label { display: block; font-size: 11px; color: var(--t3); margin-bottom: 5px; font-weight: 500; }
     .select-lite {
-      width: 100%; height: 42px; padding: 0 30px 0 10px; font: inherit; font-size: 13px; color: var(--t1);
+      width: 100%; height: 42px; padding: 0 30px 0 10px; font: inherit; font-size: 16px; color: var(--t1); /* ≥16px 防 iOS 聚焦缩放 */
       background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm);
       appearance: none; -webkit-appearance: none;
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2398a2b8' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
@@ -619,15 +640,15 @@
     .switch.on::after { transform: translateX(18px); }
 
     .seg { position: relative; display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); }
-    .seg-pill { position: absolute; top: 4px; bottom: 4px; left: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-xs), var(--card-hi); transition: transform .28s var(--ease-spring), width .28s var(--ease-spring); z-index: 0; }
+    .seg-pill { position: absolute; top: 4px; bottom: 4px; left: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-xs), var(--card-hi); transition: transform var(--dur-4) var(--ease-spring), width var(--dur-4) var(--ease-spring); z-index: 0; }
     .seg-pill.no-anim { transition: none !important; }
-    .seg button { position: relative; z-index: 1; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 500; color: var(--t3); transition: color .18s var(--ease-out); }
+    .seg button { position: relative; z-index: 1; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 500; color: var(--t3); transition: color var(--dur-2) var(--ease-out); }
     .seg button .ic { width: 13px; height: 13px; }
     .seg button.active { color: var(--primary); font-weight: 700; }
 
     .pref-label { font-size: 12px; font-weight: 700; color: var(--t2); margin: 13px 0 7px; }
     .pref-label:first-child { margin-top: 2px; }
-    .pref-note { width: 100%; min-height: 74px; resize: none; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-2); color: var(--t1); font: inherit; font-size: 13px; line-height: 1.6; padding: 10px 12px; caret-color: var(--primary); }
+    .pref-note { width: 100%; min-height: 74px; resize: none; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface-2); color: var(--t1); font: inherit; font-size: 16px; line-height: 1.6; padding: 10px 12px; caret-color: var(--primary); } /* ≥16px 防 iOS 聚焦缩放 */
     .pref-note:focus { border-color: var(--primary); box-shadow: var(--ring); outline: none; }
     .pref-summary { font-size: 12px; line-height: 1.7; color: var(--t3); background: var(--surface-2); border: 1px dashed var(--line-2); border-radius: var(--r-sm); padding: 9px 11px; margin-top: 13px; }
 
@@ -711,13 +732,13 @@
       -webkit-backdrop-filter: blur(16px) saturate(180%); backdrop-filter: blur(16px) saturate(180%);
       box-shadow: var(--shadow-md); color: var(--t1); font-size: 13px; font-weight: 500;
       opacity: 0; visibility: hidden; pointer-events: none;
-      transition: opacity .24s var(--ease-out), transform .24s var(--ease-out), visibility .24s;
+      transition: opacity var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out), visibility var(--dur-3);
     }
     .toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
     .toast .ic { width: 15px; height: 15px; color: var(--primary); flex: none; }
 
     /* ---------- 数值/状态更新动效 ---------- */
-    .tick { animation: tickIn .3s var(--ease-out); }
+    .tick { animation: tickIn var(--dur-3) var(--ease-out); }
     @keyframes tickIn { from { opacity: 0; transform: translateY(5px); } }
 
     /* ---------- 主题切换:圆形揭示(View Transition),不支持时退化为颜色交叉过渡 ---------- */
@@ -1393,7 +1414,7 @@
     function renderHistory() {
       const list = $('historyList');
       if (!state.history.length) {
-        list.innerHTML = '<div class="empty-hint" style="padding:26px 10px">暂无历史记录</div>';
+        list.innerHTML = '<div class="empty-hint" style="padding:26px 10px"><span class="art" aria-hidden="true"><svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle class="draw" pathLength="100" cx="48" cy="48" r="24"/><path class="draw d2" pathLength="100" d="M48 34v14l10 6"/><path class="fade" d="M48 12c-8 0-15 2-21 6" stroke-dasharray="1 6" opacity=".55" stroke-width="2"/><path class="fade" d="M48 84c8 0 15-2 21-6" stroke-dasharray="1 6" opacity=".55" stroke-width="2"/></svg></span>暂无历史记录</div>';
         return;
       }
       list.innerHTML = state.history.map((item, i) => `

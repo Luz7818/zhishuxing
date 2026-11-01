@@ -484,3 +484,61 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   实际由 setdefault 兜底恒真且恢复路径从未真正断言;新测试 monkeypatch 封死
   `load_missing` 并断言历史内容从库恢复)、`test_packaging.py` 脚本存在性两查。
 - 门禁:pytest 240 passed;`node --check app.js` 通过;pyflakes 0 告警;`zhishuxing smoke` 通过。
+
+## 2026-11-02 · v2.9.0 动效体系定型与体验收口(设计纪律轮)
+
+> 依据 2026-11-01 全矩阵周报「研究一 · 前端品味」对 zhishuxing 的落地建议(§7.5)与 Emil 动效
+> 方法论:本轮不堆新装饰,做「受限的令牌系统 + 一处签名件 + 细节纪律」。随批关闭体检卡 P2/P3
+> 四项诚实度问题(ZX-08/09/11/12);ZX-14(dist/build 磁盘残留)同步清理。
+
+### Added(新增)
+
+- **动效时长阶梯(两端)**:`style.css` 与 `mobile_app.html` 新增 `--dur-1(.12s 按压)/--dur-2(.18s
+  悬停与焦点)/--dur-3(.24s 入场与弹层)/--dur-4(.3s 抽屉与大面板)`,高频交互过渡(按钮/输入/
+  chips/侧栏/卡片/KPI/toast/命令面板/页面切换/抽屉)全部改从阶梯取值,替代原先约 19 个散落时长;
+  欢迎页动效与悬浮球拖拽编排属 Rare 场景,保留自有节奏并注释说明。
+- **空状态插画人格**:桌面 6 处空态(枢纽导航未规划/规划结果/RL 无权重/无仿真/报告画廊/微调预览)
+  与移动端换乘历史空态,从「图标+虚线徽托」换为框线风格迷你 SVG 插画(与 sprite 同语言:圆头描边、
+  动线虚线、站点圆标、accent 青色点);实线以 `pathLength=100` 归一做描线入场(0.7s ease-out,
+  虚线与色点错峰淡入),`prefers-reduced-motion` 下直出终态(显式落 `stroke-dashoffset:0`,
+  防全局禁动画规则把插画藏掉)。
+- **报告画廊错峰入场**:7 类报告图片按 `--gi` 索引 60ms 阶梯上浮淡入,与移动端错峰语言同源。
+
+### Changed(变更)
+
+- **移动端输入控件 ≥16px**(iOS 聚焦缩放防护):对话输入框 14→16px、偏好备注 13→16px、
+  站点下拉 13→16px。
+- **移动端中文排版**:正文 `line-height 1.75`;`hanging-punctuation: allow-end`(Safari 生效,
+  其余引擎忽略)。
+- **天穹渐变防 banding**:`@supports` 渐进改用 `in oklch` 插值(明/暗两套),不支持处保持原 sRGB。
+- **移动端 ServiceWorker 壳文档改网络优先**:`mobile_app.html` 与 manifest 拉网优先、离线回退缓存
+  (旧策略 cache-first,漏 bump `CACHE_NAME` 用户就拿不到新壳);图标等静态资产维持 cache-first;
+  缓存名 v14 → v15。
+- 控制台/移动端资产引用升 `?v=6.4`;侧栏版本号 v2.9.0。
+
+### Fixed(修复 · 诚实度与性能,随批搭车)
+
+- **od_source 如实上报(ZX-08)**:`call_llm_extract_od` 失败静默回退正则时,返回值携带
+  `_source=regex`,`plan_with_amap` 按真实来源上报——配了 LLM Key 但 LLM 挂掉时,响应不再谎称
+  `od_source: "llm"`(降级可见约定在这条链路恢复)。
+- **模拟微调不再冒充真实型号(ZX-11)**:`simulate_finetune_metrics` 的 `model_id` 从编造的
+  `qwen3.8-27b` 改为 `demo-mock`(配置里的 `SILICONFLOW_MODEL` 默认值是真实服务器配置,不动)。
+- **/api/rl/rewards 渲染记忆化(ZX-09)**:新增 `MADDPGRuntime.reward_fingerprint()`(文件名/大小/
+  mtime),服务层按指纹复用上次响应——数据未变的公开 GET 不再每次读全部 NPY 并重绘 PNG。
+- **/api/navigation/load 路径白名单(ZX-12)**:`file_path` 解析后必须位于 `configs/` 目录,
+  否则 400——防换 token 后以管理域端点探测盘上任意路径。
+
+### Removed(清理)
+
+- 本机 `dist/`(883MB)与 `build/`(86MB)历史构建产物删除(ZX-14,均可由 packaging 脚本重建)。
+
+### 验证
+
+- 新增 4 条行为断言:`test_amap.py` LLM 回退上报 `_source=regex`/成功上报 `_source=llm`、
+  `test_api.py` rewards 指纹记忆化(命中缓存不读 NPY,指纹变化才重绘)、simulate_metrics
+  `model_id == "demo-mock"`、navigation/load 白名单外 400(含穿越路径)。
+- 门禁:pytest 244 passed;pyflakes 0 告警;`zhishuxing smoke` 通过;`node --check` app.js/sw.js 通过。
+- 浏览器实测(Chrome + 本机 serve,亮/暗双主题):欢迎页 → 工作台入场、枢纽导航/RL/报告三处空态
+  描线插画终态正确、7/7 报告画廊 `--gi` 0-8 错峰落位、主题切换过渡正常;移动端 390×844——输入框
+  computed 16px、`linear-gradient(in oklch, …)` 实际生效、正文行高 28px、历史空态时钟插画、
+  对话流发送/气泡/spinner 正常。

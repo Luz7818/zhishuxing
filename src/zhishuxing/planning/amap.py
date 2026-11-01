@@ -81,11 +81,15 @@ def call_llm_extract_od(
     model: str,
     base_url: Optional[str] = None,
 ) -> Dict[str, str]:
-    """OpenAI 兼容聊天模型提取起点/终点/城市；失败回退本地正则。"""
+    """OpenAI 兼容聊天模型提取起点/终点/城市；失败回退本地正则。
+
+    返回值多带一个 "_source" 键（"llm" / "regex"），标记提取的真实来源——
+    LLM 静默回退正则时调用方必须如实上报 od_source，不得继续标 "llm"。
+    """
     try:
         from openai import OpenAI
     except Exception:
-        return extract_od_locally(question)
+        return {**extract_od_locally(question), "_source": "regex"}
 
     try:
         client = OpenAI(api_key=api_key, base_url=base_url or None)
@@ -110,9 +114,10 @@ def call_llm_extract_od(
             "origin_text": data.get("origin_text", ""),
             "destination_text": data.get("destination_text", ""),
             "city": data.get("city", ""),
+            "_source": "llm",
         }
     except Exception:
-        return extract_od_locally(question)
+        return {**extract_od_locally(question), "_source": "regex"}
 
 
 def geocode(address: str, amap_key: str, timeout: float = 10.0) -> Optional[Tuple[float, float, str]]:
@@ -283,7 +288,8 @@ def plan_route(
             model=llm_conf["model"],
             base_url=llm_conf["base_url"],
         )
-        od_source = "llm"
+        # LLM 内部失败会静默回退正则,按真实来源上报(降级可见约定,ZX-08)
+        od_source = od_data.pop("_source", "regex")
     else:
         od_data = extract_od_locally(question)
         od_source = "regex"

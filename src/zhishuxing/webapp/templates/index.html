@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/favicon-32.png" />
   <link rel="apple-touch-icon" href="/static/assets/logo-mark.svg" />
-  <link rel="stylesheet" href="/static/style.css?v=6.3" />
+  <link rel="stylesheet" href="/static/style.css?v=6.4" />
   <script>document.documentElement.classList.add("js");</script>
   <script>
     /* 服务端注入的运行配置：高德 JS Key 仅在配置了环境变量时存在 */
@@ -100,7 +100,7 @@
     <div class="side-foot">
       <div class="sys-status"><span class="dot" id="health-dot"></span><span id="health-text">连接中…</span></div>
       <div class="meta-row">
-        <span id="side-ver">v2.8.1</span><span class="msep">·</span><span id="side-llm" title="LLM 适配器模式">LLM:—</span>
+        <span id="side-ver">v2.9.0</span><span class="msep">·</span><span id="side-llm" title="LLM 适配器模式">LLM:—</span>
         <button id="theme-toggle" class="theme-btn" title="切换明暗主题" aria-label="切换明暗主题"><svg class="ic t-moon" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-moon"/></svg><svg class="ic t-sun" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-sun"/></svg></button>
       </div>
     </div>
@@ -190,7 +190,7 @@
               <canvas id="navCanvas" width="930" height="496"></canvas>
               <div class="map-side" id="mapResultPanel">
               <div class="map-side-head"><b>规划结果</b></div>
-              <div class="empty" id="navResultEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#art-route"/></svg></span>在地图上点两格，或点「规划参数」设定起终点。</div>
+              <div class="empty" id="navResultEmpty"><span class="art" aria-hidden="true"><svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect class="draw" pathLength="100" x="16" y="16" width="64" height="64" rx="12"/><path class="draw d2" pathLength="100" d="M16 40h64M16 56h64" opacity=".3" stroke-width="2"/><path class="draw d2" pathLength="100" d="M40 16v64M56 16v64" opacity=".3" stroke-width="2"/><g class="acc"><path class="fade f2" d="M30 66c8-6 10-14 18-18s10-12 18-18" stroke-width="2.5" stroke-dasharray="1 7"/></g><circle class="draw d3" pathLength="100" cx="30" cy="66" r="5"/><g class="acc"><circle class="fade f3" cx="66" cy="30" r="5" fill="currentColor" stroke="none"/></g></svg></span>在地图上点两格，或点「规划参数」设定起终点。</div>
               <div id="navResult" style="display:none">
                 <div class="kv">
                   <span class="item">路径长度<b id="navLen">—</b></span>
@@ -244,7 +244,7 @@
             <button class="btn subtle" id="btnRLRefresh">⟳ 刷新状态</button>
             <span class="badge" id="rlSourceBadge">—</span>
           </div>
-          <div class="empty" id="rlCkptEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-disk"/></svg></span>model/ 目录暂无 actor 权重。<br />运行 <code>zhishuxing train</code> 后此处将展示检查点列表。</div>
+          <div class="empty" id="rlCkptEmpty"><span class="art" aria-hidden="true"><svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect class="draw" pathLength="100" x="24" y="42" width="48" height="30" rx="7"/><path class="draw d2" pathLength="100" d="M24 52h48" opacity=".45" stroke-width="2"/><g class="acc"><path class="draw d2" pathLength="100" d="M48 18v18"/><path class="draw d3" pathLength="100" d="M40 29l8 8 8-8"/></g><path class="draw d4" pathLength="100" d="M42 64h12" opacity=".5" stroke-width="2"/></svg></span>model/ 目录暂无 actor 权重。<br />运行 <code>zhishuxing train</code> 后此处将展示检查点列表。</div>
           <table class="table" id="rlCkptTable" style="display:none">
             <thead><tr><th>Agent</th><th>算法</th><th>训练步数</th><th>权重文件</th></tr></thead>
             <tbody id="rlCkptBody"></tbody>
@@ -276,7 +276,7 @@
             <div class="field"><label>随机种子</label><input id="simSeed" type="number" value="42" /></div>
             <div class="field" style="align-self:flex-end"><button class="btn" id="btnRLSim"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-sim"/></svg>运行仿真</button></div>
           </div>
-          <div class="empty" id="simEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-radar"/></svg></span>点击「运行仿真」查看策略在枢纽中的实际表现。</div>
+          <div class="empty" id="simEmpty"><span class="art" aria-hidden="true"><svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path class="draw" pathLength="100" d="M26 22v50h46"/><path class="draw d2" pathLength="100" d="M26 52h8M26 40h8M26 30h8" opacity=".3" stroke-width="2"/><g class="acc"><path class="draw d3" pathLength="100" d="M32 62c10-2 16-10 22-16s10-10 16-14" stroke-width="2.5"/></g><g class="acc"><circle class="fade f3" cx="70" cy="32" r="3.5" fill="currentColor" stroke="none"/></g></svg></span>点击「运行仿真」查看策略在枢纽中的实际表现。</div>
           <div id="simResult" style="display:none">
             <div class="grid-4" style="margin-bottom:14px">
               <div class="kpi ok"><div class="kpi-label">到达率</div><div class="kpi-value" id="simArrive">—</div></div>
@@ -314,7 +314,7 @@
         <div class="card">
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-image"/></svg>输出面板</h3>
           <p class="desc">左：动态客流热力；右：各组引导路径。</p>
-          <div class="empty" id="panelEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-image"/></svg></span>生成后在此预览，并给出 LLM 引导文案。</div>
+          <div class="empty" id="panelEmpty"><span class="art" aria-hidden="true"><svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect class="draw" pathLength="100" x="18" y="20" width="60" height="44" rx="8"/><path class="draw d2" pathLength="100" d="M26 54l12-14 9 10 8-9 11 13" opacity=".8" stroke-width="2.5"/><g class="acc"><circle class="fade f2" cx="62" cy="31" r="4" fill="currentColor" stroke="none"/></g><rect class="draw d3" pathLength="100" x="24" y="70" width="14" height="10" rx="3" opacity=".5" stroke-width="2"/><rect class="draw d4" pathLength="100" x="42" y="70" width="14" height="10" rx="3" opacity=".5" stroke-width="2"/><rect class="draw d4" pathLength="100" x="60" y="70" width="14" height="10" rx="3" opacity=".5" stroke-width="2"/></svg></span>生成后在此预览，并给出 LLM 引导文案。</div>
           <div id="panelResult" style="display:none">
             <div class="callout" id="panelGuidance" style="margin-bottom:14px"></div>
             <figure class="output-frame show">
@@ -361,7 +361,7 @@
         </div>
 
         <div class="card">
-          <div class="empty" id="planEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#art-route"/></svg></span>规划结果将在此展示：用时 / 费用 / 换乘 / 路线详情 / 出行提醒 / 需求档案。</div>
+          <div class="empty" id="planEmpty"><span class="art" aria-hidden="true"><svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect class="draw" pathLength="100" x="14" y="28" width="68" height="40" rx="9"/><path class="fade f2" d="M50 28v40" stroke-dasharray="2 5" opacity=".45" stroke-width="2"/><circle class="draw d3" pathLength="100" cx="31" cy="48" r="3.5"/><g class="acc"><circle class="fade f3" cx="41" cy="48" r="3.5" fill="currentColor" stroke="none"/></g><path class="fade f2" d="M34.5 48h3" stroke-dasharray="1 3" opacity=".6" stroke-width="2"/><path class="draw d2" pathLength="100" d="M58 40h14" opacity=".55" stroke-width="2"/><path class="draw d3" pathLength="100" d="M58 48h10" opacity=".55" stroke-width="2"/><path class="draw d4" pathLength="100" d="M58 56h12" opacity=".55" stroke-width="2"/></svg></span>规划结果将在此展示：用时 / 费用 / 换乘 / 路线详情 / 出行提醒 / 需求档案。</div>
         </div>
         <div id="planResult" style="display:none">
           <div class="grid-4" style="margin-bottom:18px">
@@ -417,7 +417,7 @@
         <div class="card">
           <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-image"/></svg>输出画廊</h3>
           <p class="desc">运行后自动收录新产出图片。</p>
-          <div class="empty" id="galleryEmpty"><span class="icon"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-image"/></svg></span>暂无输出。点击「运行全部报告」生成。</div>
+          <div class="empty" id="galleryEmpty"><span class="art" aria-hidden="true"><svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect class="draw" pathLength="100" x="18" y="20" width="60" height="44" rx="8"/><path class="draw d2" pathLength="100" d="M26 54l12-14 9 10 8-9 11 13" opacity=".8" stroke-width="2.5"/><g class="acc"><circle class="fade f2" cx="62" cy="31" r="4" fill="currentColor" stroke="none"/></g><rect class="draw d3" pathLength="100" x="24" y="70" width="14" height="10" rx="3" opacity=".5" stroke-width="2"/><rect class="draw d4" pathLength="100" x="42" y="70" width="14" height="10" rx="3" opacity=".5" stroke-width="2"/><rect class="draw d4" pathLength="100" x="60" y="70" width="14" height="10" rx="3" opacity=".5" stroke-width="2"/></svg></span>暂无输出。点击「运行全部报告」生成。</div>
           <div class="grid-2" id="gallery" style="display:none"></div>
         </div>
 
@@ -571,6 +571,6 @@
 </div>
 
 <div id="toastHost"></div>
-<script src="/static/app.js?v=6.3"></script>
+<script src="/static/app.js?v=6.4"></script>
 </body>
 </html>

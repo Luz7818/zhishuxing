@@ -102,8 +102,8 @@
 
 | 项 | 值 | 复核命令 |
 |---|---|---|
-| 测试 | `240 passed`（本机实测 20–60 s 之间浮动，受机器负载影响，别当判据） | `python -m pytest` |
-| 用例分布 | `240 tests collected` | `python -m pytest -o addopts="" --collect-only -q` |
+| 测试 | `244 passed`（本机实测 20–60 s 之间浮动，受机器负载影响，别当判据） | `python -m pytest` |
+| 用例分布 | `244 tests collected` | `python -m pytest -o addopts="" --collect-only -q` |
 | 静态检查 | `0 告警`，退出码 0 | `python -m pyflakes src/ scripts/ tests/` |
 | API 冒烟 | `Web smoke test passed.`，退出码 0 | `zhishuxing smoke` |
 | 配置体检 | 本机配好 3 项必需密钥 → 退出码 0；全新 clone 无 `.env` → 退出码 1 并列缺 3 项 | `zhishuxing doctor` |
@@ -111,7 +111,7 @@
 | HTTP 路由 | 27 个注册 / 26 条不同路径（仅 `/api/settings` 含 GET+POST） | `grep -c '@app.get(' src/zhishuxing/webapp/app.py` 与 `grep -c '@app.post(' src/zhishuxing/webapp/app.py`，两条之和应为 27 |
 | CLI 子命令 | 11 个 | `grep -cE 'add_parser\("[a-z-]+"' src/zhishuxing/cli.py` |
 | CI | 定义在 `.github/workflows/ci.yml`：ubuntu-latest × Python `3.11` / `3.12`，装 `.[dev]` + CPU 版 torch，先 pyflakes 再 pytest（`MPLBACKEND=Agg`）。**这里不写"最近一次是哪个提交"**——分支每推一次它就变，写进文档同一次提交里就作废了；当前分支 HEAD 的徽章为 `passing`（复核见右）。本机没有 `gh`，但徽章与 Actions 接口对**公开仓都免认证**；要提交号与耗时再用 `/actions/runs`（匿名限 60 次/小时/IP，别拿它轮询） | `python -c "import urllib.request as u;b=u.urlopen(u.Request('https://github.com/Luz7818/zhishuxing/workflows/CI/badge.svg',headers={'User-Agent':'Mozilla/5.0'}),timeout=30).read().decode();print('passing' in b)"` 应为 `True`；步骤读 `.github/workflows/ci.yml` |
-| 版本 | `2.8.1` | `python -c "import zhishuxing;print(zhishuxing.__version__)"`，另一份在 `pyproject.toml` 的 `project.version` |
+| 版本 | `2.9.0` | `python -c "import zhishuxing;print(zhishuxing.__version__)"`，另一份在 `pyproject.toml` 的 `project.version` |
 | Python 要求 | `>=3.10`（CI 只跑 3.11/3.12） | `pyproject.toml` 的 `requires-python` |
 | 许可证 | Proprietary，全文在根目录 LICENSE（教学/科研内部使用，第三方需书面授权） | `git ls-files "*LICENSE*"` 恰好 1 行 |
 | 运行时依赖 | `numpy`、`matplotlib`、`flask`、`waitress`、`requests` | `pyproject.toml` 的 `dependencies` |

@@ -1,4 +1,4 @@
-const CACHE_NAME = "zhishuxing-mobile-v14";
+const CACHE_NAME = "zhishuxing-mobile-v15";
 const ASSETS = [
   "./mobile_app.html",
   "./manifest.webmanifest",
@@ -32,9 +32,20 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   // API 请求走网络优先，避免离线拿到过期规划结果
   const isApi = url.pathname.startsWith("/api/") || url.pathname.startsWith("/outputs/");
+  // 壳文档(mobile_app.html/manifest)同样网络优先:发布新版后用户无需等 CACHE_NAME 手工 bump
+  // 才能拿到新壳;离线时才回退缓存。图标等静态资产保持 cache-first(内容随版本名变化)。
+  const isShell = url.pathname.endsWith("/mobile_app.html") || url.pathname.endsWith("/manifest.webmanifest");
   event.respondWith(
-    (isApi
-      ? fetch(event.request).catch(() => caches.match(event.request))
+    (isApi || isShell
+      ? fetch(event.request)
+          .then((response) => {
+            if (isShell && response.ok) {
+              const copied = response.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copied));
+            }
+            return response;
+          })
+          .catch(() => caches.match(event.request))
       : caches.match(event.request).then(
           (cached) =>
             cached ||

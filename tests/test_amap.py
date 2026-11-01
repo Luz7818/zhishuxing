@@ -23,6 +23,51 @@ def test_extract_od_locally_fallback():
     assert result["destination_text"] == "目的地"
 
 
+def test_call_llm_extract_od_fallback_reports_regex(monkeypatch):
+    """ZX-08:LLM 调用失败静默回退正则时,必须如实上报 _source=regex。"""
+    from zhishuxing.planning.amap import call_llm_extract_od
+
+    class ExplodingClient:
+        def __init__(self, **_kwargs):
+            raise RuntimeError("模拟网络故障")
+
+    monkeypatch.setattr("openai.OpenAI", ExplodingClient)
+    data = call_llm_extract_od("从深圳北站到宝安机场", api_key="k", model="m")
+    assert data.pop("_source") == "regex"
+    assert data["origin_text"] == "深圳北站"
+    assert data["destination_text"] == "宝安机场"
+
+
+def test_call_llm_extract_od_success_reports_llm(monkeypatch):
+    """ZX-08:LLM 正常返回时上报 _source=llm,载荷不带多余包装。"""
+    from zhishuxing.planning.amap import call_llm_extract_od
+
+    class FakeMessage:
+        content = '{"origin_text": "A口", "destination_text": "B站台", "city": ""}'
+
+    class FakeChoice:
+        message = FakeMessage()
+
+    class FakeResponse:
+        choices = [FakeChoice()]
+
+    class FakeCompletions:
+        def create(self, **_kwargs):
+            return FakeResponse()
+
+    class FakeChat:
+        completions = FakeCompletions()
+
+    class FakeOpenAI:
+        def __init__(self, **_kwargs):
+            self.chat = FakeChat()
+
+    monkeypatch.setattr("openai.OpenAI", FakeOpenAI)
+    data = call_llm_extract_od("从A口到B站台", api_key="k", model="m")
+    assert data["_source"] == "llm"
+    assert data["origin_text"] == "A口"
+
+
 def test_polyline_parsing_flat_structure():
     """旧响应结构：segments[].steps[].polyline。"""
     transit = {

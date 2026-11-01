@@ -542,3 +542,12 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   描线插画终态正确、7/7 报告画廊 `--gi` 0-8 错峰落位、主题切换过渡正常;移动端 390×844——输入框
   computed 16px、`linear-gradient(in oklch, …)` 实际生效、正文行高 28px、历史空态时钟插画、
   对话流发送/气泡/spinner 正常。
+
+## 2026-11-02 · 更正:ZX-08 两测补 openai 可选守卫(2.9.0 CI 红灯修正)
+
+- 2.9.0 新增的 `test_call_llm_extract_od_fallback_reports_regex` / `..._success_reports_llm`
+  经 `monkeypatch.setattr("openai.OpenAI", …)` 依赖 `openai` 可导入,而 openai 属可选 `[llm]`
+  extra——CI 只装 `.[dev]` 无 openai,两测 ModuleNotFoundError 致 CI failure;本机全局装有
+  openai 故本地绿,属环境差异漏检(2.9.0 提交信息声称的 pytest 244 在本机为真)
+- 修正:两测开头 `pytest.importorskip("openai", …)`,与缺 torch 跳过 RL 用例同口径;
+  本机 `pytest tests/test_amap.py` 11 项仍全绿(总数 244 不变),CI 口径为 242 passed + 2 skipped

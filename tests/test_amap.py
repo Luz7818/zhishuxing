@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from zhishuxing import config as cfg
 from zhishuxing.planning.amap import (
     build_route_details,
@@ -25,6 +27,7 @@ def test_extract_od_locally_fallback():
 
 def test_call_llm_extract_od_fallback_reports_regex(monkeypatch):
     """ZX-08:LLM 调用失败静默回退正则时,必须如实上报 _source=regex。"""
+    pytest.importorskip("openai", reason="openai 属可选 [llm] 依赖(CI 不装),缺失即跳过——同缺 torch 的 RL 用例口径")
     from zhishuxing.planning.amap import call_llm_extract_od
 
     class ExplodingClient:
@@ -40,6 +43,7 @@ def test_call_llm_extract_od_fallback_reports_regex(monkeypatch):
 
 def test_call_llm_extract_od_success_reports_llm(monkeypatch):
     """ZX-08:LLM 正常返回时上报 _source=llm,载荷不带多余包装。"""
+    pytest.importorskip("openai", reason="openai 属可选 [llm] 依赖(CI 不装),缺失即跳过——同缺 torch 的 RL 用例口径")
     from zhishuxing.planning.amap import call_llm_extract_od
 
     class FakeMessage:

@@ -10,9 +10,12 @@
 
 from __future__ import annotations
 
+import json
+import re
 from pathlib import Path
 
 from flask import Flask, current_app, jsonify, make_response, render_template, request, send_from_directory
+from werkzeug.exceptions import HTTPException
 
 from .. import config as cfg
 from .. import settings as settings_store
@@ -50,17 +53,36 @@ def create_app(
         static_folder=str(webapp_dir / "static"),
     )
     app.extensions["service"] = service   # 供 cmd_serve 做 LLM 自动挂载等启动后置步骤使用
+    # 公开端点请求体预算(SEC-02):超限 Flask 直接回 413,单请求 JSON 无法再无界吃内存;
+    # 字段级预算见下方 budget()/check_session_id(),生产反代限流样例见 docs/DEPLOY.md
+    app.config["MAX_CONTENT_LENGTH"] = 256 * 1024
 
     def ok(data):
         return jsonify({"ok": True, "data": data})
 
     def fail(exc: Exception, status: int = 500):
+        # HTTPException(如请求体超限的 413)按原状态码透传,其余异常落 500;
         # 堆栈只进服务端日志：响应体给客户端回 traceback 会泄露源码路径与依赖版本
+        if isinstance(exc, HTTPException):
+            return jsonify({"ok": False, "error": exc.name}), exc.code
         current_app.logger.exception("接口处理失败")
         return jsonify({"ok": False, "error": str(exc)}), status
 
     def deny(message: str, detail: str, status: int = 403):
         return jsonify({"ok": False, "error": message, "detail": detail}), status
+
+    def budget(value, *, what: str, max_len: int) -> None:
+        """公开端点字段预算:字符串按原样、其余按 JSON 序列化计量,超限抛 ValueError(路由层 400)。"""
+        text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+        if len(text) > max_len:
+            raise ValueError(f"{what} 超过 {max_len} 字符上限")
+
+    _SESSION_ID_RE = re.compile(r"[A-Za-z0-9_-]{1,64}")
+
+    def check_session_id(sid) -> None:
+        """会话主键格式预算:1-64 位字母数字/横线/下划线,防任意长串灌库(SEC-02/PERF-01 配套)。"""
+        if not isinstance(sid, str) or not _SESSION_ID_RE.fullmatch(sid):
+            raise ValueError("session_id 格式非法（1-64 位字母数字或 -_）")
 
     # ------------------------------------------------------------ 管理端鉴权（ADMIN_PASSWORD 设置后启用）
 
@@ -135,13 +157,16 @@ def create_app(
     @app.post("/api/navigation/plan")
     def api_plan_navigation():
         try:
-            payload = request.get_json(force=True)
+            payload = request.get_json(force=True, silent=True) or {}
+            budget(payload.get("via"), what="via", max_len=4_000)
             data = service.plan_path(
                 start=payload.get("start"),
                 goal=payload.get("goal"),
                 via=payload.get("via", []),
             )
             return ok(data)
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
         except Exception as exc:
             return fail(exc)
 
@@ -222,7 +247,13 @@ def create_app(
             observations = payload.get("observations")
             if not isinstance(observations, list):
                 return jsonify({"error": "缺少 observations（二维数值数组）"}), 400
+            if len(observations) > 64:
+                return jsonify({"error": "observations 最多 64 个智能体"}), 400
+            if any(not isinstance(row, list) or len(row) > 128 for row in observations):
+                return jsonify({"error": "每行观测应为数组且最多 128 维"}), 400
             return ok(service.rl_act(observations))
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
         except Exception as exc:
             return fail(exc)
 
@@ -237,11 +268,15 @@ def create_app(
     def api_rl_simulate():
         try:
             payload = request.get_json(force=True, silent=True) or {}
+            budget(payload.get("groups"), what="groups", max_len=60_000)
+            budget(payload.get("config"), what="config", max_len=4_000)
             data = service.rl_simulate(
                 groups_payload=payload.get("groups"),
                 config=payload.get("config", {}),
             )
             return ok(data)
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
         except Exception as exc:
             return fail(exc)
 
@@ -250,12 +285,16 @@ def create_app(
     @app.post("/api/dashboard/run")
     def api_run_dashboard():
         try:
-            payload = request.get_json(force=True)
+            payload = request.get_json(force=True, silent=True) or {}
             groups = payload.get("groups", [])
             if not groups:
                 return jsonify({"error": "缺少 groups"}), 400
+            budget(groups, what="groups", max_len=60_000)
+            budget(payload.get("title"), what="title", max_len=120)
             data = service.run_dashboard(groups_payload=groups, title=payload.get("title"))
             return ok(data)
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
         except Exception as exc:
             return fail(exc)
 
@@ -273,6 +312,8 @@ def create_app(
         try:
             payload = request.get_json(force=True, silent=True) or {}
             question = payload.get("question", "")
+            budget(question, what="question", max_len=2_000)
+            budget(payload.get("prefs"), what="prefs", max_len=4_000)
             engine = payload.get("engine", "amap")
             data = service.plan_route(
                 question=question,
@@ -294,6 +335,10 @@ def create_app(
             message = (payload.get("message") or "").strip()
             if not message:
                 return jsonify({"error": "缺少 message"}), 400
+            budget(message, what="message", max_len=2_000)
+            if payload.get("session_id"):
+                check_session_id(payload["session_id"])
+            budget(payload.get("prefs"), what="prefs", max_len=4_000)
             data = service.chat(
                 message=message,
                 session_id=payload.get("session_id"),
@@ -312,7 +357,10 @@ def create_app(
             session_id = payload.get("session_id", "")
             if not session_id:
                 return jsonify({"error": "缺少 session_id"}), 400
+            check_session_id(session_id)
             return ok(service.chat_reset(session_id))
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
         except Exception as exc:
             return fail(exc)
 

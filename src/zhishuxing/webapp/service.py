@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -161,9 +162,31 @@ class ZhiShuXingWebService:
 
     # ------------------------------------------------------------ 可视化
 
+    _OUTPUT_STEMS = ("zhishuxing_web_dashboard", "rl_guided_simulation", "rl_reward_curve_web")
+    _OUTPUT_KEEP = 30  # 每个前缀保留的最近产物数
+
+    def _request_output(self, stem: str) -> Path:
+        """按请求生成不重名的产物路径(PERF-03):并发请求不再共用固定 PNG 互相覆盖。"""
+        return self.output_dir / f"{stem}_{uuid.uuid4().hex[:8]}.png"
+
+    def _sweep_outputs(self) -> None:
+        """同前缀产物只留最近 N 张:UUID 化后防止 output_dir 无限增长;固定名历史产物不受影响。"""
+        try:
+            for stem in self._OUTPUT_STEMS:
+                files = sorted(
+                    self.output_dir.glob(f"{stem}*.png"),
+                    key=lambda p: p.stat().st_mtime,
+                    reverse=True,
+                )
+                for stale in files[self._OUTPUT_KEEP:]:
+                    stale.unlink(missing_ok=True)
+        except OSError as exc:
+            print(f"[outputs] 产物清扫失败(不影响本次响应):{type(exc).__name__}: {exc}")
+
     def run_dashboard(self, groups_payload: List[Dict[str, Any]], title: Optional[str] = None) -> Dict[str, Any]:
         groups = parse_groups(groups_payload)
-        image_file = self.output_dir / "zhishuxing_web_dashboard.png"
+        self._sweep_outputs()
+        image_file = self._request_output("zhishuxing_web_dashboard")
         result = self.system.render_dashboard(groups=groups, output_png=str(image_file), title=title or "智枢星网页控制台")
         return {
             **result,
@@ -214,7 +237,8 @@ class ZhiShuXingWebService:
         groups = parse_groups(payload)
         params = config or {}
 
-        image_file = self.output_dir / "rl_guided_simulation.png"
+        self._sweep_outputs()
+        image_file = self._request_output("rl_guided_simulation")
         result = self.rl.run_guided_simulation(
             navigation=self.system.navigation,
             groups=groups,

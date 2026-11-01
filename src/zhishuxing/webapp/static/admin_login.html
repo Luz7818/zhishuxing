@@ -112,7 +112,9 @@ document.getElementById("form").addEventListener("submit", async (event) => {
     });
     const payload = await resp.json().catch(() => ({}));
     if (resp.ok && payload.ok && payload.data && payload.data.token) {
-      localStorage.setItem(TOKEN_KEY, payload.data.token);
+      // 管理会话走 HttpOnly Cookie（auth.py COOKIE_NAME）；历史版本曾把令牌副本写进
+      // localStorage（XSS 可达面），这里只清不写，顺手扫掉存量旧副本
+      try { localStorage.removeItem(TOKEN_KEY); } catch (_) { /* 隐私模式忽略 */ }
       say("登录成功，正在跳转…", "ok");
       setTimeout(() => { location.href = "/"; }, 400);
       return;

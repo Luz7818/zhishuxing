@@ -435,3 +435,52 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 - `tests/test_api.py -k mobile` 通过;浏览器实测:暗色/浅色对话页四球透光、
   毛玻璃透色、启动屏动线光带逐项目视确认
 - `sw.js` 缓存 v13 → v14;版本 2.8.0 → 2.8.1
+
+## 2026-11-01 · 安全补课批(ZX-01~05):桌面 XSS 全量转义/请求预算/会话主键恢复/产物 UUID 化/打包路径
+
+> 10-26 专项审查(周报-2026-10-26)排定的安全批,11-01 全矩阵核查确认仍未修,本次一次性关闭五项 P1。
+> 移动端 PWA 此前已 escapeHtml 全覆盖,本批只动桌面控制台与后端;SEC-07(Ed25519)仍随 TODO 任务 5 排期。
+
+### Security(安全)
+
+- **桌面端 DOM XSS 全量转义(SEC-01/ZX-01)**:`webapp/static/app.js` 渲染链路上所有
+  裸拼 API 数据的 sink 统一过 `esc()`——`route_error`/`profile.summary`/路线
+  `details`/`tips`/`kb_refs`(title/score/source)/`cost`/检查点表(算法与路径)/地标下拉
+  与安检口 chips/RL 策略标签/客流分组表/需求徽章/微调结果/报告失败标题/报告画廊文件名,
+  共 15 处;此前仅移动端全覆盖,桌面端 `renderChatAnalysis` 是唯一成片裸拼区。
+- **管理令牌 localStorage 副本清除(ZX-01)**:`admin_login.html` 登录成功后不再把令牌
+  写入 localStorage——主链路本就走 HttpOnly Cookie(auth.py COOKIE_NAME),该写入是
+  历史遗留死代码,只构成 XSS 可达面;改为顺手清除存量旧副本。body 里的 token 保留给
+  脚本/CI 的 Bearer 用法(app.py 登录路由注释口径)。
+- **公开端点请求预算(SEC-02/ZX-02)**:应用级 `MAX_CONTENT_LENGTH=256KiB`(超限 413)+
+  字段级预算——`message`/`question` 2k 字符、`prefs`/`config`/`via` 4k、`groups` 60k、
+  `title` 120、`observations` 64 智能体×128 维;`session_id` 强制 1-64 位
+  `[A-Za-z0-9_-]` 格式(防任意长串灌库,PERF-01 配套)。`/api/rl/act`、`/api/rl/simulate`、
+  `/api/dashboard/run`、`/api/chat/reset`、`/api/navigation/plan` 补齐 ValueError→400
+  细分(此前 ValueError 统一走 500)。
+
+### Performance(性能)
+
+- **会话恢复只走主键(PERF-01/ZX-03)**:`TransferAssistant.handle` 重启恢复从整表
+  `load_missing()` 回填改为按 session_id 主键 `load()` 单行;`purge_expired()` 在
+  TransferAssistant 构造(即服务启动)时真实调用,30 天 TTL 兑现;session_store.py 与
+  assistant.py 的 docstring 同步转真(原「启动清理」「不做持久化」均为失实声明)。
+- **Web 产物按请求 UUID 化(PERF-03/ZX-04)**:`run_dashboard`/`rl_simulate` 的固定
+  `zhishuxing_web_dashboard.png`/`rl_guided_simulation.png` 与
+  `rl/runtime.render_reward_curve` 的固定 `rl_reward_curve_web.png` 改为按请求 uuid
+  后缀命名,并发请求不再互相覆盖;新增 `_sweep_outputs()` 同前缀产物只留最近 30 张,
+  防 output_dir 无限增长(固定名历史产物不受影响)。
+
+### Fixed(修复)
+
+- **便携包构建路径(MAINT-01/ZX-05)**:`packaging/package_zip.py` 构建脚本引用从
+  `scripts/build_exe.py`(已不存在,默认命令 100% 失败,exit 2 实测)修正为
+  `packaging/build_exe.py`,提为模块常量 `BUILD_SCRIPT` 并以测试钉住。
+
+### Tests(测试)
+
+- 新增 6 条:`test_api.py` 请求预算三连(413/message 超限/session_id 格式)、
+  `test_session_store.py` 会话主键恢复(替换空转断言——旧跨实例测试只验「内存里存在」,
+  实际由 setdefault 兜底恒真且恢复路径从未真正断言;新测试 monkeypatch 封死
+  `load_missing` 并断言历史内容从库恢复)、`test_packaging.py` 脚本存在性两查。
+- 门禁:pytest 240 passed;`node --check app.js` 通过;pyflakes 0 告警;`zhishuxing smoke` 通过。

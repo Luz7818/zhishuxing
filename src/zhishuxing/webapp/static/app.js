@@ -755,7 +755,7 @@ function updatePolicyUI(status) {
     $("rlCkptBody").innerHTML = status.checkpoints
       .map(
         (c) =>
-          `<tr><td class="strong">agent_${c.agent_id}</td><td>${c.algorithm}</td><td>step_${c.step_k}k</td><td>${c.path.split(/[\\/]/).pop()}</td></tr>`
+          `<tr><td class="strong">agent_${esc(c.agent_id)}</td><td>${esc(c.algorithm)}</td><td>step_${esc(c.step_k)}k</td><td>${esc(c.path.split(/[\\/]/).pop())}</td></tr>`
       )
       .join("");
   } else {
@@ -805,7 +805,7 @@ async function loadGrid() {
 function buildNavControls() {
   const grid = state.nav.grid;
   const options = Object.entries(grid.landmarks)
-    .map(([key, [x, y]]) => `<option value="${x},${y}">${lmName(key)} (${x},${y})</option>`)
+    .map(([key, [x, y]]) => `<option value="${x},${y}">${esc(lmName(key))} (${x},${y})</option>`)
     .join("");
   $("navStart").innerHTML = `<option value="">— 点击网格选取 —</option>${options}`;
   $("navGoal").innerHTML = `<option value="">— 点击网格选取 —</option>${options}`;
@@ -822,7 +822,7 @@ function buildNavControls() {
   });
 
   const viaKeys = Object.keys(grid.landmarks).filter((k) => k.includes("security"));
-  $("viaChips").innerHTML = viaKeys.map((k) => `<button class="chip" data-lm="${k}">${lmName(k)}</button>`).join("");
+  $("viaChips").innerHTML = viaKeys.map((k) => `<button class="chip" data-lm="${esc(k)}">${esc(lmName(k))}</button>`).join("");
   $("viaChips")
     .querySelectorAll(".chip")
     .forEach((chip) =>
@@ -1065,7 +1065,7 @@ function initRL() {
       $("rlActResult").innerHTML = result.actions
         .map(
           (a, i) =>
-            `<span class="badge info" style="margin:3px 6px 3px 0">agent_${i} → 前进 ${a[0].toFixed(3)} · 转向 ${a[1].toFixed(3)}（${result.policy_used[i]}）</span>`
+            `<span class="badge info" style="margin:3px 6px 3px 0">agent_${i} → 前进 ${a[0].toFixed(3)} · 转向 ${a[1].toFixed(3)}（${esc(result.policy_used[i])}）</span>`
         )
         .join("");
     })
@@ -1104,8 +1104,8 @@ function renderGroupRows() {
   $("groupBody").innerHTML = flowGroups
     .map(
       (g, i) => `<tr>
-        <td class="strong">${g.name}</td>
-        <td>${g.start} → ${g.goal}${g.via_landmarks && g.via_landmarks.length ? `（经 ${g.via_landmarks.join("、")}）` : ""}</td>
+        <td class="strong">${esc(g.name)}</td>
+        <td>${esc(g.start)} → ${esc(g.goal)}${g.via_landmarks && g.via_landmarks.length ? `（经 ${esc(g.via_landmarks.join("、"))}）` : ""}</td>
         <td><input type="number" min="0" value="${g.release_time}" data-i="${i}" data-k="release_time" style="width:74px" /></td>
         <td><input type="number" min="1" value="${g.passengers}" data-i="${i}" data-k="passengers" style="width:74px" /></td>
       </tr>`
@@ -1234,7 +1234,7 @@ function profileChipHtml(profile) {
   const bits = [];
   const top = Object.entries(profile.priorities || {}).sort((a, b) => b[1] - a[1])[0];
   if (top && top[1] > 0.3) {
-    bits.push(`<span class="badge info">${PRIORITY_LABELS[top[0]] || top[0]}</span>`);
+    bits.push(`<span class="badge info">${esc(PRIORITY_LABELS[top[0]] || top[0])}</span>`);
   }
   ["hard", "soft", "persona"].forEach((cat) => {
     (profile.labels && profile.labels[cat] || []).forEach((item) => {
@@ -1299,7 +1299,7 @@ function renderChatAnalysis(data) {
   const parts = [];
 
   if (data.route_error) {
-    parts.push(`<div class="callout warn">路线获取失败：${data.route_error}</div>`);
+    parts.push(`<div class="callout warn">路线获取失败：${esc(data.route_error)}</div>`);
   }
 
   if (data.route) {
@@ -1309,11 +1309,11 @@ function renderChatAnalysis(data) {
         ? `<span class="badge ok">枢纽内偏好规划</span>`
         : `<span class="badge info">高德市际规划</span>`;
     const needs = data.profile && data.profile.summary && data.profile.summary !== "无特殊需求"
-      ? `<span class="badge">需求：${data.profile.summary}</span>`
+      ? `<span class="badge">需求：${esc(data.profile.summary)}</span>`
       : "";
     const kvBits = [];
     if (r.duration_sec) kvBits.push(`<span class="item">预计用时<b>${Math.round(r.duration_sec / 60)} 分</b></span>`);
-    if (r.cost !== undefined && r.cost !== null) kvBits.push(`<span class="item">预计费用<b>${r.cost} 元</b></span>`);
+    if (r.cost !== undefined && r.cost !== null) kvBits.push(`<span class="item">预计费用<b>${esc(r.cost)} 元</b></span>`);
     if (r.segments !== undefined) kvBits.push(`<span class="item">换乘<b>${r.segments} 次</b></span>`);
     if (r.meters !== undefined) kvBits.push(`<span class="item">步行距离<b>${r.meters} 米</b></span>`);
     parts.push(`
@@ -1328,20 +1328,20 @@ function renderChatAnalysis(data) {
         <div class="grid-2">
           <div>
             <h3 style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-road"/></svg>路线方案</h3>
-            <ol class="list">${(r.details || ["暂无分段详情"]).map((d) => `<li>${d}</li>`).join("")}</ol>
+            <ol class="list">${(r.details || ["暂无分段详情"]).map((d) => `<li>${esc(d)}</li>`).join("")}</ol>
             ${r.engine === "hub" && Array.isArray(r.route) && r.route.length > 1 && state.nav.grid
               ? `<div class="canvas-box"><canvas id="chatRouteCanvas" width="620" height="290"></canvas></div>`
               : ""}
           </div>
           <div>
             <h3 style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-bulb"/></svg>出行提醒</h3>
-            <ul class="list">${(r.tips || ["无"]).map((t) => `<li>${t}</li>`).join("")}</ul>
+            <ul class="list">${(r.tips || ["无"]).map((t) => `<li>${esc(t)}</li>`).join("")}</ul>
             ${
               data.kb_refs && data.kb_refs.length
                 ? `<h3 style="margin-top:16px"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-book"/></svg>站内换乘经验引用</h3><ul class="list">${data.kb_refs
                     .map(
                       (k) =>
-                        `<li>《${k.title}》<span style="color:var(--t3);font-size:12px"> · 相关度 ${k.score} · ${k.source}</span></li>`
+                        `<li>《${esc(k.title)}》<span style="color:var(--t3);font-size:12px"> · 相关度 ${esc(k.score)} · ${esc(k.source)}</span></li>`
                     )
                     .join("")}</ul>`
                 : ""
@@ -1485,9 +1485,9 @@ function initLLM() {
         throw new Error("配置 JSON 格式错误");
       }
       const result = await api.post("/api/llm/fine_tune", { config });
-      $("llmTuneResult").innerHTML = `<div class="callout">状态：<b>${result.status}</b><br />产物：<code>${result.artifact.split(
+      $("llmTuneResult").innerHTML = `<div class="callout">状态：<b>${esc(result.status)}</b><br />产物：<code>${esc(result.artifact.split(
         /[\\/]/
-      ).pop()}</code></div>`;
+      ).pop())}</code></div>`;
       toast("微调接口执行完成");
     })
   );
@@ -1539,7 +1539,7 @@ function initReports() {
         if (row) {
           row.innerHTML = report.ok
             ? `<span class="badge ok">完成 · ${report.files.length} 文件</span>`
-            : `<span class="badge warn" title="${(report.error || "").replace(/"/g, "")}">失败</span>`;
+            : `<span class="badge warn" title="${esc(report.error || "")}">失败</span>`;
         }
         (report.files || []).forEach((f) => {
           if (/\.(png|gif)$/i.test(f)) images.push(f);
@@ -1556,9 +1556,9 @@ function initReports() {
         gallery.innerHTML = images
           .map(
             (f) =>
-              `<figure class="output-frame show" style="margin:0"><img src="/outputs/${f.split(/[\\/]/).pop()}?t=${Date.now()}" loading="lazy" title="点击放大查看" /><figcaption>${f.split(
+              `<figure class="output-frame show" style="margin:0"><img src="/outputs/${esc(f.split(/[\\/]/).pop())}?t=${Date.now()}" loading="lazy" title="点击放大查看" /><figcaption>${esc(f.split(
                 /[\\/]/
-              ).pop()}</figcaption></figure>`
+              ).pop())}</figcaption></figure>`
           )
           .join("");
         /* 画廊图点击放大:新标签页打开原图(轻量,不引入 lightbox 依赖) */

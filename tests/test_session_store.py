@@ -97,6 +97,34 @@ def test_assistant_persists_and_recovers_across_instances(tmp_path, monkeypatch)
     a2._store.close()
 
 
+def test_assistant_restore_uses_primary_key_not_backfill(tmp_path, monkeypatch):
+    """重启恢复走主键 load(PERF-01):只取该会话一行;整表回填 load_missing 不再出现在主链路,
+    且恢复出的会话必须带历史(真正断言内容,而非"内存里存在"的空转断言)。"""
+    from zhishuxing.llm.assistant import TransferAssistant
+    from zhishuxing.llm.kb import TransferKB
+
+    class _Stub:
+        pass
+
+    db = tmp_path / "sessions.db"
+    a1 = TransferAssistant(_Stub(), kb=TransferKB.empty(), db_path=db)
+    a1.handle("我有点赶时间", session_id="restore-1")   # 非 intent 消息:完整链路,末尾写穿落库
+    a1._store.close()
+
+    a2 = TransferAssistant(_Stub(), kb=TransferKB.empty(), db_path=db)
+
+    def _boom_backfill(_sessions):
+        raise AssertionError("重启恢复不应整表 load_missing 回填")
+
+    monkeypatch.setattr(a2._store, "load_missing", _boom_backfill)
+    a2.handle("打开导航", session_id="restore-1")        # intent 消息:主键恢复先行,随后短路返回
+    assert "restore-1" in a2._sessions
+    restored = a2._sessions["restore-1"]
+    assert restored["history"], "历史应从库恢复,而非空会话"
+    assert restored["history"][0]["role"] == "user"
+    a2._store.close()
+
+
 def test_assistant_handles_db_failure_gracefully(tmp_path, monkeypatch):
     """落库失败只打印警告,对话正常返回(持久化是增强不是依赖)。"""
     from zhishuxing.llm.assistant import TransferAssistant
@@ -112,6 +140,9 @@ def test_assistant_handles_db_failure_gracefully(tmp_path, monkeypatch):
             raise RuntimeError("disk full")
 
         def delete(self, *args, **kwargs):
+            raise RuntimeError("disk full")
+
+        def load(self, session_id):
             raise RuntimeError("disk full")
 
         def load_missing(self, sessions):

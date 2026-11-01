@@ -19,6 +19,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 APP_DIR = ROOT / "dist" / "zhishuxing"
+# 桌面模式构建脚本(MAINT-01):曾误指 scripts/build_exe.py(已迁至本目录),路径漂移会让默认构建 100% 失败
+BUILD_SCRIPT = ROOT / "packaging" / "build_exe.py"
 
 
 def _usage_text(version: str) -> str:
@@ -70,7 +72,7 @@ def main() -> int:
 
     if not args.skip_build:
         print("[package_zip] 先构建桌面模式产物...")
-        build = subprocess.run([sys.executable, str(ROOT / "scripts" / "build_exe.py"), "--mode", "onedir"])
+        build = subprocess.run([sys.executable, str(BUILD_SCRIPT), "--mode", "onedir"])
         if build.returncode != 0:
             print("[package_zip] 构建失败,终止打包")
             return build.returncode

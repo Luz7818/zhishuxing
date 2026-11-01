@@ -291,3 +291,29 @@ def test_chat_normal_request_has_no_action(client):
     resp = client.post("/api/chat", json={"message": "从A口到地铁闸机怎么走", "session_id": "act-2"})
     assert resp.status_code == 200
     assert "action" not in resp.json["data"]
+
+
+# ---------------- 请求预算（SEC-02） ----------------
+
+
+def test_max_content_length_budget(client):
+    """应用级请求体预算:256 KiB 上限写进 Flask 配置,超限请求被 Werkzeug 以 413 拒收。"""
+    assert client.application.config["MAX_CONTENT_LENGTH"] == 256 * 1024
+    resp = client.post("/api/chat", json={"message": "x" * (300 * 1024)})
+    assert resp.status_code == 413
+
+
+def test_chat_message_budget(client):
+    """字段级预算:message 超过 2000 字符按 400 拒收,且不进业务层。"""
+    resp = client.post("/api/chat", json={"message": "问" * 3000})
+    assert resp.status_code == 400
+    assert "message" in resp.json["error"]
+
+
+def test_chat_session_id_budget(client):
+    """字段级预算:session_id 超长/非法格式按 400 拒收(防任意长串灌库)。"""
+    resp = client.post("/api/chat", json={"message": "你好", "session_id": "x" * 100})
+    assert resp.status_code == 400
+    assert "session_id" in resp.json["error"]
+    resp = client.post("/api/chat/reset", json={"session_id": "../etc/passwd"})
+    assert resp.status_code == 400

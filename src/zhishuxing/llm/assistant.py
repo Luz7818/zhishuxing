@@ -8,7 +8,8 @@
 4. 真实 LLM 用 chat 合成个性化回答(为什么这样走符合需求);Mock 模式用确定性
    模板拼接,保证无密钥时离线演示闭环。
 
-会话状态(历史/需求档案)保存在内存,进程重启即失效——演示项目不做持久化。
+会话状态(历史/需求档案)内存为第一层,SQLite 写穿持久化:进程重启后按
+session_id 主键恢复单条会话,超过 30 天未活跃的会话在服务启动时清理。
 """
 
 from __future__ import annotations
@@ -44,11 +45,19 @@ class TransferAssistant:
         self._service = service
         self._kb = kb or TransferKB.empty()
         self._sessions: Dict[str, Dict[str, Any]] = {}
-        # 会话持久化:内存仍是第一读写层;SQLite 写穿,重启后惰性回填(见 session_store)
+        # 会话持久化:内存仍是第一读写层;SQLite 写穿,重启后按主键恢复(见 session_store)
         from .. import config as _cfg
         from .session_store import SessionStore
 
         self._store = SessionStore(db_path or _cfg.paths.runs_dir / "sessions.db")
+        # 服务启动即清理一次过期会话(30 天 TTL):兑现 session_store docstring 的承诺,
+        # 防长驻进程里过期会话只增不减(PERF-01)
+        try:
+            removed = self._store.purge_expired()
+            if removed:
+                print(f"[session] 启动清理过期会话 {removed} 条")
+        except Exception as exc:
+            print(f"[session] 过期会话清理失败(不影响服务启动):{type(exc).__name__}: {exc}")
 
     # ------------------------------------------------------------ 对外接口
 
@@ -74,9 +83,12 @@ class TransferAssistant:
         session_key = session_id or uuid.uuid4().hex[:12]
         if session_key not in self._sessions and session_id:
             try:
-                self._store.load_missing(self._sessions)   # 重启后首次访问:从库回填
+                # 重启恢复:按主键只取这一条会话(PERF-01——不再整表 load_missing 回填)
+                restored = self._store.load(session_key)
+                if isinstance(restored, dict):
+                    self._sessions[session_key] = restored
             except Exception as exc:
-                print(f"[session] 会话回填失败(仅影响重启恢复):{type(exc).__name__}: {exc}")
+                print(f"[session] 会话恢复失败(仅影响重启恢复):{type(exc).__name__}: {exc}")
         session = self._sessions.setdefault(session_key, {"history": [], "profile": None})
 
         # 动作短路:"打开/切换 XX 板块"这类明确指令不经 LLM 直接下发动作

@@ -34,6 +34,19 @@ zhishuxing serve --port 7860            # 默认 127.0.0.1;局域网用 --host 0
 HTTPS + 备案域名 + 小程序后台配置 `request` 合法域名,三项缺一不可;
 `/mobile` 同源托管,反代后即可真机安装。
 
+## 请求预算与限流(SEC-02)
+
+应用内两道闸已内置(2026-11-01 起):请求体 `MAX_CONTENT_LENGTH=256KiB`(超限 413)
+与公开端点字段级预算——`message`/`question` 2k 字符、`prefs`/`config`/`via` 4k、
+`groups` 60k、`title` 120、`observations` 64 智能体×128 维、`session_id` 1-64 位
+`[A-Za-z0-9_-]`。公网部署时网关层再按 IP 对 `/api/chat`、`/api/plan`、
+`/api/rl/rewards` 等重计算端点限流,样例:
+
+- Nginx:`limit_req_zone $binary_remote_addr zone=chat:10m rate=10r/m;` 对
+  `/api/` 生效,并 `client_max_body_size 256k;` 对齐应用上限;
+- Caddy:请求体用 `request_body { max_size 256KB }`;按 IP 限流用
+  `caddy-ratelimit` 类插件(内置无此模块,勿照抄假指令)。
+
 ## 健康与巡检
 
 `GET /health` 200 即在线;卷挂载核对:`docker compose exec zhishuxing ls -la /app/data`。

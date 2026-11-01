@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from types import SimpleNamespace
@@ -251,7 +252,10 @@ class MADDPGRuntime:
                             series_payload: Optional[Dict] = None) -> Dict:
         import matplotlib.pyplot as plt
 
-        output_path = ensure_parent(output_png or (self.data_dir / "rl_reward_curve_web.png"))
+        # 默认路径按次生成不重名(PERF-03):并发请求渲染不再互相覆盖固定 PNG
+        output_path = ensure_parent(
+            output_png or (self.data_dir / f"rl_reward_curve_web_{uuid.uuid4().hex[:8]}.png")
+        )
         # 调用方已持有 reward_series() 结果时直接复用,避免把全部 npy 再加载一遍
         payload = series_payload if series_payload is not None else self.reward_series()
         series = payload["series"]

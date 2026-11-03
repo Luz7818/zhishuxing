@@ -1534,6 +1534,11 @@
       const el = $('chatScroll');
       el.scrollTo({ top: el.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
     }
+    /* 回读保护:用户已向上翻阅历史(离底 >80px)时,新回复不把视口拽到底 */
+    function chatNearBottom() {
+      const el = $('chatScroll');
+      return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    }
     function welcomeEl() {
       const div = document.createElement('div');
       div.className = 'welcome-card';
@@ -1694,7 +1699,7 @@
           renderRoutePage(data);
           buzz(12);
         }
-        scrollChatBottom();
+        if (chatNearBottom()) scrollChatBottom();
         state.isPlanning = false;
         $('btnSend').disabled = false;
         $('btnSend').classList.remove('loading');

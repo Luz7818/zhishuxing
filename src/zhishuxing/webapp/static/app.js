@@ -1,6 +1,12 @@
 /* ============================================================
    智枢星 Web 控制台交互 v2
    视图路由 / API 客户端 / Canvas 网格与图表 / 全流程反馈
+
+   章节索引(单文件 PWA 有意取舍,不引打包器;按标记检索):
+   ① API 客户端 → ② 反馈组件 → ③ 视图与主题/侧栏药丸 → ④ Canvas 工具
+   → ⑤ 高德底图 → ⑥ 全局状态/顶栏健康 → ⑦ 概览/枢纽导航/RL/客流/路线规划
+   → ⑧ 智能换乘助手(发送/档案/分析/悬浮模式) → ⑨ 引擎与微调面板
+   → ⑩ 分析报告/设置 → ⑪ Dock 开合/侧栏收起 → ⑫ 命令面板 → ⑬ 启动
    ============================================================ */
 
 "use strict";
@@ -1246,6 +1252,9 @@ function profileChipHtml(profile) {
 
 function appendChatMessage(role, text, pending) {
   const box = $("chatMessages");
+  /* 回读保护:用户已向上翻阅历史(离底 >80px)时,新回复不再把视口拽到底部;
+     用户自己发送的消息(role=user)始终滚底——那是主动行为,应当看到自己说的话 */
+  const nearBottom = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
   const el = document.createElement("div");
   el.className = `chat-msg ${role}${pending ? " pending" : ""}`;
   if (pending) {
@@ -1255,7 +1264,7 @@ function appendChatMessage(role, text, pending) {
     el.textContent = text;
   }
   box.appendChild(el);
-  box.scrollTop = box.scrollHeight;
+  if (nearBottom || role === "user") box.scrollTop = box.scrollHeight;
   return el;
 }
 
@@ -1354,6 +1363,10 @@ function renderChatAnalysis(data) {
   }
 
   host.innerHTML = parts.join("");
+  /* 整块内容换新时轻淡入一次,替代硬切 teleport(reduced-motion 由全局规则抑制) */
+  host.classList.remove("ca-in");
+  void host.offsetWidth;
+  host.classList.add("ca-in");
 
   const canvas = $("chatRouteCanvas");
   if (canvas) {

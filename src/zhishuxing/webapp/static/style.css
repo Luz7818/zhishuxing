@@ -1362,3 +1362,12 @@ details.raw[open] pre { animation: rawIn var(--dur-3) var(--ease-out); }
                          animation-delay: calc(var(--gi, 0) * 60ms); }
 /* 侧栏窄面板里的空态插画缩小一档,避免撑高 300px 侧栏 */
 .map-side .empty .art { width: 60px; height: 60px; margin-bottom: 10px; }
+
+/* ============================================================
+   v6.5 微交互收尾(2026-11-04 · 2.10.0)—— 对话分析卡换新轻入场 ·
+   对话流回读保护(JS 侧,见 appendChatMessage)
+   ============================================================ */
+
+/* 对话分析卡:整块内容换新时轻淡入一次(JS 挂 ca-in,reduced-motion 全局抑制) */
+@keyframes caIn { from { opacity: 0; transform: translateY(4px); } }
+.chat-analysis.ca-in { animation: caIn var(--dur-2) var(--ease-out); }

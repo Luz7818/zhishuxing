@@ -245,7 +245,9 @@ function applyTheme(theme) {
 function initTheme() {
   let saved = null;
   try { saved = localStorage.getItem("zsx_theme"); } catch (_) { /* 忽略 */ }
-  applyTheme(saved || "light");
+  /* 首访(无记忆偏好)跟随系统明暗,与移动端三态「auto」同口径;已有偏好则尊重记忆 */
+  const system = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  applyTheme(saved || system);
   $("theme-toggle").addEventListener("click", () => {
     applyTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark");
   });
@@ -1339,7 +1341,7 @@ function renderChatAnalysis(data) {
             <h3 style="margin-top:0"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-road"/></svg>路线方案</h3>
             <ol class="list">${(r.details || ["暂无分段详情"]).map((d) => `<li>${esc(d)}</li>`).join("")}</ol>
             ${r.engine === "hub" && Array.isArray(r.route) && r.route.length > 1 && state.nav.grid
-              ? `<div class="canvas-box"><canvas id="chatRouteCanvas" width="620" height="290"></canvas></div>`
+              ? `<div class="canvas-box"><canvas id="chatRouteCanvas" width="620" height="290" role="img" aria-label="对话路线在枢纽网格上的示意图"></canvas></div>`
               : ""}
           </div>
           <div>
@@ -1567,16 +1569,21 @@ function initReports() {
         $("galleryEmpty").style.display = "none";
         gallery.style.display = "";
         gallery.innerHTML = images
-          .map(
-            (f, i) =>
-              `<figure class="output-frame show" style="margin:0;--gi:${i}"><img src="/outputs/${esc(f.split(/[\\/]/).pop())}?t=${Date.now()}" loading="lazy" title="点击放大查看" /><figcaption>${esc(f.split(
-                /[\\/]/
-              ).pop())}</figcaption></figure>`
-          )
+          .map((f, i) => {
+            const name = f.split(/[\\/]/).pop();
+            return `<figure class="output-frame show" style="margin:0;--gi:${i}"><img src="/outputs/${esc(name)}?t=${Date.now()}" loading="lazy" title="点击放大查看" alt="${esc(name)}" tabindex="0" role="button" aria-label="放大查看 ${esc(name)}" /><figcaption>${esc(name)}</figcaption></figure>`;
+          })
           .join("");
-        /* 画廊图点击放大:新标签页打开原图(轻量,不引入 lightbox 依赖) */
+        /* 画廊图点击放大:新标签页打开原图(轻量,不引入 lightbox 依赖);Enter/Space 同效 */
         $$("#gallery img").forEach((img) => {
-          img.addEventListener("click", () => window.open(img.src, "_blank"));
+          const open = () => window.open(img.src, "_blank");
+          img.addEventListener("click", open);
+          img.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              open();
+            }
+          });
           bindImgFade(img);
         });
       }

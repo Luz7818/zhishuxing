@@ -588,3 +588,27 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   回复落地 `scrollTop` 保持 0;回到底部场景回复照常跟随(atBottom=true);`ca-in` 挂载确认;
   移动端同法验证保护生效。管理登录页走查过渡正常。
 - 门禁:pytest 244 passed;pyflakes 0 告警;`zhishuxing smoke` 通过;`node --check` 通过。
+
+## 2026-11-04 · v2.11.0 可访问性收尾 + 首访主题跟随(体验精修第四轮)
+
+### Added(新增)
+
+- **控制台首访跟随系统明暗**:`initTheme` 无记忆偏好时改按 `prefers-color-scheme` 初始化
+  (原固定 light),与移动端三态「auto」同口径;已有记忆偏好则尊重记忆,切换行为不变。
+- **对话流读屏播报**:桌面 `#chatMessages` 与移动端 `#chatLog` 加 `aria-live="polite"`,
+  新回复对读屏用户可感知;桌面 `#toastHost` 同加(移动端 toast 已有 role="status")。
+- **画廊键盘可达**:报告图片补 `tabindex=0`+`role="button"`+`aria-label`,Enter/Space 与点击
+  同效打开原图(与移动端 route-mini 键盘支持同一先例);img 补 `alt=文件名`。
+
+### Changed(变更)
+
+- 六处 canvas 补 `role="img"` + 中文 `aria-label`(枢纽网格/奖励曲线/规划路线小图/对话内路线小图/
+  微调损失/微调指标);dock 输入框补 `aria-label`(与移动端同文案)。
+- 资产引用升 `?v=6.6`;侧栏版本号 v2.11.0。
+
+### 验证
+
+- 浏览器实测:清空记忆偏好后首访,环境系统偏好 dark → 页面正确落 dark(回退分支实测命中);
+  `aria-live`/canvas role/label/dock aria-label 逐项读取确认;画廊 img 可聚焦,Enter/Space 打桩
+  验证均打开对应原图 URL。
+- 门禁:pytest 244 passed;pyflakes 0 告警;`zhishuxing smoke` 通过;`node --check` 通过。

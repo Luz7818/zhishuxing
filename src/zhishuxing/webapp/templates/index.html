@@ -7,7 +7,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/assets/favicon.svg" />
   <link rel="icon" type="image/png" sizes="32x32" href="/static/assets/favicon-32.png" />
   <link rel="apple-touch-icon" href="/static/assets/logo-mark.svg" />
-  <link rel="stylesheet" href="/static/style.css?v=6.5" />
+  <link rel="stylesheet" href="/static/style.css?v=6.6" />
   <script>document.documentElement.classList.add("js");</script>
   <script>
     /* 服务端注入的运行配置：高德 JS Key 仅在配置了环境变量时存在 */
@@ -100,7 +100,7 @@
     <div class="side-foot">
       <div class="sys-status"><span class="dot" id="health-dot"></span><span id="health-text">连接中…</span></div>
       <div class="meta-row">
-        <span id="side-ver">v2.10.0</span><span class="msep">·</span><span id="side-llm" title="LLM 适配器模式">LLM:—</span>
+        <span id="side-ver">v2.11.0</span><span class="msep">·</span><span id="side-llm" title="LLM 适配器模式">LLM:—</span>
         <button id="theme-toggle" class="theme-btn" title="切换明暗主题" aria-label="切换明暗主题"><svg class="ic t-moon" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-moon"/></svg><svg class="ic t-sun" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-sun"/></svg></button>
       </div>
     </div>
@@ -187,7 +187,7 @@
               <button class="map-btn" id="btnNavReload" title="重新加载导航图"><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-pulse"/></svg> 重新加载</button>
             </div>
             <div class="map-row">
-              <canvas id="navCanvas" width="930" height="496"></canvas>
+              <canvas id="navCanvas" width="930" height="496" role="img" aria-label="枢纽网格示意图:阻断区域、楼梯扶梯直梯设施与地标分布"></canvas>
               <div class="map-side" id="mapResultPanel">
               <div class="map-side-head"><b>规划结果</b></div>
               <div class="empty" id="navResultEmpty"><span class="art" aria-hidden="true"><svg viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect class="draw" pathLength="100" x="16" y="16" width="64" height="64" rx="12"/><path class="draw d2" pathLength="100" d="M16 40h64M16 56h64" opacity=".3" stroke-width="2"/><path class="draw d2" pathLength="100" d="M40 16v64M56 16v64" opacity=".3" stroke-width="2"/><g class="acc"><path class="fade f2" d="M30 66c8-6 10-14 18-18s10-12 18-18" stroke-width="2.5" stroke-dasharray="1 7"/></g><circle class="draw d3" pathLength="100" cx="30" cy="66" r="5"/><g class="acc"><circle class="fade f3" cx="66" cy="30" r="5" fill="currentColor" stroke="none"/></g></svg></span>在地图上点两格，或点「规划参数」设定起终点。</div>
@@ -262,7 +262,7 @@
           <div class="card">
             <h3><svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-chart"/></svg>训练奖励曲线</h3>
             <p class="desc">来自 data 目录的评估奖励序列（多 seed 叠加）。</p>
-            <div class="canvas-box"><canvas id="rewardCanvas" width="760" height="300"></canvas></div>
+            <div class="canvas-box"><canvas id="rewardCanvas" width="760" height="300" role="img" aria-label="MADDPG 训练奖励曲线,多条随机种子叠加"></canvas></div>
             <div class="legend" id="rewardLegend"></div>
             <div class="row" style="margin-top:12px"><button class="btn subtle sm" id="btnRLRewards">⟳ 刷新曲线</button></div>
           </div>
@@ -377,7 +377,7 @@
               <div class="chips" id="planProfileChips" style="display:none"></div>
               <div class="canvas-box" id="planMapBox" style="display:none">
                 <div id="amapContainer"></div>
-                <canvas id="planCanvas" width="620" height="330"></canvas>
+                <canvas id="planCanvas" width="620" height="330" role="img" aria-label="规划路线在枢纽网格上的示意图"></canvas>
                 <div class="map-note" id="planMapNote"></div>
               </div>
               <ol class="list" id="planDetails" style="margin-top:12px"></ol>
@@ -469,7 +469,7 @@
         </span>
       </div>
       <div class="dock-body-inner">
-        <div class="chat-box" id="chatMessages">
+        <div class="chat-box" id="chatMessages" aria-live="polite">
           <div class="chat-msg assistant">您好,我是智枢星换乘助手。直接说出您的需求即可,例如:<b>「带老人行李多,优先直梯,去地铁前先上趟卫生间,从A口出发」</b>。</div>
         </div>
         <div class="chips" id="chatExamples">
@@ -492,7 +492,7 @@
       <button class="dock-engine-btn" id="btnDockTools" title="对话引擎 · 模型微调(实验)" aria-label="打开对话引擎与模型微调面板">
         <svg class="ic" aria-hidden="true"><use href="/static/assets/icons.svg?v=6.0#i-cpu"/></svg>
       </button>
-      <input id="chatInput" placeholder="向智能换乘助手说出需求:赶时间、优先直梯、途经卫生间…" />
+      <input id="chatInput" placeholder="向智能换乘助手说出需求:赶时间、优先直梯、途经卫生间…" aria-label="换乘需求输入" />
       <button class="btn" id="btnChatSend">发送</button>
     </div>
   </div>
@@ -549,8 +549,8 @@
               <span class="item">ROUGE-1<b id="ftR1">—</b></span>
               <span class="item">ROUGE-L<b id="ftRL">—</b></span>
             </div>
-            <div class="canvas-box"><canvas id="ftLossCanvas" width="620" height="240"></canvas></div>
-            <div class="canvas-box" style="margin-top:10px"><canvas id="ftMetricCanvas" width="620" height="260"></canvas></div>
+            <div class="canvas-box"><canvas id="ftLossCanvas" width="620" height="240" role="img" aria-label="模拟微调损失下降曲线"></canvas></div>
+            <div class="canvas-box" style="margin-top:10px"><canvas id="ftMetricCanvas" width="620" height="260" role="img" aria-label="模拟微调 BLEU 与 ROUGE 指标曲线"></canvas></div>
             <div class="legend">
               <span class="key"><span class="swatch" style="background:#f87171"></span>Loss</span>
               <span class="key"><span class="swatch" style="background:#4f46e5"></span>BLEU-4</span>
@@ -570,7 +570,7 @@
   <span>松开吸附到底部对话板块</span>
 </div>
 
-<div id="toastHost"></div>
-<script src="/static/app.js?v=6.5"></script>
+<div id="toastHost" aria-live="polite"></div>
+<script src="/static/app.js?v=6.6"></script>
 </body>
 </html>

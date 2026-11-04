@@ -30,7 +30,9 @@
       --ok: #059669; --ok-soft: #e6f6ef;
       --warn: #b45309; --warn-soft: #fbf1df;
       --bad: #dc2626; --bad-soft: #fdeaea;
-      --grad: linear-gradient(135deg, #4f46e5, #7c3aed);
+      /* 纯色化(2026-11-05 研究二轮口径,照 rr-studio 6163925):同族明度渐变删除,
+         变量名沿用以减 diff,值为 --primary 纯色 */
+      --grad: var(--primary);
       --grad-glow: 0 6px 16px -4px rgba(79, 70, 229, .45);
       --shadow-xs: 0 1px 2px rgba(16, 24, 40, .05);
       --shadow-sm: 0 4px 12px -2px rgba(16, 24, 40, .10);
@@ -65,7 +67,7 @@
       --ok: #34d399; --ok-soft: #0e2b22;
       --warn: #fbbf24; --warn-soft: #2e2410;
       --bad: #f87171; --bad-soft: #331414;
-      --grad: linear-gradient(135deg, #6366f1, #8b5cf6);
+      --grad: var(--primary);   /* 纯色化(研究二轮口径),随主题取 --primary */
       --grad-glow: 0 6px 18px -4px rgba(99, 102, 241, .5);
       --shadow-xs: 0 1px 2px rgba(0, 0, 0, .4);
       --shadow-sm: 0 6px 16px -4px rgba(0, 0, 0, .5);

@@ -463,7 +463,8 @@ details.raw pre { margin: 8px 0 0; padding: 12px 14px; background: var(--chip-bg
 .btn-hero { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 16px;
             border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; text-decoration: none;
             font-family: inherit; transition: filter var(--dur-2), background var(--dur-2); }
-.btn-hero.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: 0;
+/* 纯色化(2026-11-05 研究二轮口径):同族明度渐变删除,主色纯色 + hover 明度深化(照 rr-studio 6163925) */
+.btn-hero.primary { background: var(--primary); color: #fff; border: 0;
                     box-shadow: 0 6px 18px -4px rgba(99,102,241,.55); }
 .btn-hero.primary:hover { filter: brightness(1.08); }
 .btn-hero.ghost { background: rgba(255,255,255,.07); color: #cbd5eb; border: 1px solid rgba(255,255,255,.14); }
@@ -491,6 +492,7 @@ details.raw pre { margin: 8px 0 0; padding: 12px 14px; background: var(--chip-bg
                text-align: left; margin-bottom: 34px; }
 .feat .f-ico { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center;
                justify-content: center; font-size: 19px;
+               /* 品牌豁免:靛蓝→青跨色相低透明洗底(动线母题双色),非同族明度渐变 */
                background: linear-gradient(135deg, rgba(99,102,241,.25), rgba(34,211,238,.18));
                color: #a5f3fc; border: 1px solid rgba(129,140,248,.3); }
 .feat { background: rgba(13,20,36,.66); border: 1px solid rgba(255,255,255,.09);
@@ -569,18 +571,17 @@ details.raw pre { margin: 8px 0 0; padding: 12px 14px; background: var(--chip-bg
 
 /* ============================================================
    v3.1 视觉精修(2026-09-29)—— 附加层,不改动上方既有规则:
-   主操作统一「靛蓝→紫」渐变语言 · 卡片悬浮微抬升 · 主区极光底光 ·
+   主操作统一主色纯色语言 · 卡片悬浮微抬升 · 主区极光底光 ·
    KPI 顶部发丝线 · 输入框悬停反馈 · 均随明/暗主题取值
+   (2026-11-05 研究二轮口径:「靛蓝→紫」同族明度渐变删除,主按钮/悬浮球/
+   用户气泡一律 --primary 纯色,hover 走 --primary-h 明度深化;
+   原照 rr-studio 6163925 同决策)
    ============================================================ */
 :root {
-  --grad: linear-gradient(135deg, #4f46e5, #7c3aed);
-  --grad-h: linear-gradient(135deg, #4338ca, #6d28d9);
-  --grad-glow: 0 6px 16px -4px rgba(79, 70, 229, .45);
+  --btn-glow: 0 6px 16px -4px rgba(79, 70, 229, .45);
 }
 html[data-theme="dark"] {
-  --grad: linear-gradient(135deg, #6366f1, #8b5cf6);
-  --grad-h: linear-gradient(135deg, #4f46e5, #7c3aed);
-  --grad-glow: 0 6px 18px -4px rgba(129, 140, 248, .5);
+  --btn-glow: 0 6px 18px -4px rgba(129, 140, 248, .5);
 }
 
 /* 主区底光:两层极浅的径向渐变叠在点阵纹理上,给页面纵向深度 */
@@ -598,14 +599,14 @@ html[data-theme="dark"] .main {
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='2' cy='2' r='1.2' fill='%23818cf8' fill-opacity='.055'/%3E%3C/svg%3E");
 }
 
-/* 主按钮:渐变 + 柔光,与欢迎页 .btn-hero.primary 同语言 */
+/* 主按钮:主色纯色 + 柔光,与欢迎页 .btn-hero.primary 同语言 */
 .btn:not(.ghost):not(.subtle) {
-  background: var(--grad);
-  box-shadow: var(--grad-glow);
+  background: var(--primary);
+  box-shadow: var(--btn-glow);
 }
 .btn:not(.ghost):not(.subtle):hover:not(:disabled) {
-  background: var(--grad-h);
-  box-shadow: var(--grad-glow), var(--shadow-sm);
+  background: var(--primary-h);
+  box-shadow: var(--btn-glow), var(--shadow-sm);
 }
 
 /* 侧栏激活项:渐变药丸 + 右缘光标 */
@@ -662,7 +663,7 @@ input:hover:not(:focus):not([type="checkbox"]) { border-color: var(--t4); }
 .chat-dock-bar .btn { height: 40px; border-radius: 11px; }
 .dock-fab { width: 40px; height: 40px; flex: none; border-radius: 12px; border: 0; cursor: pointer;
             display: flex; align-items: center; justify-content: center; color: #fff;
-            background: var(--grad); box-shadow: var(--grad-glow);
+            background: var(--primary); box-shadow: var(--btn-glow);
             transition: filter var(--dur-2), transform var(--dur-1); }
 .dock-fab:hover { filter: brightness(1.08); }
 .dock-fab:active { transform: scale(.95); }
@@ -818,9 +819,9 @@ html[data-theme="dark"] .legend .swatch { box-shadow: inset 0 0 0 1px rgba(255,2
 #health-chip.off::before { background: var(--bad); box-shadow: 0 0 0 3px var(--bad-soft); }
 
 /* ---- 主按钮:顶部内高光模拟玻璃弧面 ---- */
-.btn:not(.ghost):not(.subtle) { box-shadow: var(--grad-glow), inset 0 1px 0 rgba(255,255,255,.22); }
+.btn:not(.ghost):not(.subtle) { box-shadow: var(--btn-glow), inset 0 1px 0 rgba(255,255,255,.22); }
 .btn:not(.ghost):not(.subtle):hover:not(:disabled) {
-  box-shadow: var(--grad-glow), var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.25); }
+  box-shadow: var(--btn-glow), var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.25); }
 
 /* ---- 欢迎页:首屏内容一次性入场节奏,自上而下 60ms 阶梯(下半屏走 .reveal 滚动显现) ---- */
 .hero-inner > *:nth-child(-n+5) { animation: riseIn .5s var(--ease-out) both; }
@@ -837,6 +838,7 @@ html[data-theme="dark"] .legend .swatch { box-shadow: inset 0 0 0 1px rgba(255,2
          padding: 13px 20px 13px 13px; }
 .hstat .hs-ico { flex: none; width: 38px; height: 38px; border-radius: 11px;
                  display: flex; align-items: center; justify-content: center;
+                 /* 品牌豁免:靛蓝→青跨色相低透明洗底(动线母题双色),非同族明度渐变 */
                  color: #a5f3fc; background: linear-gradient(135deg, rgba(99,102,241,.30), rgba(34,211,238,.16));
                  border: 1px solid rgba(129,140,248,.32); }
 .hstat .hs-ico .ic { width: 19px; height: 19px; }
@@ -885,7 +887,7 @@ html[data-theme="dark"] .legend .swatch { box-shadow: inset 0 0 0 1px rgba(255,2
                          border-radius: 2px; background: var(--primary); }
 
 /* ---- 对话消息气泡:用户侧加一点渐变,助手侧保持素净 ---- */
-.chat-msg.user { background: var(--grad); box-shadow: 0 3px 10px -4px rgba(79,70,229,.5); }
+.chat-msg.user { background: var(--primary); box-shadow: 0 3px 10px -4px rgba(79,70,229,.5); }
 
 /* ============================================================
    v4.9 悬浮模式:对话气泡拖出 → 悬浮泡 ↔ 浮动面板

@@ -612,3 +612,25 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   `aria-live`/canvas role/label/dock aria-label 逐项读取确认;画廊 img 可聚焦,Enter/Space 打桩
   验证均打开对应原图 URL。
 - 门禁:pytest 244 passed;pyflakes 0 告警;`zhishuxing smoke` 通过;`node --check` 通过。
+
+## 2026-11-05 · v2.11.1 桌面+移动端主按钮纯色化(研究二轮 taste 批)
+
+### Changed(变更)
+
+- **主色渐变纯色化**(研究二轮口径,照 rr-studio 6163925 同决策):删除
+  「靛蓝→紫」同族明度渐变 `--grad`/`--grad-h`(135deg #4f46e5→#7c3aed 族),
+  主按钮 `.btn`/悬浮球 `.dock-fab`/用户气泡 `.chat-msg.user`/欢迎页
+  `.btn-hero.primary` 一律改 `--primary` 纯色,hover 走 `--primary-h` 或
+  `filter: brightness(1.08)` 明度深化。依据:品味研究第 1 条「同一族的明度
+  渐变是最偷懒的渐变」。`--grad-glow` 随批更名 `--btn-glow`(值不变,名实一致)。
+- **移动端 mobile_app.html 同款渐变一并纯色化**:`--grad` 两处定义(明/暗)
+  改 `var(--primary)`,变量名沿用以减 diff(10 处引用零改动,行为等价)。
+- 保留的两处 135deg(`.feat .f-ico`/`.hstat .hs-ico`)为靛蓝→青跨色相低透明
+  洗底(动线母题双色),补品牌豁免注释,非同族明度渐变。
+- 资产引用 `style.css?v=6.6` → `?v=6.7`(缓存穿透)。
+
+### 验证
+
+- 门禁:pytest 244 passed;`node --check app.js` 通过;浏览器不可开,
+  代码层验证:style.css 花括号配平(684/684)、`grep --grad` 归零、
+  `135deg` 仅剩 2 处品牌豁免注释在案。

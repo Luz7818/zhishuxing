@@ -958,3 +958,44 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   且靠后,数值元素残留 `.tick` 类时骨架 shimmer 被压成静帧——`.kpi-value.skeleton`
   内重声明一次 `animation: shimmer` 提高特异性,复测「skeleton + tick 残留 →
   animationName: shimmer」通过。
+
+## 2026-11-11 · 前端动效升级批(F1–F7)收尾:浏览器实测记录与遗留(未发版)
+
+### 验证(本机 serve :7871 + Chromium/IAB,渲染帧冻结环境)
+
+- 环境限制如实声明:IAB 标签页 `document.visibilityState === "visible"` 但 rAF 不触发
+  (渲染冻结),过渡/动画的**视觉过程**无法录看;本轮完成的是计算样式、CSSOM 规则、
+  状态机与 canvas 像素级验证。真机视觉走查(明暗两主题 hover 手感、侧栏开合跳字、
+  药丸手感、切页发车观感)仍待有真实渲染环境的人复核,不阻塞门禁。
+- F1 实测:mask 计算过渡 = `opacity .18s cubic-bezier(.23,1,.32,1), display .18s
+  allow-discrete`;关门瞬间 `.hidden` 已挂而 computed display 保持 `flex`、mask/面板
+  opacity→0、面板 translateY(4px)——**allow-discrete 的 display 延迟翻转对 `!important`
+  的全局 `.hidden` 规则同样生效**(机制关键点,实测证实);退场过渡在冻结环境无法播完,
+  display 翻转完成未观测(真实渲染环境 180ms 后翻转,与 Dock 先例同机制)。
+  `CSS.supports('selector(::details-content)')&&CSS.supports('transition-behavior',
+  'allow-discrete')` 本环境为 true,渐进增强分支会生效。
+- F2/F3 实测:`.nav-pill` 计算过渡含 `var(--ease-in-out)`;CSSOM 规则复核
+  `.btn-hero.primary:hover`/`.dock-fab:hover` = `var(--primary-h)`、
+  `#app.dock-open .dock-fab:hover` = `var(--surface-2)`(两端 hover 规则内
+  background-position/brightness 均 0 命中,见 F2 条目)。
+- F4 实测:switchTab 旧页立即 `.leaving` + `position:absolute` + `pointer-events:none`,
+  新页 `.active` 与标题换位正常,260ms 后 `.leaving` 全部摘除、旧页 `display:none`
+  (定时摘类状态机闭环);窄屏 375px 下退场页 padding 16px 对齐,过渡结束及清场后
+  `scrollWidth(366) < innerWidth(375)` 无横向溢出。
+- F5 实测:明→暗→明切换,navCanvas 同一采样点像素 暗 `(15,25,45)` → 亮
+  `(229,233,239)` → 暗 `(15,25,45)`,令牌取色重绘闭环且瞬时(像素读数不依赖渲染帧)。
+- F6 实测(系统深色偏好下):`/admin/login` computed `color-scheme: dark`、按钮底
+  `rgb(129,140,248)`(= --primary 暗值,纯色)、hover 规则 `var(--primary-h)`、卡底
+  `rgb(20,27,51)`、`#msg.err` = `var(--err)+shake var(--dur-4)`、`.back` =
+  `var(--primary)`;亮色组与改前逐值一致(diff 核对),亮色渲染目检待有真实环境复核。
+- F7 实测:见 F7 条目(画廊封顶 0.12s/0s、withBusy 锁宽语义、skeleton shimmer
+  压过 .tick 残留的缺陷修复)。
+- 截图留档失败:IAB 渲染冻结环境 `tab.screenshot()` 报错,无画面可存。
+
+### 遗留(如实)
+
+- 版本号未动:本批只动 templates/static/web/mobile/docs,pyproject.toml 与
+  `src/zhishuxing/__init__.py` 的 `__version__` 不在边界内,发版号(HISTORY 正式条目 +
+  pyproject + tag)留待维护者确认后统一执行。
+- 真机视觉走查清单:控制台明暗两主题 hover/关门/切页/侧栏开合、移动端三药丸手感、
+  /admin 登录页亮色目检与暗色目检、reduced-motion 下各终态。

@@ -47,7 +47,8 @@ def test_landmark_path_includes_via(simple_map):
 def test_unknown_landmark_raises(simple_map):
     adapter = NavigationAdapter()
     adapter.map = simple_map
-    with pytest.raises(KeyError):
+    # ValueError(原 KeyError):未知 via 属客户端可修正的输入错误,走路由层 400 而非 500
+    with pytest.raises(ValueError):
         adapter.plan_landmark_path(start=(0, 0), via=["不存在"], goal=(4, 4))
 
 

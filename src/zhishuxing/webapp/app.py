@@ -62,11 +62,12 @@ def create_app(
 
     def fail(exc: Exception, status: int = 500):
         # HTTPException(如请求体超限的 413)按原状态码透传,其余异常落 500;
-        # 堆栈只进服务端日志：响应体给客户端回 traceback 会泄露源码路径与依赖版本
+        # 堆栈与异常原文只进服务端日志(logger.exception)：响应体回 str(exc)/traceback
+        # 会泄露源码路径与依赖版本,客户端一律给固定文案
         if isinstance(exc, HTTPException):
             return jsonify({"ok": False, "error": exc.name}), exc.code
         current_app.logger.exception("接口处理失败")
-        return jsonify({"ok": False, "error": str(exc)}), status
+        return jsonify({"ok": False, "error": "服务器内部错误,请稍后重试;详情见服务端日志。"}), status
 
     def deny(message: str, detail: str, status: int = 403):
         return jsonify({"ok": False, "error": message, "detail": detail}), status
@@ -149,12 +150,12 @@ def create_app(
             payload = request.get_json(force=True)
             file_path = payload.get("file_path", "")
             if not file_path:
-                return jsonify({"error": "缺少 file_path"}), 400
+                return jsonify({"ok": False, "error": "缺少 file_path"}), 400
             # 路径白名单(ZX-12):只接受 configs/ 目录下的枢纽文件,防换 token 后探测盘上任意路径
             allowed_root = cfg.paths.configs.resolve()
             candidate = Path(file_path).resolve()
             if allowed_root not in candidate.parents:
-                return jsonify({"error": "file_path 必须位于 configs/ 目录"}), 400
+                return jsonify({"ok": False, "error": "file_path 必须位于 configs/ 目录"}), 400
             return ok(service.load_navigation(str(candidate)))
         except Exception as exc:
             return fail(exc)
@@ -197,7 +198,7 @@ def create_app(
             payload = request.get_json(force=True)
             model_id = payload.get("model_id", "")
             if not model_id:
-                return jsonify({"error": "缺少 model_id"}), 400
+                return jsonify({"ok": False, "error": "缺少 model_id"}), 400
             data = service.load_llm(
                 model_id=model_id,
                 model_path=payload.get("model_path"),
@@ -251,11 +252,11 @@ def create_app(
             payload = request.get_json(force=True, silent=True) or {}
             observations = payload.get("observations")
             if not isinstance(observations, list):
-                return jsonify({"error": "缺少 observations（二维数值数组）"}), 400
+                return jsonify({"ok": False, "error": "缺少 observations（二维数值数组）"}), 400
             if len(observations) > 64:
-                return jsonify({"error": "observations 最多 64 个智能体"}), 400
+                return jsonify({"ok": False, "error": "observations 最多 64 个智能体"}), 400
             if any(not isinstance(row, list) or len(row) > 128 for row in observations):
-                return jsonify({"error": "每行观测应为数组且最多 128 维"}), 400
+                return jsonify({"ok": False, "error": "每行观测应为数组且最多 128 维"}), 400
             return ok(service.rl_act(observations))
         except ValueError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
@@ -293,7 +294,7 @@ def create_app(
             payload = request.get_json(force=True, silent=True) or {}
             groups = payload.get("groups", [])
             if not groups:
-                return jsonify({"error": "缺少 groups"}), 400
+                return jsonify({"ok": False, "error": "缺少 groups"}), 400
             budget(groups, what="groups", max_len=60_000)
             budget(payload.get("title"), what="title", max_len=120)
             data = service.run_dashboard(groups_payload=groups, title=payload.get("title"))
@@ -319,7 +320,12 @@ def create_app(
             question = payload.get("question", "")
             budget(question, what="question", max_len=2_000)
             budget(payload.get("prefs"), what="prefs", max_len=4_000)
+            prefs = payload.get("prefs")
+            if prefs is not None and not isinstance(prefs, dict):
+                raise ValueError('prefs 应为 JSON 对象（如 {"note": "行李多"}）')
             engine = payload.get("engine", "amap")
+            if engine not in ("amap", "hub"):
+                raise ValueError("engine 仅支持 amap 或 hub")
             data = service.plan_route(
                 question=question,
                 engine=engine,
@@ -339,11 +345,14 @@ def create_app(
             payload = request.get_json(force=True, silent=True) or {}
             message = (payload.get("message") or "").strip()
             if not message:
-                return jsonify({"error": "缺少 message"}), 400
+                return jsonify({"ok": False, "error": "缺少 message"}), 400
             budget(message, what="message", max_len=2_000)
             if payload.get("session_id"):
                 check_session_id(payload["session_id"])
             budget(payload.get("prefs"), what="prefs", max_len=4_000)
+            prefs = payload.get("prefs")
+            if prefs is not None and not isinstance(prefs, dict):
+                raise ValueError('prefs 应为 JSON 对象（如 {"note": "行李多"}）')
             data = service.chat(
                 message=message,
                 session_id=payload.get("session_id"),
@@ -361,7 +370,7 @@ def create_app(
             payload = request.get_json(force=True, silent=True) or {}
             session_id = payload.get("session_id", "")
             if not session_id:
-                return jsonify({"error": "缺少 session_id"}), 400
+                return jsonify({"ok": False, "error": "缺少 session_id"}), 400
             check_session_id(session_id)
             return ok(service.chat_reset(session_id))
         except ValueError as exc:

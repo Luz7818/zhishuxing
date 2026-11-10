@@ -25,18 +25,32 @@ from ..rl.runtime import MADDPGRuntime
 
 
 def parse_groups(groups_payload: List[Dict[str, Any]]) -> List[PassengerGroup]:
-    """把 API payload（[x,y] 坐标）解析为 PassengerGroup。"""
-    return [
-        PassengerGroup(
-            name=item["name"],
-            start=(int(item["start"][0]), int(item["start"][1])),
-            goal=(int(item["goal"][0]), int(item["goal"][1])),
-            via_landmarks=item.get("via_landmarks", []),
-            release_time=int(item.get("release_time", 0)),
-            passengers=int(item.get("passengers", 10)),
+    """把 API payload（[x,y] 坐标）解析为 PassengerGroup。
+
+    缺必需字段 / 坐标形状不对一律抛 ValueError（路由层既有 ValueError→400 通道），
+    不让 KeyError/IndexError/TypeError 落进 500 —— 客户端可触发的错误不该按服务端故障上报。
+    """
+    groups: List[PassengerGroup] = []
+    for item in groups_payload:
+        if not isinstance(item, dict):
+            raise ValueError("场景组应为 JSON 对象（{name, start, goal}）")
+        missing = [key for key in ("name", "start", "goal") if item.get(key) is None]
+        if missing:
+            raise ValueError(f"场景组缺少必需字段: {'/'.join(missing)}")
+        for key in ("start", "goal"):
+            if not isinstance(item[key], (list, tuple)) or len(item[key]) != 2:
+                raise ValueError(f"场景组 {key} 应为 [x, y] 两项坐标")
+        groups.append(
+            PassengerGroup(
+                name=item["name"],
+                start=(int(item["start"][0]), int(item["start"][1])),
+                goal=(int(item["goal"][0]), int(item["goal"][1])),
+                via_landmarks=item.get("via_landmarks", []),
+                release_time=int(item.get("release_time", 0)),
+                passengers=int(item.get("passengers", 10)),
+            )
         )
-        for item in groups_payload
-    ]
+    return groups
 
 
 class ZhiShuXingWebService:

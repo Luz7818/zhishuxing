@@ -654,3 +654,30 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   21 passed;`python -m pytest` 245 passed(244→245,新增缓存行为断言 1 条);
   `python -m pyflakes src/ scripts/ tests/` 0 告警;`zhishuxing smoke` 通过
   (真实规划 [1,2]→[28,12] 含 via=security)。
+
+## 2026-11-11 · 后端优化批之二:请求入口健壮性——校验前置 400 + 错误信封统一
+
+### Changed(变更)
+
+- **输入校验前置**(客户端可触发的 500 归零):
+  - `parse_groups` 缺 name/start/goal、坐标非两项、组非对象一律 `ValueError`
+    (原 KeyError/IndexError/TypeError 落 500),走路由层既有 ValueError→400 通道;
+  - `plan_landmark_path` 未知 via 由 `KeyError` 改用户可读 `ValueError`(原 500→400),
+    `test_unknown_landmark_raises` 同步改钉 ValueError;
+  - `/api/chat` 与 `/api/plan` 的 prefs 非 dict(如字符串「行李多」)回 400,不再进业务层;
+  - `/api/plan` 的 engine 非 amap/hub 回 400(原静默落 hub)。
+- **错误信封统一**:9 处裸 `jsonify({"error": ...})` 全部补 `"ok": false`
+  (`grep -c 'jsonify({"error"'` 归零);`fail()` 非 HTTPException 分支改回固定文案
+  「服务器内部错误…」,异常原文不再 str(exc) 直传客户端,详情只进服务端日志
+  (logger.exception 已在打)。
+- **兼容性**:error 键读取不变——`static/app.js:44` 判 `response.ok || payload.ok===false`、
+  `:45` 读 `payload.error`,本批为纯增量(成功路径契约零变化),已复核无需改前端。
+- 缘由:此前 `/api/navigation/plan` 带 `via:["不存在"]`、`/api/dashboard/run` 缺字段等
+  纯客户端输入错误会以 500+异常原文落响应,既污染故障观测又泄露内部信息。
+
+### 验证
+
+- 门禁:`zhishuxing smoke` 通过('Web smoke test passed.');`pytest tests/test_api.py`
+  + `pytest tests/test_navigation.py` 40 passed;`python -m pytest` 251 passed
+  (245→251,新增 6 条:prefs/engine 校验、未知 via 400、缺字段 400、500 固定信封);
+  `python -m pyflakes src/ scripts/ tests/` 0 告警。

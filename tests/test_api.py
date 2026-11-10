@@ -352,3 +352,69 @@ def test_chat_session_id_budget(client):
     assert "session_id" in resp.json["error"]
     resp = client.post("/api/chat/reset", json={"session_id": "../etc/passwd"})
     assert resp.status_code == 400
+
+
+# ---------------- 输入校验前置与错误信封统一(2.11.x 后端健壮性批) ----------------
+
+
+def test_plan_rejects_non_dict_prefs(client):
+    """prefs 只收 JSON 对象:字符串如「行李多」按 400 拒收,不再落业务层。"""
+    resp = client.post("/api/plan", json={"question": "从A口到地铁闸机", "engine": "hub", "prefs": "行李多"})
+    assert resp.status_code == 400
+    assert resp.json["ok"] is False
+    assert "prefs" in resp.json["error"]
+
+    null_prefs = client.post("/api/plan", json={"question": "从A口到地铁闸机", "engine": "hub", "prefs": None})
+    assert null_prefs.status_code == 200  # 显式 null 视同未携带,历史行为不变
+
+
+def test_plan_rejects_unknown_engine(client):
+    """engine 非 amap/hub 按 400 拒收,不再静默落 hub。"""
+    resp = client.post("/api/plan", json={"question": "从A口到地铁闸机", "engine": "baidu"})
+    assert resp.status_code == 400
+    assert resp.json["ok"] is False
+    assert "engine" in resp.json["error"]
+
+
+def test_chat_rejects_non_dict_prefs(client):
+    resp = client.post("/api/chat", json={"message": "从A口到地铁闸机", "prefs": "行李多"})
+    assert resp.status_code == 400
+    assert resp.json["ok"] is False
+    assert "prefs" in resp.json["error"]
+
+
+def test_navigation_plan_unknown_via_returns_400(client):
+    """未知 via 由 KeyError(500)改为 ValueError(400):客户端可修正的输入错误。"""
+    resp = client.post(
+        "/api/navigation/plan", json={"start": [1, 2], "goal": [28, 12], "via": ["不存在的地标"]}
+    )
+    assert resp.status_code == 400
+    assert resp.json["ok"] is False
+    assert "不存在的地标" in resp.json["error"]
+
+
+def test_dashboard_rejects_group_missing_fields(client):
+    """场景组缺必需字段按 400 拒收(原 KeyError→500)。"""
+    resp = client.post("/api/dashboard/run", json={"groups": [{"name": "只有名字"}]})
+    assert resp.status_code == 400
+    assert resp.json["ok"] is False
+    assert "start/goal" in resp.json["error"]
+
+    bad_shape = client.post("/api/dashboard/run", json={"groups": [{"name": "g", "start": [1], "goal": [2, 2]}]})
+    assert bad_shape.status_code == 400
+    assert "start" in bad_shape.json["error"]
+
+
+def test_internal_error_returns_fixed_envelope_without_exc_text(client, monkeypatch):
+    """fail() 非 HTTPException 分支回固定文案,异常原文只进服务端日志不回传客户端。"""
+    svc = client.application.extensions["service"]
+
+    def boom():
+        raise RuntimeError("内部机密细节 secret-internal-detail")
+
+    monkeypatch.setattr(svc, "grid", boom)
+    resp = client.get("/api/navigation/grid")
+    assert resp.status_code == 500
+    assert resp.json["ok"] is False
+    assert "secret-internal-detail" not in resp.json["error"]
+    assert "服务器内部错误" in resp.json["error"]

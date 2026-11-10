@@ -76,6 +76,10 @@
   全部有用例钉着（`tests/test_settings.py`）。
 - **对外一律掩码。** `mask_value()` 只给前 2 字符与长度，≤4 连前缀都不给；任何新接口、CLI
   输出、日志不得回显明文。
+- **API 错误信封统一为 `{ok: false, error: ...}`。** 客户端可修正的输入错误（缺字段/prefs 非
+  对象/engine 非法/未知 via 等）一律在路由层校验并回 400，不落业务层变 500；`fail()` 的
+  非 HTTPException 分支只回固定文案，异常原文仅进服务端日志。`error` 键是旧客户端的兼容
+  读取面（`static/app.js` 判 `ok === false` 或读 `error`），动返回结构必须同步该文件。
 - **路径只由 `config.py` 推导。** 产物走 `config.paths`（`ZHISHUXING_WORKSPACE` 可覆盖）；
   相对 CWD 的写法就是 bug。副作用：`web/mobile/` 也从 workspace 取，改 workspace 会让
   `/mobile` 变 404。

@@ -169,7 +169,8 @@ class NavigationAdapter:
         for name in via:
             waypoint = self.map.landmarks.get(name)
             if waypoint is None:
-                raise KeyError(f"未找到地标: {name}")
+                # ValueError 走路由层 400:未知 via 是客户端可修正的输入错误,不是服务端故障
+                raise ValueError(f"未找到地标: {name}")
             segment = self._astar(current, waypoint, cost_spec)
             if route:
                 route.extend(segment[1:])

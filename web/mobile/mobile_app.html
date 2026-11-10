@@ -40,6 +40,7 @@
       --ring: 0 0 0 3px rgba(79, 70, 229, .16);
       --r-lg: 20px; --r-md: 14px; --r-sm: 10px;
       --ease-out: cubic-bezier(.23, 1, .32, 1);
+      --ease-in-out: cubic-bezier(.77, 0, .175, 1);   /* 在屏内移动(F3 补令牌,与控制台同值) */
       --ease-drawer: cubic-bezier(.32, .72, 0, 1);
       --ease-spring: cubic-bezier(.34, 1.26, .64, 1);
       /* 时长阶梯:按压 < 悬停/焦点 < 入场/弹层 < 抽屉/大面板(与控制台同源) */
@@ -528,8 +529,9 @@
     .kpi span { display: block; margin-top: 2px; font-size: 10.5px; color: var(--t3); }
 
     .mode-tabs { position: relative; display: flex; gap: 6px; padding: 5px; margin-bottom: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; }
-    /* 滑动高亮药丸:选中态在两个模式间滑移(与底部导航同一语言),而非原地换底色 */
-    .mode-pill { position: absolute; top: 5px; bottom: 5px; left: 0; border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-xs), var(--card-hi); transition: transform .3s var(--ease-spring), width .3s var(--ease-spring); z-index: 0; }
+    /* 滑动高亮药丸:选中态在两个模式间滑移(与底部导航同一语言),而非原地换底色
+       (F3 曲线归位:在屏内移动走 --ease-in-out;.3s 硬编码时长留待下一批归阶梯) */
+    .mode-pill { position: absolute; top: 5px; bottom: 5px; left: 0; border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-xs), var(--card-hi); transition: transform .3s var(--ease-in-out), width .3s var(--ease-in-out); z-index: 0; }
     .mode-pill.no-anim { transition: none !important; }
     .mode-tab { position: relative; z-index: 1; flex: 1; text-align: center; padding: 8px 0; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--t3); transition: color .18s var(--ease-out); cursor: pointer; }
     .mode-tab.active { color: var(--primary); font-weight: 700; }
@@ -644,7 +646,7 @@
     .switch.on::after { transform: translateX(18px); }
 
     .seg { position: relative; display: flex; gap: 4px; padding: 4px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); }
-    .seg-pill { position: absolute; top: 4px; bottom: 4px; left: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-xs), var(--card-hi); transition: transform var(--dur-4) var(--ease-spring), width var(--dur-4) var(--ease-spring); z-index: 0; }
+    .seg-pill { position: absolute; top: 4px; bottom: 4px; left: 0; border-radius: 8px; background: var(--surface); box-shadow: var(--shadow-xs), var(--card-hi); transition: transform var(--dur-4) var(--ease-in-out), width var(--dur-4) var(--ease-in-out); z-index: 0; }
     .seg-pill.no-anim { transition: none !important; }
     .seg button { position: relative; z-index: 1; flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 5px; height: 32px; border-radius: 8px; font-size: 12px; font-weight: 500; color: var(--t3); transition: color var(--dur-2) var(--ease-out); }
     .seg button .ic { width: 13px; height: 13px; }
@@ -717,11 +719,12 @@
     .nav-item.active .nv-ico .ic { filter: drop-shadow(0 0 7px rgba(99, 102, 241, .55)); }
     .nav-item.active .nv-ico { background: transparent; transform: translateY(-1px); }
     .nav-item:active .nv-ico { transform: scale(.92); }
-    /* 滑动高亮药丸:在 tab 之间以弹簧曲线滑移(单一高亮元素,不是每项各自淡入) */
+    /* 滑动高亮药丸:在 tab 之间滑移(单一高亮元素,不是每项各自淡入)
+       (F3 曲线归位:--ease-in-out,检票闸机滑轨/列车屏内行进;.34s 时长留待下一批归阶梯) */
     .nav-pill {
       position: absolute; top: 5px; bottom: 5px; left: 0; width: 0;
       border-radius: 15px; background: var(--primary-soft); z-index: 0;
-      transition: transform .34s var(--ease-spring), width .34s var(--ease-spring);
+      transition: transform .34s var(--ease-in-out), width .34s var(--ease-in-out);
     }
     .nav-pill.no-anim { transition: none !important; }
 

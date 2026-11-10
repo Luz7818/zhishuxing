@@ -796,3 +796,33 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 
 - 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
   CSS 括号配平(693/693)。明暗两主题浏览器手检归入动效升级批收尾统一执行。
+
+## 2026-11-11 · 前端动效升级批(F3):侧栏收合双轨 + 药丸曲线统一(未发版)
+
+### Changed(变更)
+
+- **控制台侧栏收合双轨**:几何 width/min-width 保持 `--dur-4 --ease-drawer`(v3.4 层
+  既有不动);nav-item 文字/nv-flag、品牌区文字、侧栏底部文字由 `display:none` 直切改为
+  opacity 交叉淡出 `--dur-2 --ease-out` + `display` 经 allow-discrete 延迟翻转(style.css
+  新增 v6.8 层,机制同 F1 弹层关门):文字先淡出、宽度后收,收口瞬间无截断跳变;展开时经
+  `@starting-style` 淡入与开抽屉同步。窄屏(≤960px)侧栏整宽形态由既有媒体块管可见性,
+  交叉淡出在该断点回退 opacity:1;不支持 allow-discrete 的浏览器回退现状直切。
+  本版未新增布局属性动画(dock-resizer width、gliding left/top 既有豁免原样)。
+- **控制台 nav-pill 曲线归位**:`--ease-drawer` → `--ease-in-out`(--dur-3 不变)——
+  药丸属「在屏内移动」口径,同时激活 `--ease-in-out` 定义后 0 引用的孤儿令牌
+  (grep `var(--ease-in-out)` 0 → 1,已核)。
+- **移动端三处药丸曲线统一**::root 补 `--ease-in-out` 令牌(与控制台同值);
+  nav-pill/mode-pill/seg-pill 由 `--ease-spring` 归位 `--ease-in-out`——只统一曲线
+  不统一实现;.3s/.34s 硬编码时长本版不动,记入 CODE-STYLE 动效章节 scopeNote
+  (F4 落文档)。splashPop/sheet/nv-dot 的 spring 属既有 Rare 豁免不动(grep 复核
+  仅剩此三处)。
+
+### 不变
+
+- 控制台 moveNavPill 首次定位(内联 transition:none + 强制重排)与移动端 no-anim 类
+  各自保留;两端 reduced-motion 兜底(全局块 / .01ms 钳制)各自生效。
+
+### 验证
+
+- 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
+  CSS 括号配平(699/699)。浏览器手检侧栏开合无跳字归入动效升级批收尾统一执行。

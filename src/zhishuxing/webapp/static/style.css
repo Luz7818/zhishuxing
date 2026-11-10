@@ -1096,7 +1096,8 @@ details.raw summary { transition: color var(--dur-2) var(--ease-out); }
             pointer-events: none; opacity: 0;
             background: linear-gradient(90deg, rgba(99,102,241,.26), rgba(124,58,237,.14));
             box-shadow: inset 0 0 0 1px rgba(129,140,248,.28);
-            transition: transform var(--dur-3) var(--ease-drawer), opacity var(--dur-2) var(--ease-out);
+            /* 药丸在屏内移动(F3 归位):--ease-in-out,与移动端三处药丸同一手感 */
+            transition: transform var(--dur-3) var(--ease-in-out), opacity var(--dur-2) var(--ease-out);
             will-change: transform; }
 /* 激活项自身不再铺底色,避免与滑动药丸叠加 */
 .nav-item.active { background: transparent; box-shadow: none; }
@@ -1418,4 +1419,34 @@ details.raw[open] pre { animation: rawIn var(--dur-3) var(--ease-out); }
   @starting-style { details.raw[open]::details-content { opacity: 0; } }
   /* 内容整体随 ::details-content 淡入,pre 内层 rawIn 不再叠加第二层淡入 */
   details.raw[open] pre { animation: none; }
+}
+
+/* ============================================================
+   v6.8 侧栏收合双轨(2026-11-11 · 动效升级 F3)——
+   几何 width/min-width 保持 --dur-4 --ease-drawer(v3.4 层既有);
+   内部文字/旗标由 display:none 直切改为 opacity 交叉淡出
+   --dur-2 --ease-out + display 延迟翻转(allow-discrete,同弹层关门
+   机制):文字先淡出、宽度后收,收口瞬间无截断跳变;展开时经
+   @starting-style 淡入,与开抽屉同步。不支持 allow-discrete 的浏览器
+   回退为现状直切。本版不新增布局属性动画(.dock-resizer::before
+   width、.chat-dock.float.gliding left/top 为既有豁免不动)。
+   ============================================================ */
+.brand .bt, .nav-item .nv-txt, .nav-item .nv-flag,
+.sys-status span:not(.dot), .meta-row span {
+  transition: opacity var(--dur-2) var(--ease-out), display var(--dur-2) allow-discrete;
+}
+@starting-style {
+  .brand .bt, .nav-item .nv-txt, .nav-item .nv-flag,
+  .sys-status span:not(.dot), .meta-row span { opacity: 0; }
+}
+#app.side-collapsed .brand .bt,
+#app.side-collapsed .nav-item .nv-txt, #app.side-collapsed .nav-item .nv-flag,
+#app.side-collapsed .sys-status span:not(.dot),
+#app.side-collapsed .meta-row span:not(#theme-toggle) { opacity: 0; }
+/* 窄屏侧栏保持整宽形态,收合态文字可见性由 v3.2 媒体块负责,交叉淡出不参与 */
+@media (max-width: 960px) {
+  #app.side-collapsed .brand .bt,
+  #app.side-collapsed .nav-item .nv-txt, #app.side-collapsed .nav-item .nv-flag,
+  #app.side-collapsed .sys-status span:not(.dot),
+  #app.side-collapsed .meta-row span:not(#theme-toggle) { opacity: 1; }
 }

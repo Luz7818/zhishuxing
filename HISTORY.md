@@ -826,3 +826,39 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 
 - 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
   CSS 括号配平(699/699)。浏览器手检侧栏开合无跳字归入动效升级批收尾统一执行。
+
+## 2026-11-11 · 前端动效升级批(F4):页面切换「发车-到站」+ 两端过渡口径文档化(未发版)
+
+### Added(新增)
+
+- **控制台页面切换补旧页退场**(此前旧页瞬时 `display:none`,与新页 `pageIn` stagger
+  不对称):`switchTab` 给旧页挂 `.leaving`——淡出 + 上行 6px(发车离站,`--dur-2
+  --ease-out`,比新页 `--dur-3` 快约 20%),淡出期间 `absolute + pointer-events:none`
+  豁免布局回流,JS 定时(200ms)摘类落 `display:none`,不依赖 transitionend;
+  reduceMotion 与「应用壳未显示」(首次进入)分支不加退场类;快速连切先把上一退场页
+  立即落定。新页子元素 `pageIn` stagger 原样,总切换 ≈360ms ≤400ms。实施前置(评审
+  补充):内容列 `main` 补 `position:relative` 作退场页定位祖先(此前 `.main#scroll-area`
+  无定位,absolute 须先补定位祖先或由退场页搬运宽度)——退场页与新页同一内容列宽/
+  内边距,免宽度搬运,窄屏 ≤960px 内边距对齐 16px。
+
+### Changed(变更)
+
+- **docs/CODE-STYLE.md 新增「前端动效规范」章节**(此前全文件 0 处动效条目,已核):
+  「到站/开门/发车/沿线行进」语义判据、三缓动分工与四档阶梯、两端页面切换口径
+  (控制台 = 内容层纵向到站 + 旧页发车淡出;移动端 = 页面层 push ±64px)、主题切换
+  规范(桌面 theme-fading `--dur-3` / 移动端 vtCircle .45s + .26s 回退,定为规范不再
+  另起)、不回潮红线(2.10.0 否决滚动耦合 reveal、主按钮纯色不回升、hover 单一机制)、
+  scopeNote(移动端三药丸 .3s/.34s 时长未归阶梯、sheet/toast 时长不一致,下一批收)。
+- **docs/TESTING.md 不再复述会过期的死数字**::9「N 项」与 :19「N passed」内联数字
+  改为指回 AGENTS.md「当前状态」(单一事实来源;核查时两处当前同为 255、暂未失同步,
+  但内联数字历史上已过期过 201→255 两次,按决策去重)。
+
+### 不变
+
+- 移动端页面 push、`.reveal` 滚动显现(进过视口即定格)均不动,不回潮已否决方案。
+
+### 验证
+
+- 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
+  `node --check app.js` 通过;`grep -n "255\|201" docs/TESTING.md` 0 命中。
+  真机明暗+窄屏手检归入动效升级批收尾统一执行(首轮提交后补)。

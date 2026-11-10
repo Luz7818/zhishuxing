@@ -160,6 +160,17 @@ function showView(name) {
 
 function switchTab(tab) {
   $$(".nav-item[data-tab]").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  /* 旧页「发车」:淡出 + 轻微上行(--dur-2,比新页 pageIn --dur-3 快约 20%),
+     期间 absolute + pointer-events:none 豁免布局回流,过渡结束后摘类落 display:none。
+     定时摘类不依赖 transitionend;reduceMotion 或应用壳未显示(首次进入)时不加
+     退场类,保持瞬时切换;快速连切先把上一退场页立即落定,避免两页同时离站 */
+  const prev = document.querySelector("main section.page.active");
+  if (prev && prev.id !== "tab-" + tab && !$("app").classList.contains("hidden") && !reduceMotion()) {
+    clearTimeout(switchTab._leaving);
+    $$("main section.leaving").forEach((s) => s.classList.remove("leaving"));
+    prev.classList.add("leaving");
+    switchTab._leaving = setTimeout(() => prev.classList.remove("leaving"), 200);   /* --dur-2 + 余量 */
+  }
   $$("main section").forEach((s) => s.classList.toggle("active", s.id === "tab-" + tab));
   const [t, sub] = TITLES[tab] || [tab, ""];
   $("page-title").textContent = t;

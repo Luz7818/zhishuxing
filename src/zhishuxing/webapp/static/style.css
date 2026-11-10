@@ -1450,3 +1450,29 @@ details.raw[open] pre { animation: rawIn var(--dur-3) var(--ease-out); }
   #app.side-collapsed .sys-status span:not(.dot),
   #app.side-collapsed .meta-row span:not(#theme-toggle) { opacity: 1; }
 }
+
+/* ============================================================
+   v6.9 页面切换「发车-到站」(2026-11-11 · 动效升级 F4)——
+   旧页不再瞬时 display:none:淡出 + 轻微上行(发车离站,--dur-2,
+   比新页 pageIn --dur-3 快约 20%),淡出期间 absolute + pointer-events:none
+   豁免布局回流。实施前置(评审补充):.main#scroll-area 现无 position,
+   故由内容列 main 补 position:relative 作定位祖先——退场页与新页同一
+   内容列宽/内边距,免宽度搬运。退场类由 JS 定时摘除(reduceMotion 与
+   首次进入不加类);全局 reduced-motion 块下过渡亦为瞬时。总切换时长 =
+   退场 180ms ∥ 新页 stagger(240ms + 120ms 阶梯)≈ 360ms ≤ 400ms。
+   ============================================================ */
+main { position: relative; }
+section.page.leaving {
+  display: block;
+  position: absolute;
+  top: 24px;                 /* 对齐 main 的 padding-top,与新页内容同起点 */
+  inset-inline: 0;
+  padding-inline: 32px;      /* 对齐 main 的水平内边距(窄屏见下) */
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+@media (max-width: 960px) {
+  section.page.leaving { padding-inline: 16px; }
+}

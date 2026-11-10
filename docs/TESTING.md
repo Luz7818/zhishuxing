@@ -6,7 +6,7 @@
 
 | 层 | 管什么 | 数量级 |
 |---|---|---|
-| pytest 单元/集成 | CLI、配置、导航、API、KB | 255 项（`test_settings.py` 一文件占 100） |
+| pytest 单元/集成 | CLI、配置、导航、API、KB | 数量口径见 `AGENTS.md`「当前状态」（`test_settings.py` 一文件占大头；本文不复述会过期的死数字） |
 | pyflakes | 静态检查（src/ scripts/ tests/） | 0 告警 |
 | API 冒烟 | 进程内打全部核心端点 | `zhishuxing smoke` |
 | 配置体检 | 在线能力与降级状态 | `zhishuxing doctor` |
@@ -16,7 +16,7 @@
 ## 运行命令
 
 ```bash
-python -m pytest                                # 255 passed（20–60 s，受机器负载影响）
+python -m pytest                                # 全量单元/集成;用例数与耗时口径见 AGENTS.md「当前状态」
 python -m pyflakes src/ scripts/ tests/         # 0 告警
 zhishuxing smoke                                # Web smoke test passed.
 zhishuxing doctor                               # 本机配好密钥 → 退出码 0；全新 clone → 退出码 1

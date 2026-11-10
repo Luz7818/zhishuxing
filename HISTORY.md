@@ -761,3 +761,38 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 - 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警。
 - CSS 括号配平自查(694/694);本批为纯 CSS 增量,app.js 未改。浏览器逐项手检归入
   动效升级批收尾统一执行(门禁不阻塞)。
+
+## 2026-11-11 · 前端动效升级批(F2):悬停语言统一与死动效清理(未发版)
+
+### Changed(变更)
+
+- **删除主按钮 background-position 悬停滑动空转遗物(两端)**:控制台 v3.4.2 层
+  `.btn` 的 `background-size/position` + 悬停 0%→92% 滑动与重复 transition 定义整块删除
+  (2.11.1 纯色化后纯色不可见滑动,层注释同步修正);移动端 `.btn-primary` 的
+  background-size/position(:576 基础规则 + :579 hover)同删——评审指出的「半截死代码」
+  一并收口。
+- **.15s/.12s 硬编码归位 --dur 阶梯**(清理面 = transition 时长,animation-delay 豁免):
+  控制台 :138(theme-btn)/:243(icon-btn)/:254(input border/box-shadow)/:290(chip)/:298(kpi)
+  就地换 `var(--dur-2)`;:627(kpi transition)与 :638(chip transition)系被 v6.4 层
+  完全覆盖的死代码,整行删除;移动端 :577(.btn-primary transition)随 F2① 重写归阶梯、
+  :760(theme-fading button transform .12s)换 `var(--dur-1)`。grep 复核口径:两端
+  `transition` 中 .15s/.12s 归零(shimmer/lineFlow/heroSheen 等 keyframes 的
+  background-position 属功能性渐变动画、欢迎页/插画 .12s 属 animation-delay 豁免,
+  实测 grep 仅剩令牌定义与豁免点);其余时长档(.18s/.26s 等)不属本版清理面。
+- **卡片 hover 统一「到站微抬升」**:`.card`(新增位移)/`.kpi`(-2px→-1px、
+  shadow-md→shadow-sm)/`.feat`(-3px→-1px、自绘辉光影→shadow-sm)同语言,
+  transform `--dur-1`、阴影 `--dur-2`,均 `--ease-out`;同屏只留一种位移语言。
+- **主按钮明度反馈归一(单一机制 = 背景换色)**:`.btn-hero.primary:hover` 与
+  `.dock-fab:hover` 的 brightness(1.06~1.08) 改 `background: var(--primary-h)`
+  (与 `.btn` 同口径);dock-open 态按钮为 surface 底,hover 沿 surface 系换
+  `--surface-2`,同一机制。移动端 `.btn-primary:hover` 同步改 `--primary-h`。
+  grep 复核:两端 `brightness(` 归零(0 命中),明度反馈机制单一可证。
+- **触屏门控补漏**:`@media (hover:none),(pointer:coarse)` 纳入 `.card:hover` 位移
+  (F2③ 新增)、`.feat:hover::after` 光泽扫过(触屏点特性卡不再误播 0.8s 扫光)与
+  `#gallery .output-frame img:hover` 位移;hover 效果的键盘等价路径沿用既有全局
+  `:focus-visible` ring。
+
+### 验证
+
+- 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
+  CSS 括号配平(693/693)。明暗两主题浏览器手检归入动效升级批收尾统一执行。

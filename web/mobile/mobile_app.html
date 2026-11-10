@@ -573,10 +573,12 @@
       width: 100%; height: 46px; border-radius: 14px; font-size: 14.5px; font-weight: 700; color: #fff;
       background: var(--grad); box-shadow: var(--grad-glow); letter-spacing: .01em;
       display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-      background-size: 160% 100%; background-position: 0% 0%;
-      transition: background-position .3s var(--ease-out), transform .12s var(--ease-out), filter .15s;
+      /* F2 悬停语言统一:background-size/position 悬停滑动是渐变期遗物
+         (--grad 现为 --primary 纯色,滑动不可见),删除;hover 明度反馈与
+         控制台同口径,走 --primary-h 背景换色,时长归 --dur 阶梯 */
+      transition: background var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out);
     }
-    .btn-primary:hover { background-position: 92% 0%; filter: brightness(1.04); }
+    .btn-primary:hover { background: var(--primary-h); }
     .btn-primary:active { transform: scale(.98); box-shadow: 0 2px 6px -2px rgba(79, 70, 229, .5); }
     .btn-primary:disabled { opacity: .65; filter: grayscale(.3); }
     .btn-primary .ic { width: 17px; height: 17px; }
@@ -757,7 +759,8 @@
                   border-color .26s var(--ease-out), fill .26s var(--ease-out), stroke .26s var(--ease-out) !important;
     }
     html.theme-fading button {
-      transition: transform .12s var(--ease-out), background-color .26s var(--ease-out),
+      /* theme-fading 定为规范(F4 动效文档):按压 transform 取 --dur-1,主题色过渡 .26s 为规范值 */
+      transition: transform var(--dur-1) var(--ease-out), background-color .26s var(--ease-out),
                   color .26s var(--ease-out), border-color .26s var(--ease-out) !important;
     }
 

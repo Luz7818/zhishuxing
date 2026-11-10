@@ -192,7 +192,7 @@ def test_registry_shape_and_lookup_are_consistent():
         # 这四段文案要能直接喂给「设置」视图 / doctor / 移动端引导，不能空着
         assert item.label and item.purpose and item.apply_entry and item.degrades_to
         assert isinstance(item.required, bool) and isinstance(item.numeric, bool)
-        assert item.numeric is (item.key == "AMAP_TIMEOUT")  # 数值型校验只该挂在超时项上
+        assert item.numeric is (item.key in ("AMAP_TIMEOUT", "SILICONFLOW_TIMEOUT"))  # 数值型校验只该挂在超时项上
     # 离线演示的兜底就是 Mock，把 LLM 密钥算成必需项会让「零密钥可演示」自相矛盾
     assert "SILICONFLOW_API_KEY" in OPTIONAL_KEYS
     assert set(REQUIRED_KEYS) == {"AMAP_REST_KEY", "AMAP_JS_KEY", "AMAP_SECURITY_CODE"}
@@ -315,6 +315,29 @@ def test_clean_value_numeric_rejects_text_but_allows_blank():
         assert "有限的正数" in str(excinfo.value)
     # 非数值项不受数字校验约束
     assert settings_store.clean_value(item_of("SILICONFLOW_MODEL"), "Qwen/Qwen2.5-7B") == "Qwen/Qwen2.5-7B"
+
+
+def test_clean_value_siliconflow_timeout_rejects_bad_numbers():
+    """SILICONFLOW_TIMEOUT 与 AMAP_TIMEOUT 同一套有限正数闸:非数值/0/负数/inf/nan 全拒。"""
+    item = item_of("SILICONFLOW_TIMEOUT")
+    assert settings_store.clean_value(item, " 30 ") == "30"
+    assert settings_store.clean_value(item, "2.5") == "2.5"
+    assert settings_store.clean_value(item, "") == ""  # 留空回落默认 60
+    for bad in ["abc", "10s", "0", "-3", "nan", "inf", "-inf", "1e690"]:
+        with pytest.raises(settings_store.SettingError):
+            settings_store.clean_value(item, bad)
+
+
+def test_llm_timeout_read_path_falls_back_to_default():
+    """读路径容错:非数值/0/负数/inf 的 SILICONFLOW_TIMEOUT 一律回落默认 60 秒,
+    别让手滑写坏的 .env 让真实适配器一挂载就炸(siliconflow_config['timeout'])。"""
+    set_env({})
+    assert cfg.siliconflow_config()["timeout"] == 60.0          # 未配置 = 默认
+    set_env({"SILICONFLOW_TIMEOUT": "45"})
+    assert cfg.siliconflow_config()["timeout"] == 45.0          # 合法值生效
+    for bad in ["abc", "0", "-5", "inf", "nan"]:
+        set_env({"SILICONFLOW_TIMEOUT": bad})
+        assert cfg.siliconflow_config()["timeout"] == 60.0, bad  # 非法值回落默认
 
 
 def test_cleaned_value_stays_identical_in_file_and_memory(bare_workspace: Path):

@@ -703,3 +703,31 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 - 门禁:`pytest tests/test_session_store.py` 11 passed(新增上限淘汰与低频清理用例 2 条);
   `python -m pytest` 253 passed(251→253);`python -m pyflakes src/ scripts/ tests/` 0 告警;
   跑完 `git status` 干净(data/outputs/ 等运行时产物未入库)。
+
+## 2026-11-11 · 后端优化批之四:LLM 调用超时可配置 + 重试收窄到连接类异常(PERF-07)
+
+### Added(新增)
+
+- **`SILICONFLOW_TIMEOUT` 设置项**(可选、数值型):LLM(OpenAI 兼容端点)单次请求超时秒数,
+  默认 60。照 `AMAP_TIMEOUT` 先例落地——`settings.SETTINGS` 注册表(第 8 键,ARCHITECTURE
+  「写回 .env 五道闸」计数同步 7→8)+ `config._llm_timeout()` 容错读取(非数值/0/负数/inf
+  一律回落 60.0)。它是运行参数设置项、不是密钥项;`.env.example` 在 `AMAP_TIMEOUT` 旁补
+  `SILICONFLOW_TIMEOUT=` 一行(AGENTS 对 .env.example 作为新 clone 配置清单的权威记录要求)。
+
+### Changed(变更)
+
+- `adapters.SiliconFlowLLMAdapter` 两处 `httpx.Client(timeout=60.0)` 硬编码(建客户端/
+  失败重建)改读 `siliconflow_config()["timeout"]`,防慢端点按固定 60s 占满 waitress 线程池。
+- chat 失败重试由「裸 `except Exception` 必重试一次」收窄到连接类异常
+  `(APITimeoutError, APIConnectionError)`(openai SDK 把传输层错误包成这两类,已核
+  本机 openai 1.55.3 源码);4xx/5xx 等响应类失败原样抛出交上层降级,不再白等一次重试。
+- 降级路径不变:无密钥/离线行为同现状;真实 LLM 自动挂载仍只在 cmd_serve 路径。
+
+### 验证
+
+- 门禁:`pytest tests/test_settings.py` 100 passed(新增写路径有限正数拒绝 + 读路径回落
+  默认 2 用例);`zhishuxing doctor` 退出码 0(新项如实列为可选项,默认 60);
+  `python -m pytest` 255 passed(253→255);`python -m pyflakes src/ scripts/ tests/` 0 告警。
+- 手工验证(离线打桩,不入门禁):SILICONFLOW_TIMEOUT=45 生效到 httpx 客户端;
+  超时(APITimeoutError)→ 重建客户端重试一次成功返回;4xx(BadRequestError)→ 原样抛出
+  零重试。

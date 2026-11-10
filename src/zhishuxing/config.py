@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -178,12 +179,22 @@ def _env_timeout() -> float:
         return 10.0
 
 
+def _llm_timeout() -> float:
+    """SILICONFLOW_TIMEOUT 手改成非数值/0/负数/inf 时回落默认 60，别让真实适配器一挂载就炸。"""
+    try:
+        value = float(_env_or_default("SILICONFLOW_TIMEOUT", "60"))
+    except ValueError:
+        return 60.0
+    return value if math.isfinite(value) and value > 0 else 60.0
+
+
 def siliconflow_config() -> Dict[str, Optional[str]]:
-    """SiliconFlow（OpenAI 兼容）LLM 服务配置。"""
+    """SiliconFlow（OpenAI 兼容）LLM 服务配置。timeout 为单次请求超时秒数。"""
     return {
         "api_key": os.environ.get("SILICONFLOW_API_KEY") or None,
         "base_url": _env_or_default("SILICONFLOW_BASE_URL", "https://api.siliconflow.cn/v1"),
         "model": _env_or_default("SILICONFLOW_MODEL", "qwen3.8-27b"),
+        "timeout": _llm_timeout(),
     }
 
 

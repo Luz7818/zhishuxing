@@ -153,7 +153,10 @@ class SiliconFlowLLMAdapter:
         # 进程启动时代理环境变量的快照因此不再影响 LLM 调用。
         import httpx
 
-        self._http_client = httpx.Client(trust_env=False, timeout=60.0)
+        # 超时可配置(SILICONFLOW_TIMEOUT,config._llm_timeout 已兜底非法值),
+        # 防慢端点按 60s 硬超时占满 waitress 线程池
+        self._timeout = float(conf.get("timeout") or 60.0)
+        self._http_client = httpx.Client(trust_env=False, timeout=self._timeout)
         self._client = OpenAI(api_key=self.api_key, base_url=self.base_url,
                               http_client=self._http_client)
         return {
@@ -217,13 +220,17 @@ class SiliconFlowLLMAdapter:
         }
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
+        from openai import APIConnectionError, APITimeoutError
+
         try:
             response = self._client.chat.completions.create(**kwargs)
-        except Exception:
-            # 网关拦截页/陈旧连接池:重建客户端后重试一次(每次调用最多一次重试)
+        except (APITimeoutError, APIConnectionError):
+            # 只对连接类失败(超时/连接错误/陈旧连接池)重建客户端后重试一次;
+            # openai SDK 把传输层错误包成这两类,4xx/5xx 等响应类失败(APIStatusError)
+            # 原样抛出交上层降级,不再白等一次重试(防慢端点占满线程池配套)
             import httpx
 
-            self._http_client = httpx.Client(trust_env=False, timeout=60.0)
+            self._http_client = httpx.Client(trust_env=False, timeout=self._timeout)
             from openai import OpenAI
             self._client = OpenAI(api_key=self.api_key, base_url=self.base_url,
                                   http_client=self._http_client)

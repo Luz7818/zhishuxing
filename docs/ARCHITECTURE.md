@@ -54,7 +54,7 @@
 | `unity/` | Unity 侧智能体脚本与接入说明 | **不是可构建工程**，没有 Assets/ProjectSettings |
 | `scripts/` | 工具脚本：品牌 PNG 图标渲染（`render_brand_assets.py`）与 Windows exe 打包（`build_exe.py`） | 渲染需要 Pillow（已在 dev 组）；打包需要 pyinstaller |
 | `packaging/` | Windows 单文件 exe 的打包资产：`exe_entry.py` 打包入口 + `app.ico`、`_build_version.txt` 两个生成物 | 后两者由 `build_exe.py` 生成，勿手改 |
-| `tests/` | pytest 套件 | `test_settings.py` 一个文件占 98 个用例 |
+| `tests/` | pytest 套件 | `test_settings.py` 一个文件占 100 个用例 |
 | `legacy/code_optimization/` | 行人仿真向量化基准与报告 | 跑基准会重写入库的 `benchmark_results.json` |
 | `legacy/ui/` | 迁移前的 Streamlit 原型 | 不参与测试，也不在 pyflakes 门禁里 |
 | `docs/DEPLOY.md` | Docker 优先的部署手册 | — |
@@ -70,7 +70,7 @@
 - **`reload_env()` 是唯一 `override=True` 入口**，只在 `POST /api/settings` 保存后调用，只刷新
   `.env` 里出现的键。**在设置页保存过的项以 `.env` 为准**，会盖掉同名 shell 变量；不要把只存在
   于 shell 的密钥在设置页清空——清空会写 `KEY=` 并立即生效，等效于抹掉这把密钥。
-- **写回 `.env` 的五道闸**：① 只接受 `SETTINGS` 注册表内 7 个键；② 值含换行/回车/NUL/`=`
+- **写回 `.env` 的五道闸**：① 只接受 `SETTINGS` 注册表内 8 个键；② 值含换行/回车/NUL/`=`
   拒绝；③ 超 400 字符拒绝、`numeric` 项要有限正数；④ 先备份 `.env.bak` 再 `os.replace` 原子
   替换；⑤ `POST /api/settings` 只认 `remote_addr` 是否 loopback，**不信 `X-Forwarded-For`**。
   全部有用例钉着（`tests/test_settings.py`）。

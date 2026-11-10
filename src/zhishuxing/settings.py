@@ -106,6 +106,17 @@ SETTINGS: Tuple[SettingItem, ...] = (
         default="10",
         numeric=True,
     ),
+    SettingItem(
+        key="SILICONFLOW_TIMEOUT",
+        label="LLM 请求超时（秒）",
+        purpose="后端调用 OpenAI 兼容端点（对话合成/需求解析/OD 提取）的单次请求超时秒数；"
+        "端点偏慢或偶发挂起时调小，可防慢请求占满服务线程。",
+        apply_entry="无需申请，按端点响应情况填一个正数即可。",
+        degrades_to="使用默认 60 秒。",
+        required=False,
+        default="60",
+        numeric=True,
+    ),
 )
 
 MANAGED_KEYS: Tuple[str, ...] = tuple(item.key for item in SETTINGS)

@@ -78,12 +78,15 @@ function toast(message, type = "ok") {
 async function withBusy(btn, runningText, fn) {
   const original = btn.innerHTML;
   btn.disabled = true;
+  /* 等宽换装(F7):spinner 期间锁 min-width,按钮不跳宽,还原后解除 */
+  btn.style.minWidth = `${btn.offsetWidth}px`;
   btn.innerHTML = `<span class="spinner"></span>${runningText}`;
   try {
     return await fn();
   } finally {
     btn.disabled = false;
     btn.innerHTML = original;
+    btn.style.minWidth = "";
   }
 }
 
@@ -107,13 +110,17 @@ function setImage(imgId, frameId, url) {
   bindImgFade(img);
 }
 
-/* 输出图加载淡入:缓存命中直接显示,网络加载时避免破图/半图突兀 */
+/* 输出图加载淡入:缓存命中直接显示,网络加载时避免破图/半图突兀;
+   加载失败给等高框线占位(F7),不再裸破图(alt 文案保留可读) */
 function bindImgFade(img) {
-  if (img.complete && img.naturalWidth) { img.classList.remove("img-fade", "img-in"); return; }
+  if (img.complete && img.naturalWidth) { img.classList.remove("img-fade", "img-in", "img-error"); return; }
   img.classList.add("img-fade");
-  img.classList.remove("img-in");
+  img.classList.remove("img-in", "img-error");
   img.addEventListener("load", () => img.classList.add("img-in"), { once: true });
-  img.addEventListener("error", () => img.classList.remove("img-fade"), { once: true });
+  img.addEventListener("error", () => {
+    img.classList.remove("img-fade");
+    img.classList.add("img-error");
+  }, { once: true });
 }
 
 /* ---------------- 视图与主题(仿 harness:欢迎页 → 应用壳,tab 切换) ---------------- */
@@ -2212,13 +2219,41 @@ function initAppOnce() {
   initLLMPanel();
   switchTab(lastTab() || "overview");
 
+  /* 首屏等待反馈(F7):refreshTopbar/loadGrid 期间 KPI 卡等待 >300ms 才出现
+     等高骨架(短等待禁闪骨架防噪);数据到站由 setTick/tickIn(--dur-3)淡入替换;
+     初始化失败骨架退为「—」可读占位 + toast。reduced-motion 下骨架为静色块
+     (全局块兜底),文本照常先入 DOM 不等动画 */
   (async () => {
+    const kpiIds = ["kpiPolicy", "kpiSteps", "kpiCheckpoints", "kpiRewards"];
+    const skeletonTimer = setTimeout(() => {
+      kpiIds.forEach((id) => { const el = $(id); el.textContent = ""; el.classList.add("skeleton"); });
+    }, 300);
+    const clearSkeleton = (refill) => {
+      clearTimeout(skeletonTimer);
+      let had = false;
+      kpiIds.forEach((id) => {
+        const el = $(id);
+        if (el.classList.contains("skeleton")) { had = true; el.classList.remove("skeleton"); }
+        if (refill && !el.textContent) el.textContent = "—";
+      });
+      return had;
+    };
     try {
       await Promise.all([refreshTopbar(), loadGrid()]);
       flowGroups = await api.get("/api/scenarios");
       renderGroupRows();
       await refreshRewards();
+      /* 数据到站:骨架若出现过,数值文本已在等待期写入,重放一次 tick 入场淡入 */
+      if (clearSkeleton(false)) {
+        kpiIds.forEach((id) => {
+          const el = $(id);
+          el.classList.remove("tick");
+          void el.offsetWidth;
+          el.classList.add("tick");
+        });
+      }
     } catch (error) {
+      clearSkeleton(true);
       toast(`初始化失败：${error.message}`, "err");
     }
   })();

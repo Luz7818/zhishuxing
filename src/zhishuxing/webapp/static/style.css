@@ -1485,3 +1485,31 @@ section.page.leaving {
 @media (max-width: 960px) {
   section.page.leaving { padding-inline: 16px; }
 }
+
+/* ============================================================
+   v6.12 等待与到站反馈(2026-11-11 · 动效升级 F7)——
+   站台候车 → 数据到站定格:KPI 骨架(>300ms 才出现,短等待禁闪)·
+   画廊错峰封顶 · 输出图首次 show 入场 · 破图占位
+   ============================================================ */
+
+/* ---- KPI 等待骨架:与数值行等高防布局跳动;reduced-motion 全局块下为静色块。
+   animation 在此重声明一次以提高特异性:.tick(v6.0 层)与 .skeleton 同特异性且靠后,
+   数值元素残留 .tick 类时会压掉 shimmer,骨架静帧 ---- */
+.kpi-value.skeleton { display: block; width: 88px; height: 25px; margin: 6px 0 0; border-radius: 8px;
+                      animation: shimmer 1.2s infinite linear; }
+
+/* ---- 画廊错峰封顶:delay = min(--gi,2)×60ms,封顶 120ms,第 3 张起同帧;
+   叠加 --dur-3 入场后总感知 ≈360ms ≤400ms(手册红线:60ms/项先例 + 总时长封顶)。
+   欢迎页 Math.min(i*70,210)+.5s riseIn 属 Rare 编排既有豁免,不适用本红线 ---- */
+#gallery .output-frame { animation-delay: calc(min(var(--gi, 0), 2) * 60ms); }
+
+/* ---- 输出图首次 show 入场:与画廊 galleryIn 同语言,不做错峰;
+   display 翻转时动画自播(每次真实 show 各一次),画廊已带 --gi 阶梯不受影响 ---- */
+#simImageFrame.show, #panelResult .output-frame.show { animation: galleryIn var(--dur-3) var(--ease-out); }
+
+/* ---- 破图占位:加载失败的输出图退为等高框线占位,alt 文案保留可读 ---- */
+.output-frame img.img-error {
+  min-height: 140px; padding: 52px 16px; box-sizing: border-box;
+  background: var(--surface-2); border: 1px dashed var(--line-2); border-radius: var(--r-md);
+  color: var(--t3); font-size: 12.5px; text-align: center;
+}

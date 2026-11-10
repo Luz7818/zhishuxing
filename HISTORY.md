@@ -926,3 +926,35 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   grep 复核:admin_login.html 内 `--grad`/裸浅色值仅存在于亮色令牌定义行(0 使用处),
   `brightness` 仅存于说明注释,大括号配平(52/52)。
   `/admin` 登录页明暗两态浏览器手检归入动效升级批收尾统一执行。
+
+## 2026-11-11 · 前端动效升级批(F7):等待与到站反馈补齐(未发版)
+
+### Added(新增)
+
+- **首屏骨架落地**:`.skeleton` 样式此前在而 index.html 0 处使用(grep 已核)——进入
+  工作台 `refreshTopbar`/`loadGrid` 期间,概览 4 张 KPI 卡等待 **>300ms** 才显示等高
+  骨架(`.kpi-value.skeleton`,短等待禁闪骨架防噪);数据到站复用 `tickIn --dur-3` 淡入
+  替换(骨架出现过则重放一次 tick);初始化失败骨架退为「—」可读占位 + toast。
+  reduced-motion 下骨架为静色块(全局块兜底),消息/toast 文本照常先入 DOM 不等动画。
+- **画廊错峰封顶(评审修订数值)**:`delay = min(--gi, 2)×60ms`——封顶 120ms,第 3 张起
+  同帧,叠加 `--dur-3` 入场后总感知 ≈360ms ≤400ms(按手册红线「60ms/项先例 + 总时长
+  封顶 400ms」反推;原「封顶 5 档」提算 480ms 违线故收紧)。欢迎页
+  `Math.min(i*70,210)` + .5s riseIn 属 Rare 编排既有豁免,不动。
+- **输出图首次 show 入场**:`#simImageFrame.show` 与 `#panelResult .output-frame.show`
+  补一次 `galleryIn --dur-3 --ease-out`(与画廊同语言、不做错峰;display 翻转时自播)。
+- **破图占位**:`bindImgFade` error 分支挂 `.img-error`——等高框线占位、alt 文案保留,
+  不再裸破图。
+- **withBusy 防跳宽**:换装 spinner 期间 `min-width` 锁定为换装前宽度,还原后解除,
+  按钮不再跳宽。
+
+### 验证
+
+- 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
+  `node --check app.js` 通过;CSS 括号配平(707/707)。
+- 浏览器实测(本机 serve + Chromium;IAB 标签页渲染帧冻结,只做了计算样式/状态机/
+  canvas 像素级验证,视觉动效无法录看):画廊错峰封顶实测 `--gi:5 → animation-delay
+  0.12s`、`--gi:0 → 0s`;withBusy 换装期间 `min-width` 锁定、还原后解除(等宽语义
+  成立)。**实测发现并修复一处集成缺陷**:`.tick`(v6.0 层)与 `.skeleton` 同特异性
+  且靠后,数值元素残留 `.tick` 类时骨架 shimmer 被压成静帧——`.kpi-value.skeleton`
+  内重声明一次 `animation: shimmer` 提高特异性,复测「skeleton + tick 残留 →
+  animationName: shimmer」通过。

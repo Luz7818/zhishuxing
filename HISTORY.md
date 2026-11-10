@@ -999,3 +999,116 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   pyproject + tag)留待维护者确认后统一执行。
 - 真机视觉走查清单:控制台明暗两主题 hover/关门/切页/侧栏开合、移动端三药丸手感、
   /admin 登录页亮色目检与暗色目检、reduced-motion 下各终态。
+
+## 2026-11-11 · v2.12.0 后端优化批(PERF-05/06/07) + 请求入口健壮性 + 前端动效升级 F1–F7
+
+### 版本判定(为何是 2.12.0)
+
+- **加能力升次版本:2.11.1 → 2.12.0**。本版主体为能力新增/增强:后端性能优化三项
+  (PERF-05 A* 提速 / PERF-06 会话有界化 / PERF-07 超时可配置)、请求入口健壮性与
+  错误信封统一、前端动效升级七项(F1–F7);既有修复成分(500→400、漏网纯色化)不足以
+  落补丁,无破坏契约故不升主版本。
+- 「破坏契约」逐项核对(结论:无):B1(PERF-05)API 契约与 `configs/hub_default.json`
+  零变化;B2 错误信封补 `ok:false` 为纯增量(`static/app.js:44-45` 判
+  `payload.ok===false`、读 `payload.error`,兼容已复核),未知 via `KeyError`→
+  `ValueError` 是错误路径缺陷修复(客户端可触发的 500→400),成功路径契约零变化;
+  B3(PERF-06)schema/依赖零变化;B4(PERF-07)设置注册表新增可选键、读路径非法值
+  回落默认;F1–F7 为表现层,弹层/侧栏 JS 关闭路径零改动。既有消费者无需改任何代码。
+- 「下一个大版本」按仓内先例口径执行 = 下一个正式版本发布条目:2.9.0/2.10.0/2.11.0
+  三轮体验/动效批均为次版本发布,本版同口径;确有契约破坏才升主版本(仓内暂无先例)。
+- **版本口径收口**:2.11.1 发布提交(2c9897c)只改了 `__init__.py`、漏改
+  pyproject.toml(留在 2.11.0),两处自 2.11.1 起不一致——本版发布两处一并落
+  **2.12.0**,恢复「pyproject 与 `__version__` 一致」口径(AGENTS「当前状态」版本行
+  已注明)。
+
+### Added(新增)
+
+- **`SILICONFLOW_TIMEOUT` 设置项(PERF-07)**:LLM(OpenAI 兼容端点)单次请求超时秒数,
+  可选/数值型/默认 60(照 `AMAP_TIMEOUT` 先例,读路径非数值/0/负数/inf 回落);
+  `adapters` 两处 `timeout=60.0` 硬编码改读配置,chat 重试由裸 `except Exception`
+  收窄到 `(APITimeoutError, APIConnectionError)`(4xx 不再白等重试;离线打桩手工验证:
+  `SILICONFLOW_TIMEOUT=45` 生效、超时→重建客户端重试一次成功、BadRequest 原样抛出
+  零重试,不入门禁);`.env.example` 补项(设置项非密钥项);设置注册表 7→8 键同步
+  ARCHITECTURE,陈旧测试计数(201/98)同步 255/100。
+- **前端动效升级 F1–F7**(设计手册「光沿动线走」落地,逐条详见 2026-11-11 各批次
+  条目):
+  - F1 弹层「关门」:cmdk/llm-panel/plan-params 退场过渡(`allow-discrete` 延迟
+    display 翻转,Dock v3.4 先例)+ `details.raw ::details-content` 纯 CSS 渐进增强
+    (@supports 守卫);JS 零改动;
+  - F2 悬停语言统一与死动效清理:两端主按钮 `background-position` 空转遗物整块删除
+    (控制台 v3.4.2 层 + mobile :576/:577/:579),`.15s`/`.12s` transition 时长归
+    `--dur` 阶梯(style :138/:243/:254/:290/:298 换 token、:627/:638 死行删除、
+    mobile :577/:760 同清),卡片到站微抬升统一,明度反馈归一 `--primary-h` 背景换色、
+    两端 `brightness()` 归零,触屏门控补漏;
+  - F3 侧栏收合双轨 + 药丸曲线统一:侧栏文字 opacity 交叉淡出 + `allow-discrete`
+    延迟翻转,控制台 nav-pill 归位 `--ease-in-out`(激活孤儿令牌),移动端补令牌、
+    三药丸归位(只统一曲线不统一实现,.3s/.34s 时长记 scopeNote 下一批);
+  - F4 页面切换「发车-到站」:switchTab 旧页 `.leaving` 淡出+上行(absolute 豁免
+    回流,定时摘类不依赖 transitionend),`main` 补 `position:relative` 定位祖先;
+    docs/CODE-STYLE.md 新增「前端动效规范」章节(语义判据/三缓动分工/两端切换口径/
+    主题切换规范/不回潮红线/scopeNote);
+  - F5 画布主题感知:画布硬编码色改 `--canvas-*` 令牌(明暗两组,暗组与原值逐值
+    一致),CHART_COLORS 明暗两组,applyTheme 触发可见画布 `animate:false` 瞬时重绘
+    (不重放描线;对话小图/微调序列/回退折线留缓存);
+  - F6 管理登录页对齐 2.11.x 语言:主按钮纯色化 + hover `--primary-h` 换色,
+    `prefers-color-scheme:dark` 媒体查询暗色令牌组(无 JS 无存储),shake 对齐
+    `--dur-4`;登录流程零改动;
+  - F7 等待与到站反馈补齐:首屏骨架(>300ms 才出现,tickIn 淡入,失败退「—」+toast),
+    画廊错峰封顶 `min(--gi,2)×60ms`,output-frame 首次 show 入场,破图占位,
+    withBusy 锁宽。
+  - 资产版本递进:style v=6.7→6.12、app v=6.6→6.9(终值,缓存穿透)。
+- **错误信封契约进 docs/ARCHITECTURE.md 关键约定**(随 B2)。
+
+### Changed(变更)
+
+- **PERF-05 A* 热路径提速**:`NavigationMap._blocked_set` 加载后惰性缓存一次
+  (`frozenset`;blocked 全仓只读已核,写入 0 处)——cProfile 20 次
+  `plan_with_preferences`(tag_penalties+soft_via 场景)总耗时 0.389s→0.092s
+  (约 4.4×),`_blocked_set` 累计占比 68.6%(0.267s/42,120 次)→2.9%(0.0026s)。
+- **PERF-06 对话会话运行期有界化**:`_sessions` LRU 容量上限 512(`_touched` 记最近
+  活跃,超限淘汰最久不动者,淘汰会话经 SQLite 主键恢复,命中/重置语义不动);
+  30 天 TTL 清理由「仅启动一次」改「启动 + 写入路径每 50 次落库机会式清理」
+  (同锁串行,失败不阻断落库);零新依赖、schema 不变。
+- **请求入口健壮性(B2)**:客户端可触发的 500 归零——`parse_groups` 缺字段/坏坐标、
+  未知 via(`KeyError`→`ValueError`)、prefs 非 dict、engine 非 amap/hub 全部前置
+  校验回 400;9 处裸 `jsonify({"error"})` 补 `ok:false` 归零;`fail()` 非
+  HTTPException 分支固定文案不泄异常原文(详情只进服务端日志)。
+- **前端动效文档化**:docs/CODE-STYLE.md 新增前端动效规范章节;docs/TESTING.md
+  内联死数字(:9/:19)改指回 AGENTS.md「当前状态」(单一事实来源)。
+- **版本联动**:pyproject.toml(2.11.0 漏改收口)与 `__init__.py`(2.11.1)→
+  **2.12.0**;侧栏 `side-ver` v2.12.0;AGENTS「当前状态」版本行同步。
+
+### Fixed(修复)
+
+- 客户端可触发的 500 归零(B2,见 Changed);管理登录页纯色化漏网(2.11.1 唯一漏网
+  页面,F6 收编);F7 实测发现并修复 `.tick` 残留压 shimmer 的特异性缺陷
+  (`.kpi-value.skeleton` 重声明 animation)。
+
+### 测试
+
+- 244→245→251→253→255,AGENTS「当前状态」逐批回写;新增用例:缓存行为断言 1(B1)、
+  入口校验与错误信封 6(B2)、LRU 淘汰+低频清理 2(B3)、写路径拒绝+读路径回落 2(B4)。
+
+### 未完成与遗留(如实)
+
+- **真机视觉走查未做**(环境限制):本机 IAB 浏览器标签页渲染帧冻结(rAF 不触发,
+  `tab.screenshot()` 报错),过渡/动画的视觉过程无法录看——F1 退场过渡播完、两端
+  hover 手感、侧栏开合跳字、切页发车观感、/admin 亮色渲染目检等,只能在真实渲染
+  环境人工复核;已完成的替代验证(计算样式/CSSOM 规则/状态机/canvas 像素级)逐条
+  记录在同日「收尾」条目。
+- **移动端三药丸 `.3s`/`.34s` 时长未归阶梯**(F3 只统一曲线不统一实现,CODE-STYLE
+  动效章节 scopeNote 已记下一批;sheet/toast 时长不一致同批收)。
+- F2 移动端清单曾有一个前端任务因「绝不碰 webapp 文件」边界冲突未实施(升级提问
+  留档并给出落地方案),后续 F2 批(a637173)已按该方案落地——发布前 grep 复核:
+  两端 `transition` 中 `.15s`/`.12s` 0 残留,`background-position` 悬停死代码
+  0 残留(两端剩余 3 处为 shimmer/lineFlow keyframes 与静态纹理定位豁免)。
+
+### 验证(发布时实跑)
+
+- `pip install -e .` 重装;`python -c "import zhishuxing;print(zhishuxing.__version__)"`
+  → `2.12.0`;
+- `python -m pytest` **255 passed**(39.47s,1 warning 为 torch/pynvml 弃用提示,与本版无关);
+- `python -m pyflakes src/ scripts/ tests/` 0 告警,退出码 0;
+- `zhishuxing smoke` → `Web smoke test passed.`,退出码 0;
+- 提交后打本地 tag `v2.12.0`(按 docs/GIT.md 与 AGENTS「版本发布」行;绝不 push,
+  推送等人确认)。

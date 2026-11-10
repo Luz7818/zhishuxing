@@ -1373,3 +1373,43 @@ details.raw[open] pre { animation: rawIn var(--dur-3) var(--ease-out); }
 /* 对话分析卡:整块内容换新时轻淡入一次(JS 挂 ca-in,reduced-motion 全局抑制) */
 @keyframes caIn { from { opacity: 0; transform: translateY(4px); } }
 .chat-analysis.ca-in { animation: caIn var(--dur-2) var(--ease-out); }
+
+/* ============================================================
+   v6.6 弹层「关门」(2026-11-11 · 动效升级 F1)——
+   cmdk / llm-panel / plan-params 三个弹层退场过渡:opacity+transform
+   --dur-2 --ease-out(比进场 --dur-3 快约 20%),display 经
+   transition-behavior:allow-discrete 延迟到过渡结束再翻转
+   (复用 Dock 开合先例 v3.4 层;不支持的浏览器自动回退为现状直关)。
+   入场不加 @starting-style:fadeIn/popIn keyframes 在 display 翻转时
+   自会重放,叠加过渡会造成双重入场。JS 关闭路径不变(挂 .hidden 即关门)。
+   ============================================================ */
+.cmdk-mask, .llm-panel-mask {
+  transition: opacity var(--dur-2) var(--ease-out), display var(--dur-2) allow-discrete;
+}
+.cmdk, .llm-panel, .plan-params-panel {
+  transition: opacity var(--dur-2) var(--ease-out), transform var(--dur-2) var(--ease-out);
+}
+/* 关门 = 车门合拢:面板下沉淡出、mask 底同步淡出。
+   fadeIn/popIn 声明了 fill both,动画填充值会压过普通声明的 opacity,
+   隐藏态必须一并摘掉 animation 才能让退场过渡生效(再开时动画随
+   display 翻转重放,入场不受影响) */
+.cmdk-mask.hidden, .llm-panel-mask.hidden { animation: none; opacity: 0; }
+.cmdk-mask.hidden .cmdk, .cmdk-mask.hidden .plan-params-panel,
+.llm-panel-mask.hidden .llm-panel { animation: none; opacity: 0; transform: translateY(4px); }
+
+/* ---- details.raw 收起过渡:纯 CSS 渐进增强,仅 Chrome 131+ 生效 ----
+   ::details-content + allow-discrete:收起时内容淡出、content-visibility
+   延迟到过渡结束再翻转;不满足 @supports(Firefox/Safari 等)即维持
+   原生瞬时关闭 = 现状,终态可见无功能损失。明确不做 JS 拦截 summary
+   点击的方案(复杂度违反最简优先);summary 箭头回转由既有
+   transition: transform(var(--dur-2)) 在 [open] 摘除时自然完成,不重复实现 */
+@supports (selector(::details-content)) and (transition-behavior: allow-discrete) {
+  details.raw::details-content {
+    opacity: 0;
+    transition: content-visibility var(--dur-2) allow-discrete, opacity var(--dur-2) var(--ease-out);
+  }
+  details.raw[open]::details-content { opacity: 1; }
+  @starting-style { details.raw[open]::details-content { opacity: 0; } }
+  /* 内容整体随 ::details-content 淡入,pre 内层 rawIn 不再叠加第二层淡入 */
+  details.raw[open] pre { animation: none; }
+}

@@ -731,3 +731,33 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 - 手工验证(离线打桩,不入门禁):SILICONFLOW_TIMEOUT=45 生效到 httpx 客户端;
   超时(APITimeoutError)→ 重建客户端重试一次成功返回;4xx(BadRequestError)→ 原样抛出
   零重试。
+
+## 2026-11-11 · 前端动效升级批(F1):弹层「关门」补全(未发版)
+
+### Changed(变更)
+
+- **cmdk / llm-panel / plan-params 三个弹层补退场过渡**(此前关闭是 `hidden` 直切,
+  与 popIn 入场不对称):关门 = 面板下沉 4px 淡出 + mask 底同步淡出,`--dur-2 --ease-out`
+  (比进场 `--dur-3` 快约 20%),`display` 经 `transition-behavior:allow-discrete` 延迟到
+  过渡结束再翻转(复用 Dock 开合 v3.4 先例,style.css 新增 v6.6 层);不支持 allow-discrete
+  的浏览器自动回退为现状直关,`fadeIn`/`popIn` 入场不受影响,Escape/点 mask 关闭路径
+  (app.js)零改动。实现要点:`fadeIn`/`popIn` 声明了 `fill both`,动画填充值会压过普通
+  声明的 opacity,隐藏态须一并 `animation: none` 才能让退场过渡生效;入场不加
+  `@starting-style`(keyframes 在 display 翻转时自会重放,叠加过渡会双重入场)。
+- **details.raw 收起过渡**:纯 CSS 渐进增强,仅 `@supports (selector(::details-content))
+  and (transition-behavior: allow-discrete)`(Chrome 131+)生效——收起时内容随
+  `::details-content` 淡出,`content-visibility` 延迟翻转;不满足即维持原生瞬时关闭 = 现状。
+  支持态下 `pre` 内层 rawIn 摘除,避免与内容整体淡入叠加两层;summary 箭头回转由既有
+  `transition: transform`(v6.2 层)在 `[open]` 摘除时自然完成,不重复实现。明确不做
+  JS 拦截 summary 点击的方案(复杂度违反最简优先)。
+
+### 无障碍
+
+- reduced-motion 下全局块(transition/animation:none)使关门瞬时落终态,退场纯 CSS、
+  JS 不依赖 transitionend、无残留类;`chatMessages`/`toastHost` aria-live 常驻行为不变。
+
+### 验证
+
+- 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警。
+- CSS 括号配平自查(694/694);本批为纯 CSS 增量,app.js 未改。浏览器逐项手检归入
+  动效升级批收尾统一执行(门禁不阻塞)。

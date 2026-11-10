@@ -239,9 +239,9 @@ function reduceMotion() {
 }
 
 function applyTheme(theme) {
-  /* 主题切换:无页面级动画(GitHub/Linear 同款)。
-     切换瞬间挂 theme-fading 类,让全站颜色以统一曲线滑入新配色,260ms 后移除;
-     reduced-motion 下全局规则会抑制过渡,表现为瞬时切换 */
+/* 主题切换:无页面级动画(GitHub/Linear 同款)。
+   切换瞬间挂 theme-fading 类,让全站颜色以统一曲线滑入新配色,260ms 后移除;
+   reduced-motion 下全局规则会抑制过渡,表现为瞬时切换 */
   document.documentElement.dataset.theme = theme;
   try { localStorage.setItem("zsx_theme", theme); } catch (_) { /* 隐私模式忽略 */ }
   if (!reduceMotion()) {
@@ -250,7 +250,32 @@ function applyTheme(theme) {
     clearTimeout(applyTheme._t);
     applyTheme._t = setTimeout(() => root.classList.remove("theme-fading"), 260);
   }
+  /* 画布取色随主题变(F5):可见画布立即按新令牌重绘(瞬时路径,不重放描线动画) */
+  repaintThemedCanvases();
   /* 日/月图标由 CSS 依 data-theme 切换,无需改按钮内容 */
+}
+
+/* 主题切换后按新令牌重绘可见画布:全部走既有瞬时路径(drawLineChart 传
+   opts.animate=false、drawGrid/drawPolyline 直接画终态),绝不重放 560ms 描线;
+   canvas 像素不参与 theme-fading 颜色过渡,重绘即终态。工作台未初始化时跳过
+   (画布由 initAppOnce 首绘);对话/微调/折线画布的数据在各自渲染处留有缓存 */
+function repaintThemedCanvases() {
+  if (!appInited) return;
+  if (state.nav.grid) repaintNav();
+  if (rewardSeriesCache.length) {
+    const colors = chartColors();
+    rewardSeriesCache = rewardSeriesCache.map((s, i) => ({ ...s, color: colors[i % colors.length] }));
+    drawLineChart($("rewardCanvas"), rewardSeriesCache, { animate: false });
+    $$("#rewardLegend .swatch").forEach((sw, i) => { sw.style.background = colors[i % colors.length]; });
+  }
+  if (ftSeriesCache) {
+    drawLineChart($("ftLossCanvas"), ftSeriesCache.loss, { animate: false });
+    drawLineChart($("ftMetricCanvas"), ftSeriesCache.metric, { animate: false, yMin: 0, yMax: 1 });
+  }
+  if (chatRouteView && $("chatRouteCanvas") && state.nav.grid) {
+    drawGrid($("chatRouteCanvas"), state.nav.grid, chatRouteView);
+  }
+  if (polylineCache) drawPolyline($("planCanvas"), polylineCache.coords, polylineCache.labels);
 }
 
 function initTheme() {
@@ -294,6 +319,10 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+/* 画布主题取色(F5):网格/图表底色与文字从 CSS 令牌读取,随明暗主题重绘
+   (移动端 mobile_app.html drawGrid 为同款先例);令牌组见 style.css --canvas-* */
+const cvar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
 function drawGrid(canvas, grid, view) {
   const ctx = canvas.getContext("2d");
   const W = canvas.width;
@@ -304,10 +333,10 @@ function drawGrid(canvas, grid, view) {
   const ox = (W - cell * grid.width) / 2;
   const oy = (H - cell * grid.height) / 2;
 
-  // 底色网格
-  ctx.fillStyle = "#0a1224";
+  // 底色网格(令牌取色,随明暗主题)
+  ctx.fillStyle = cvar("--canvas-bg");
   ctx.fillRect(ox, oy, cell * grid.width, cell * grid.height);
-  ctx.strokeStyle = "rgba(126,168,220,0.10)";
+  ctx.strokeStyle = cvar("--canvas-line");
   ctx.lineWidth = 1;
   for (let x = 0; x <= grid.width; x++) {
     ctx.beginPath();
@@ -323,7 +352,7 @@ function drawGrid(canvas, grid, view) {
   }
 
   // 阻挡区域
-  ctx.fillStyle = "#33477a";
+  ctx.fillStyle = cvar("--canvas-blocked");
   grid.blocked.forEach(([bx, by]) => {
     roundRect(ctx, ox + bx * cell + 1, oy + by * cell + 1, cell - 2, cell - 2, 3);
     ctx.fill();
@@ -367,7 +396,7 @@ function drawGrid(canvas, grid, view) {
     ctx.beginPath();
     ctx.arc(cx, cy, Math.max(4, cell * 0.22), 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#dce6f7";
+    ctx.fillStyle = cvar("--canvas-text");
     ctx.font = `${Math.max(10, cell * 0.52)}px "Microsoft YaHei"`;
     ctx.textAlign = "center";
     ctx.fillText(lmName(key), cx, cy - cell * 0.55);
@@ -419,7 +448,12 @@ function drawGrid(canvas, grid, view) {
   marker(view && view.goal, "#34d399", "终");
 }
 
-const CHART_COLORS = ["#38bdf8", "#f59e0b", "#34d399", "#a78bfa", "#f87171"];
+/* 图表序列色(F5):明暗两组,亮色取 600 系保证浅底对比度;随主题取用 */
+const CHART_COLORS = {
+  dark: ["#38bdf8", "#f59e0b", "#34d399", "#a78bfa", "#f87171"],
+  light: ["#0284c7", "#b45309", "#059669", "#7c3aed", "#dc2626"],
+};
+const chartColors = () => CHART_COLORS[document.documentElement.dataset.theme === "dark" ? "dark" : "light"];
 
 /* 同一画布的描线动画互斥:新数据到达即取消旧帧,不叠加 */
 const chartAnims = new WeakMap();
@@ -445,8 +479,8 @@ function drawLineChart(canvas, series, opts = {}) {
 
   const render = (progress) => {
     ctx.clearRect(0, 0, W, H);
-    ctx.strokeStyle = "rgba(126,168,220,0.12)";
-    ctx.fillStyle = "#6e7fa0";
+    ctx.strokeStyle = cvar("--canvas-line");
+    ctx.fillStyle = cvar("--canvas-text-dim");
     ctx.font = '11px "Microsoft YaHei"';
     ctx.textAlign = "right";
     for (let i = 0; i <= 4; i++) {
@@ -459,8 +493,9 @@ function drawLineChart(canvas, series, opts = {}) {
       ctx.fillText(yv.toFixed(opts.yDecimals !== undefined ? opts.yDecimals : 1), pad.l - 8, py + 4);
     }
 
+    const colors = chartColors();
     series.forEach((s, si) => {
-      const color = s.color || CHART_COLORS[si % CHART_COLORS.length];
+      const color = s.color || colors[si % colors.length];
       ctx.strokeStyle = color;
       ctx.lineWidth = s.width || 2;
       ctx.beginPath();
@@ -500,7 +535,7 @@ function ctxClear(canvas) {
 function drawChartEmpty(canvas, text) {
   ctxClear(canvas);
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#6e7fa0";
+  ctx.fillStyle = cvar("--canvas-text-dim");
   ctx.font = '13px "Microsoft YaHei"';
   ctx.textAlign = "center";
   ctx.fillText(text, canvas.width / 2, canvas.height / 2);
@@ -529,7 +564,7 @@ function drawPolyline(canvas, coords, labels = {}, progress = 1) {
     H - pad - (lat - latMin) * scale - (H - pad * 2 - (latMax - latMin) * scale) / 2,
   ];
 
-  ctx.fillStyle = "#0a1224";
+  ctx.fillStyle = cvar("--canvas-bg");
   ctx.fillRect(0, 0, W, H);
 
   ctx.strokeStyle = "#38bdf8";
@@ -557,7 +592,7 @@ function drawPolyline(canvas, coords, labels = {}, progress = 1) {
     ctx.lineWidth = 2;
     ctx.stroke();
     if (label) {
-      ctx.fillStyle = "#dce6f7";
+      ctx.fillStyle = cvar("--canvas-text");
       ctx.font = '12px "Microsoft YaHei"';
       ctx.textAlign = "center";
       ctx.fillText(label, x, y - 13);
@@ -569,8 +604,10 @@ function drawPolyline(canvas, coords, labels = {}, progress = 1) {
 
 /* 回退折线的描线入场:与 drawLineChart 同一语言(0.56s ease-out,新请求取消旧帧) */
 const polylineAnims = new WeakMap();
+let polylineCache = null;   // 最近一次折线数据,供主题切换重绘终态
 
 function animatePolyline(canvas, coords, labels) {
+  polylineCache = { coords, labels };
   const prev = polylineAnims.get(canvas);
   if (prev) cancelAnimationFrame(prev);
   if (reduceMotion()) { drawPolyline(canvas, coords, labels, 1); return; }
@@ -1024,11 +1061,12 @@ function highlightRewardSeries(activeIdx) {
 
 async function refreshRewards() {
   const data = await api.get("/api/rl/rewards");
+  const colors = chartColors();
   const series = (data.series || []).map((s, i) => ({
     name: s.file.replace(/\.npy$/, ""),
     x: s.x,
     y: s.y,
-    color: CHART_COLORS[i % CHART_COLORS.length],
+    color: colors[i % colors.length],
   }));
   const canvas = $("rewardCanvas");
   if (!series.length) {
@@ -1042,7 +1080,7 @@ async function refreshRewards() {
   $("rewardLegend").innerHTML = series
     .map(
       (s, i) =>
-        `<button class="key legend-key" data-series="${i}" type="button" title="悬停高亮该曲线"><span class="swatch" style="background:${CHART_COLORS[i % CHART_COLORS.length]}"></span>${esc(s.name)}</button>`
+        `<button class="key legend-key" data-series="${i}" type="button" title="悬停高亮该曲线"><span class="swatch" style="background:${colors[i % colors.length]}"></span>${esc(s.name)}</button>`
     )
     .join("");
   /* 图例悬停高亮对应曲线,移出恢复(多 seed 对比时快速分辨) */
@@ -1316,9 +1354,13 @@ function renderPlanProfile(profile) {
   host.style.display = "";
 }
 
+/* 最近一次对话路线小图的视图,供主题切换重绘(canvas 随分析卡内容替换) */
+let chatRouteView = null;
+
 function renderChatAnalysis(data) {
   const host = $("chatAnalysis");
   const parts = [];
+
 
   if (data.route_error) {
     parts.push(`<div class="callout warn">路线获取失败：${esc(data.route_error)}</div>`);
@@ -1383,12 +1425,13 @@ function renderChatAnalysis(data) {
 
   const canvas = $("chatRouteCanvas");
   if (canvas) {
-    animateGridCanvas(canvas, {
+    chatRouteView = {
       route: data.route.route,
       start: data.route.route[0],
       goal: data.route.route[data.route.route.length - 1],
       progress: 0,
-    });
+    };
+    animateGridCanvas(canvas, chatRouteView);
   }
 }
 
@@ -1474,6 +1517,8 @@ function initLLMPanel() {
 
 /* ---------------- LLM 引擎 ---------------- */
 
+let ftSeriesCache = null;   // 最近一次微调指标序列,供主题切换重绘
+
 function initLLM() {
   $("chipReal").addEventListener("click", () => {
     state.llm.preferReal = !state.llm.preferReal;
@@ -1531,16 +1576,17 @@ function initLLM() {
       $("ftRL").textContent = result.final.rougeL;
 
       const epochs = result.series.epoch;
-      drawLineChart($("ftLossCanvas"), [{ x: epochs, y: result.series.loss, color: "#f87171" }]);
-      drawLineChart(
-        $("ftMetricCanvas"),
-        [
+      /* 序列留档:主题切换后微调画布按新令牌重绘(repaintThemedCanvases) */
+      ftSeriesCache = {
+        loss: [{ x: epochs, y: result.series.loss, color: "#f87171" }],
+        metric: [
           { x: epochs, y: result.series.bleu4, color: "#38bdf8" },
           { x: epochs, y: result.series.rouge1, color: "#34d399" },
           { x: epochs, y: result.series.rougeL, color: "#f59e0b" },
         ],
-        { yMin: 0, yMax: 1 }
-      );
+      };
+      drawLineChart($("ftLossCanvas"), ftSeriesCache.loss);
+      drawLineChart($("ftMetricCanvas"), ftSeriesCache.metric, { yMin: 0, yMax: 1 });
       toast("微调指标报告已生成");
     })
   );

@@ -862,3 +862,37 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 - 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
   `node --check app.js` 通过;`grep -n "255\|201" docs/TESTING.md` 0 命中。
   真机明暗+窄屏手检归入动效升级批收尾统一执行(首轮提交后补)。
+
+## 2026-11-11 · 前端动效升级批(F5):画布主题感知——控制台枢纽图/曲线图随明暗主题取色重绘(未发版)
+
+### Changed(变更)
+
+- **画布取色令牌化**:drawGrid/drawLineChart/drawPolyline/drawChartEmpty 不再硬编码
+  `#0a1224`/`#33477a`/`rgba(126,168,220,.10~.12)`/`#dce6f7`/`#6e7fa0`(grep 复核 0 残留),
+  改从 `getComputedStyle` 读 `--canvas-bg/--canvas-line/--canvas-blocked/--canvas-text/
+  --canvas-text-dim`(移动端 mobile_app.html drawGrid 为同款先例);style.css 补齐
+  明暗两组令牌——暗色组与原硬编码逐值一致(暗色外观零变化),亮色组为新增
+  (浅底浅网格 + 600 系文字,对比度可读)。导航图例「阻挡区域」色板同步改
+  `var(--canvas-blocked)`。
+- **图表序列色明暗两组**:`CHART_COLORS` 改 `dark/light` 两组 + `chartColors()` 取用
+  (暗组维持原色,亮组取 600 系:#0284c7/#b45309/#059669/#7c3aed/#dc2626);
+  奖励曲线图例色板随主题同步。
+- **applyTheme 触发可见画布重绘**:导航画布 `repaintNav`、RL 奖励曲线与微调指标
+  `drawLineChart`、对话内小图 `chatRouteCanvas`、路线规划回退折线 `planCanvas` 全部
+  走**既有瞬时路径**——`drawLineChart` 传 `opts.animate=false`(reduced-motion/
+  animate:false 直绘终态的既有分支),`drawGrid/drawPolyline` 直接画终态,
+  切主题不重放 560ms 描线动画;canvas 像素不参与 theme-fading 颜色过渡,重绘即终态,
+  不双画布、不逐帧。工作台未初始化时跳过(画布由 initAppOnce 首绘)。
+- 为重绘留档:对话小图视图(`chatRouteView`)、微调指标序列(`ftSeriesCache`)、
+  回退折线数据(`polylineCache`)在各自渲染处缓存;奖励曲线缓存按主题重映射序列色
+  并同步图例色板(图例悬停高亮联动不受影响)。
+
+### 不变
+
+- canvas `role=img` 与中文 aria-label(2.11.0 口径)不动;重绘为瞬时非动画,无画布过渡。
+
+### 验证
+
+- 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
+  `node --check app.js` 通过;CSS 括号配平(703/703);grep 硬编码画布色 0 残留。
+  明暗切换后全部画布的浏览器手检归入动效升级批收尾统一执行。

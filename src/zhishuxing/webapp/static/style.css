@@ -40,6 +40,11 @@
   --sb-thumb: #ccd3e0; --surface-2: #f7f8fc;
   --card-inset-hi: inset 0 1px 0 rgba(255,255,255,.75);
   --input-inset: inset 0 1px 2px rgba(15,23,40,.045);
+  /* 画布令牌(F5):drawGrid/drawLineChart/drawPolyline 从 CSS 取色随明暗主题重绘
+     (移动端 mobile_app.html drawGrid 为同款先例);亮色组为新增,暗色组维持原画布配色 */
+  --canvas-bg: #eef1f8; --canvas-line: rgba(15,23,40,.08);
+  --canvas-blocked: #c6cde0;
+  --canvas-text: #4a5670; --canvas-text-dim: #69758c;
 }
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -62,6 +67,10 @@ html[data-theme="dark"] {
   --shadow-sm: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.25);
   --shadow-md: 0 12px 28px -8px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.3);
   --ring: 0 0 0 3px rgba(129,140,248,.25);
+  /* 画布令牌暗色组:与此前 app.js 硬编码画布配色逐值一致(外观不变) */
+  --canvas-bg: #0a1224; --canvas-line: rgba(126,168,220,.10);
+  --canvas-blocked: #33477a;
+  --canvas-text: #dce6f7; --canvas-text-dim: #6e7fa0;
 }
 
 /* ================= 基础 ================= */

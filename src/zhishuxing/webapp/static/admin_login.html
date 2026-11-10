@@ -5,52 +5,83 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>智枢星 · 管理登录</title>
 <style>
-  /* 与控制台同源的品牌令牌:靛蓝紫渐变主操作 + 靛蓝着色阴影(2026-10-31 对齐 v6.0) */
-  :root { color-scheme: light;
-    --grad: linear-gradient(135deg, #4f46e5, #7c3aed);
-    --grad-glow: 0 6px 16px -4px rgba(79, 70, 229, .45);
+  /* 与控制台同源的品牌令牌(2026-11-11 · 动效升级 F6 对齐 2.11.x):
+     主按钮 --primary 纯色(2.11.1 纯色化此前漏掉本页,页面最后触达是 2.10.0),
+     hover 明度反馈与控制台同口径 = --primary-h 背景换色(不再 brightness);
+     明暗跟随系统(prefers-color-scheme 媒体查询 + color-scheme 同步),
+     登录页不引入主题存储与 JS。亮色组与改前逐值一致,亮色外观不变。 */
+  :root {
+    color-scheme: light;
+    --primary: #4f46e5; --primary-h: #4338ca;
+    --btn-glow: 0 6px 16px -4px rgba(79, 70, 229, .45);
     --ring: 0 0 0 3px rgba(79, 70, 229, .16);
     --ease-out: cubic-bezier(.23, 1, .32, 1);
-    --dur-1: .12s; --dur-2: .18s; }
+    --dur-1: .12s; --dur-2: .18s; --dur-4: .3s;
+    /* 表面色(全页硬编码浅色值收编,暗色组逐一覆盖,不留白底裸色值) */
+    --card-bg: #fff;
+    --t1: #1f2d3d; --t3: #8a97a5; --label: #5a6b7b;
+    --line: #d5dde5; --focus-border: #a5b0fc;
+    --err: #c0392b; --ok: #1e8449;
+    --card-shadow: 0 24px 64px -16px rgba(5, 8, 20, .55), inset 0 1px 0 rgba(255,255,255,.8);
+    --sk-inset: inset 0 1px 2px rgba(15,23,40,.045);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      /* 品牌与状态色取值与控制台 html[data-theme=dark] 同源 */
+      --primary: #818cf8; --primary-h: #6d78f0;
+      --btn-glow: 0 6px 18px -4px rgba(129, 140, 248, .5);
+      --ring: 0 0 0 3px rgba(129, 140, 248, .25);
+      --card-bg: #141b33;
+      --t1: #e8edf8; --t3: #93a0bd; --label: #a7b2ca;
+      --line: #2d3957; --focus-border: #818cf8;
+      --err: #f87171; --ok: #34d399;
+      --card-shadow: 0 24px 64px -16px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255,255,255,.05);
+      --sk-inset: inset 0 1px 2px rgba(0,0,0,.22);
+    }
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
     font-family: "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+    /* 页背板本就是深色品牌底(径向底光 + 深蓝渐变),明暗两态沿用,不算浅色裸值 */
     background:
       radial-gradient(900px 420px at 12% -8%, rgba(99,102,241,.20), transparent 62%),
       radial-gradient(760px 380px at 92% 108%, rgba(6,182,212,.12), transparent 60%),
       linear-gradient(165deg, #0b1020 0%, #141b33 100%);
-    color: #1f2d3d;
+    color: var(--t1);
     -webkit-font-smoothing: antialiased;
   }
   .card {
-    width: min(372px, 92vw); background: #fff; border-radius: 18px; padding: 32px 30px 26px;
-    box-shadow: 0 24px 64px -16px rgba(5, 8, 20, .55), inset 0 1px 0 rgba(255,255,255,.8);
+    width: min(372px, 92vw); background: var(--card-bg); border-radius: 18px; padding: 32px 30px 26px;
+    box-shadow: var(--card-shadow);
+    /* Rare 豁免:单次入场编排 .4s,不并入 --dur 阶梯(时长冻结,不改观感) */
     animation: cardIn .4s var(--ease-out) both;
   }
   @keyframes cardIn { from { opacity: 0; transform: translateY(12px) scale(.985); } }
   .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
   .brand img { width: 34px; height: 34px; border-radius: 9px; filter: drop-shadow(0 4px 10px rgba(99,102,241,.4)); }
   .brand b { font-size: 15px; letter-spacing: .2px; }
-  .brand span { display: block; font-size: 11px; color: #8a97a5; }
+  .brand span { display: block; font-size: 11px; color: var(--t3); }
   h1 { margin: 0 0 4px; font-size: 20px; letter-spacing: -.01em; }
-  .sub { margin: 0 0 8px; font-size: 12px; color: #8a97a5; line-height: 1.6; }
-  label { display: block; font-size: 13px; margin: 16px 0 6px; color: #5a6b7b; font-weight: 600; }
+  .sub { margin: 0 0 8px; font-size: 12px; color: var(--t3); line-height: 1.6; }
+  label { display: block; font-size: 13px; margin: 16px 0 6px; color: var(--label); font-weight: 600; }
   input[type=password] {
-    width: 100%; padding: 11px 13px; font-size: 15px; border: 1px solid #d5dde5;
-    border-radius: 10px; outline: none; caret-color: #4f46e5;
-    box-shadow: inset 0 1px 2px rgba(15,23,40,.045);
+    width: 100%; padding: 11px 13px; font-size: 15px; border: 1px solid var(--line);
+    border-radius: 10px; outline: none; caret-color: var(--primary); color: var(--t1);
+    background: transparent;
+    box-shadow: var(--sk-inset);
     transition: border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
   }
-  input[type=password]:focus { border-color: #a5b0fc; box-shadow: var(--ring); }
+  input[type=password]:focus { border-color: var(--focus-border); box-shadow: var(--ring); }
   button {
     width: 100%; margin-top: 20px; padding: 11px 0; font-size: 15px; font-weight: 600; border: 0;
-    border-radius: 10px; background: var(--grad); color: #fff; cursor: pointer;
-    box-shadow: var(--grad-glow), inset 0 1px 0 rgba(255,255,255,.22);
+    border-radius: 10px; background: var(--primary); color: #fff; cursor: pointer;
+    box-shadow: var(--btn-glow), inset 0 1px 0 rgba(255,255,255,.22);
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    transition: filter var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
+    transition: background var(--dur-2) var(--ease-out), transform var(--dur-1) var(--ease-out), box-shadow var(--dur-2) var(--ease-out);
   }
-  button:hover:not(:disabled) { filter: brightness(1.06); }
+  button:hover:not(:disabled) { background: var(--primary-h); }
   button:active:not(:disabled) { transform: scale(.98); box-shadow: 0 2px 8px -2px rgba(79,70,229,.5); }
   button:disabled { opacity: .6; cursor: default; }
   .spinner { width: 14px; height: 14px; flex: none; border-radius: 50%;
@@ -59,10 +90,10 @@
   button.loading .spinner { display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
   #msg { margin: 14px 0 0; font-size: 13px; min-height: 18px; line-height: 1.6; }
-  #msg.err { color: #c0392b; animation: shake .3s var(--ease-out); }
-  #msg.ok { color: #1e8449; }
+  #msg.err { color: var(--err); animation: shake var(--dur-4) var(--ease-out); }
+  #msg.ok { color: var(--ok); }
   @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 65% { transform: translateX(3px); } }
-  .back { display: block; margin-top: 16px; text-align: center; font-size: 13px; color: #4f46e5; text-decoration: none; }
+  .back { display: block; margin-top: 16px; text-align: center; font-size: 13px; color: var(--primary); text-decoration: none; }
   .back:hover { text-decoration: underline; }
   @media (prefers-reduced-motion: reduce) {
     .card, #msg.err { animation: none; }

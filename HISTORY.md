@@ -896,3 +896,33 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 - 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
   `node --check app.js` 通过;CSS 括号配平(703/703);grep 硬编码画布色 0 残留。
   明暗切换后全部画布的浏览器手检归入动效升级批收尾统一执行。
+
+## 2026-11-11 · 前端动效升级批(F6):管理登录页对齐 2.11.x 语言(未发版)
+
+### Changed(变更)
+
+- **主按钮纯色化**:`--grad` 靛蓝→紫渐变(2.11.1 提交 2c9897c 纯色化的唯一漏网页面,
+  该页最后触达 2.10.0)改 `--primary` 纯色 + `--btn-glow` 阴影(照控制台 2.11.1 改名);
+  hover 明度反馈与 F2④ 归一结果同口径——brightness(1.06) 改 `background:
+  var(--primary-h)` 背景换色,明暗两态取控制台同源值(light #4f46e5/#4338ca、
+  dark #818cf8/#6d78f0)。
+- **跟随系统明暗**:替换固定 `color-scheme: light`,新增 `prefers-color-scheme: dark`
+  媒体查询暗色令牌组并同步 `color-scheme`;无需 JS、不引入主题存储(登录页不记忆)。
+  暗色覆盖面按评审判据逐枚举收编全页硬编码浅色值——card 底 #fff、正文 #1f2d3d、
+  次级文字 #8a97a5/#5a6b7b、输入框描边 #d5dde5 与焦点描边 #a5b0fc、`#msg.err`
+  #c0392b、`#msg.ok` #1e8449、`.back`/caret #4f46e5 全部进令牌(dark 组逐一覆盖:
+  #141b33/#e8edf8/#93a0bd/#a7b2ca/#2d3957/#818cf8/#f87171/#34d399),不留白底不可读的
+  裸色值;页背板本就是深色品牌底,明暗两态沿用。亮色组与改前逐值一致,亮色外观不变。
+
+### 不变
+
+- cardIn 入场与错误 shake 保留(shake .3s 与 `--dur-4` 同值改用令牌;cardIn .4s 就地
+  注明 Rare 豁免不并入阶梯);reduced-motion 局部降级(:67-70)继续生效;
+  登录流程(HttpOnly Cookie 会话、登录脚本)零改动。
+
+### 验证
+
+- 门禁:`python -m pytest` 255 passed;`python -m pyflakes src/ scripts/ tests/` 0 告警;
+  grep 复核:admin_login.html 内 `--grad`/裸浅色值仅存在于亮色令牌定义行(0 使用处),
+  `brightness` 仅存于说明注释,大括号配平(52/52)。
+  `/admin` 登录页明暗两态浏览器手检归入动效升级批收尾统一执行。

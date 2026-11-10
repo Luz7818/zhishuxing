@@ -73,3 +73,15 @@ def test_load_navigation_from_config():
     nav = adapter.load_navigation(str(cfg.paths.navigation_config))
     assert nav.width == 30 and nav.height == 16
     assert "entry_a" in nav.landmarks and "metro_gate" in nav.landmarks
+
+
+def test_blocked_set_lazy_cached_and_consistent(simple_map):
+    """blocked set 惰性缓存(PERF-05):构造后不预计算,首访构建,之后返回同一份。
+
+    A* 热路径每个邻居展开都过 is_valid → _blocked_set,重复重建占规划耗时约 2/3;
+    缓存正确性依赖 blocked 只读这一前提(全仓无写入,见 navigation.py 注释)。
+    """
+    assert simple_map._blocked_cache is None          # 构造后首访前不预计算
+    first = simple_map._blocked_set
+    assert first == {(2, 2), (2, 3)}
+    assert simple_map._blocked_set is first           # 二次访问命中缓存,同一对象

@@ -634,3 +634,23 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 - 门禁:pytest 244 passed;`node --check app.js` 通过;浏览器不可开,
   代码层验证:style.css 花括号配平(684/684)、`grep --grad` 归零、
   `135deg` 仅剩 2 处品牌豁免注释在案。
+
+## 2026-11-11 · 后端优化批之一:A* 热路径 blocked set 惰性缓存(PERF-05)
+
+### Changed(变更)
+
+- `NavigationMap._blocked_set` 由"每次访问重建 `set(tuple(...))`"改为加载/构造后惰性缓存
+  一次(`__post_init__` 置空缓存,首访构建 `frozenset`,之后返回同一份)。A* 每展开一个邻居
+  都走 `is_valid → _blocked_set`,不缓存时每次重建 25 格 set;前提已核:全仓 `blocked` 无
+  append/extend/add 写入(只读引用仅 simulation.py:213、system.py:70 传渲染器与
+  service.py 取数),缓存安全。
+- cProfile 实测(20 次 `plan_with_preferences`,tag_penalties+soft_via 场景):总耗时
+  0.389s → 0.092s(约 4.4×),`_blocked_set` 累计占比 68.6% → 2.9%。
+- API 契约、产物命名、`configs/hub_default.json` 结构零变化。
+
+### 验证
+
+- 门禁:`pytest tests/test_navigation.py tests/test_navigation_prefs.py tests/test_simulation.py`
+  21 passed;`python -m pytest` 245 passed(244→245,新增缓存行为断言 1 条);
+  `python -m pyflakes src/ scripts/ tests/` 0 告警;`zhishuxing smoke` 通过
+  (真实规划 [1,2]→[28,12] 含 via=security)。

@@ -78,13 +78,22 @@ class NavigationMap:
     cell_tags: Dict[str, List[Point]] = field(default_factory=dict)
     cell_size_m: float = 30.0
 
+    def __post_init__(self) -> None:
+        # blocked 全仓只读(无 append/extend/add 写入),可放心缓存:
+        # A* 热路径每展开一个邻居都走 is_valid → _blocked_set,
+        # 不缓存时每次访问都重建 set(实测占规划耗时约 2/3,PERF-05)
+        self._blocked_cache: Optional[frozenset] = None
+
     def is_valid(self, node: Point) -> bool:
         x, y = node
         return 0 <= x < self.width and 0 <= y < self.height and node not in self._blocked_set
 
     @property
-    def _blocked_set(self) -> set:
-        return set(tuple(item) for item in self.blocked)
+    def _blocked_set(self) -> frozenset:
+        """惰性缓存:首次访问构建,之后每次返回同一份(勿绕过本属性直改 blocked)。"""
+        if self._blocked_cache is None:
+            self._blocked_cache = frozenset(tuple(item) for item in self.blocked)
+        return self._blocked_cache
 
     def tag_cells(self, tag: str) -> set:
         return {tuple(item) for item in self.cell_tags.get(tag, [])}

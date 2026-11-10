@@ -9,11 +9,14 @@
    模板拼接,保证无密钥时离线演示闭环。
 
 会话状态(历史/需求档案)内存为第一层,SQLite 写穿持久化:进程重启后按
-session_id 主键恢复单条会话,超过 30 天未活跃的会话在服务启动时清理。
+session_id 主键恢复单条会话;超过 30 天未活跃的会话在服务启动时清理一次,
+长驻期间由写入路径低频机会式再清(见 session_store.PURGE_EVERY_N_SAVES);
+内存侧会话按 LRU 容量上限(SESSION_CAPACITY)淘汰,不再无界增长。
 """
 
 from __future__ import annotations
 
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -25,6 +28,9 @@ from .actions import action_envelope_instructions, match_tab_intent, parse_actio
 from .profile import PassengerProfile, profile_from_api_prefs
 
 HISTORY_LIMIT = 12  # 会话保留的最近消息条数(一问一答各算一条)
+# 内存会话容量上限(LRU):命中即常驻的 _sessions 不能随新 session_id 无界增长直到重启;
+# 超限按最近活跃淘汰,被淘汰会话已写穿 SQLite,再次到访按主键恢复,行为不变
+SESSION_CAPACITY = 512
 
 SYNTHESIS_SYSTEM_PROMPT = (
     "你是大型综合交通枢纽的智慧换乘引导助手「智枢星」,真正懂乘客。"
@@ -45,6 +51,8 @@ class TransferAssistant:
         self._service = service
         self._kb = kb or TransferKB.empty()
         self._sessions: Dict[str, Dict[str, Any]] = {}
+        # LRU 记账:session_id -> 最近活跃时刻(monotonic),容量淘汰只看它,不污染会话本体
+        self._touched: Dict[str, float] = {}
         # 会话持久化:内存仍是第一读写层;SQLite 写穿,重启后按主键恢复(见 session_store)
         from .. import config as _cfg
         from .session_store import SessionStore
@@ -64,6 +72,7 @@ class TransferAssistant:
     def reset(self, session_id: str) -> Dict[str, Any]:
         sid = session_id or ""
         self._sessions.pop(sid, None)
+        self._touched.pop(sid, None)
         try:
             self._store.delete(sid)
         except Exception as exc:
@@ -90,6 +99,7 @@ class TransferAssistant:
             except Exception as exc:
                 print(f"[session] 会话恢复失败(仅影响重启恢复):{type(exc).__name__}: {exc}")
         session = self._sessions.setdefault(session_key, {"history": [], "profile": None})
+        self._touch_session(session_key)
 
         # 动作短路:"打开/切换 XX 板块"这类明确指令不经 LLM 直接下发动作
         # (离线确定性,与「LLM 只有增强、必须可降级」口径一致)
@@ -180,6 +190,21 @@ class TransferAssistant:
         except Exception as exc:                      # 持久化失败不阻断对话
             print(f"[session] 会话落库失败(仅影响重启恢复):{type(exc).__name__}: {exc}")
         return payload
+
+    # ------------------------------------------------------------ 会话容量(LRU)
+
+    def _touch_session(self, session_key: str) -> None:
+        """记录活跃时刻;超 SESSION_CAPACITY 时按最近活跃淘汰最久不动者。
+
+        被淘汰会话此前已写穿 SQLite,再次到访走 handle 的主键 load 恢复,合法会话行为不变。
+        """
+        self._touched[session_key] = time.monotonic()
+        overflow = len(self._sessions) - SESSION_CAPACITY
+        if overflow <= 0:
+            return
+        for sid in sorted(self._touched, key=self._touched.__getitem__)[:overflow]:
+            self._sessions.pop(sid, None)
+            self._touched.pop(sid, None)
 
     # ------------------------------------------------------------ 各环节实现
 

@@ -10,7 +10,8 @@
 - **单连接 + 锁**:SQLite 连接随 store 实例持有,写路径全部经
   `threading.Lock` 串行 —— 服务是单实例部署(AGENTS 边界),不追求多进程;
 - **30 天过期**:`purge_expired()` 在 TransferAssistant 构造(即服务启动)时
-  真实调用一次,过期会话静默删除;
+  真实调用一次;长驻进程里另在写入路径机会式清理(每 `PURGE_EVERY_N_SAVES`
+  次落库触发一次,`save()` 内部顺带执行),过期会话静默删除;
 - **profile 存 JSON**:PassengerProfile.to_dict()/from_dict 序列化,
   schema 演进时旧记录解析失败按"无档案"处理,不炸服务。
 """
@@ -25,6 +26,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 DEFAULT_TTL_SECONDS = 30 * 24 * 3600  # 30 天
+# 写入路径机会式清理的频率:每落库 N 次顺带清一次过期会话(低频摊薄 DELETE 扫描成本)
+PURGE_EVERY_N_SAVES = 50
 
 
 class SessionStore:
@@ -42,6 +45,7 @@ class SessionStore:
                )"""
         )
         self._conn.commit()
+        self._saves_since_purge = 0
 
     # ------------------------------------------------------------ 读写
 
@@ -55,6 +59,17 @@ class SessionStore:
                 (session_id, time.time(), payload),
             )
             self._conn.commit()
+            # 机会式过期清理:启动清理之外,长驻进程里过期会话随写入低频淘汰
+            self._saves_since_purge += 1
+            if self._saves_since_purge >= PURGE_EVERY_N_SAVES:
+                self._saves_since_purge = 0
+                try:
+                    removed = self._purge_expired_locked()
+                except sqlite3.Error as exc:
+                    print(f"[session] 机会式过期清理失败(不影响本次落库):{type(exc).__name__}: {exc}")
+                else:
+                    if removed:
+                        print(f"[session] 写入路径清理过期会话 {removed} 条")
 
     def load(self, session_id: str) -> Optional[Dict[str, Any]]:
         with self._lock:
@@ -93,14 +108,18 @@ class SessionStore:
             self._conn.commit()
 
     def purge_expired(self) -> int:
-        """删除超过 TTL 未活跃的会话;返回删除条数(服务启动时调用一次)。"""
-        cutoff = time.time() - self.ttl_seconds
+        """删除超过 TTL 未活跃的会话;返回删除条数(启动时一次+写入路径低频机会式)。"""
         with self._lock:
-            cur = self._conn.execute(
-                "DELETE FROM sessions WHERE updated_at < ?", (cutoff,)
-            )
-            self._conn.commit()
-            return cur.rowcount
+            return self._purge_expired_locked()
+
+    def _purge_expired_locked(self) -> int:
+        """purge 的实现体;调用方必须已持有 self._lock(Lock 不可重入,勿在锁内再走公开方法)。"""
+        cutoff = time.time() - self.ttl_seconds
+        cur = self._conn.execute(
+            "DELETE FROM sessions WHERE updated_at < ?", (cutoff,)
+        )
+        self._conn.commit()
+        return cur.rowcount
 
     def close(self) -> None:
         with self._lock:

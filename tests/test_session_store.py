@@ -156,3 +156,48 @@ def test_assistant_handles_db_failure_gracefully(tmp_path, monkeypatch):
     assert out["action"]["tab"] == "settings"        # 对话不受影响
     a.reset("boom-1")                                # reset 的删库失败同样被吞
     a._store.close()
+
+
+def test_save_opportunistic_purge_every_n_saves(tmp_path):
+    """写入路径低频清理:每 PURGE_EVERY_N_SAVES 次落库机会式清一次过期会话,
+    长驻进程不再只靠启动那一次 purge(PERF-06)。"""
+    import time
+
+    from zhishuxing.llm.session_store import PURGE_EVERY_N_SAVES
+
+    store = SessionStore(db_path=tmp_path / "sessions.db", ttl_seconds=60)
+    store.save("old", {"history": []})   # 计入落库计数
+    with store._lock:
+        store._conn.execute(
+            "UPDATE sessions SET updated_at = ? WHERE session_id = 'old'", (time.time() - 7200,)
+        )
+        store._conn.commit()
+        # 把计数拨到只差一次触发,隔离「前面落库次数」对断言的干扰
+        store._saves_since_purge = PURGE_EVERY_N_SAVES - 1
+
+    store.save("trigger", {"history": []})   # 这次落库应触发机会式清理
+
+    assert store.load("old") is None          # 过期会话被清理
+    assert store.load("trigger") is not None  # 本次落库不受影响
+    assert store._saves_since_purge == 0      # 计数归零重新起算
+    store.close()
+
+
+def test_assistant_sessions_bounded_by_lru_eviction(tmp_path):
+    """内存会话上限(LRU):超 SESSION_CAPACITY 按最近活跃淘汰,新 sid 不再无界增长;
+    淘汰的是最久不活跃者,最新会话保留。"""
+    from zhishuxing.llm.assistant import SESSION_CAPACITY, TransferAssistant
+    from zhishuxing.llm.kb import TransferKB
+
+    class _Stub:
+        pass
+
+    a = TransferAssistant(_Stub(), kb=TransferKB.empty(), db_path=tmp_path / "s.db")
+    total = SESSION_CAPACITY + 8
+    for i in range(total):
+        a.handle("打开设置", session_id=f"sid-{i}")   # intent 短路消息:快速建会话
+
+    assert len(a._sessions) <= SESSION_CAPACITY
+    assert "sid-0" not in a._sessions                  # 最老被淘汰
+    assert f"sid-{total - 1}" in a._sessions           # 最新保留
+    a._store.close()

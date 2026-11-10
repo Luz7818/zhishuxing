@@ -681,3 +681,25 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   + `pytest tests/test_navigation.py` 40 passed;`python -m pytest` 251 passed
   (245→251,新增 6 条:prefs/engine 校验、未知 via 400、缺字段 400、500 固定信封);
   `python -m pyflakes src/ scripts/ tests/` 0 告警。
+
+## 2026-11-11 · 后端优化批之三:对话会话运行期有界化(PERF-06)
+
+### Changed(变更)
+
+- **内存侧 LRU 上限**:`TransferAssistant._sessions` 加 `SESSION_CAPACITY = 512` 容量上限,
+  新增 `_touched` 记账(sid → 最近活跃时刻,monotonic,不污染会话本体与落库 payload),
+  每次 handle 记活跃,超限按最近活跃淘汰最久不动者;被淘汰会话已写穿 SQLite,
+  再次到访走既有主键 load 恢复——命中恢复/重置语义(assistant.py)零改动。
+  此前 `/api/chat` 的新 session_id 命中即常驻,内存随新 sid 无界增长直到重启。
+- **DB 侧低频清理**:30 天 TTL `purge_expired()` 原「仅服务启动清一次」改为
+  「启动一次 + 写入路径机会式清理(每 `PURGE_EVERY_N_SAVES = 50` 次落库触发一次)」;
+  清理与落库同锁串行(`_purge_expired_locked` 内部实现体,避免 Lock 不可重入死锁),
+  清理失败只打印告警不阻断本次落库。零新依赖、schema 不变。
+- `session_store.py` 与 `assistant.py` 模块 docstring 同步新语义;
+  AGENTS「对话会话已持久化」条目的「30 天不活跃自动清理」语义仍成立,核对未改。
+
+### 验证
+
+- 门禁:`pytest tests/test_session_store.py` 11 passed(新增上限淘汰与低频清理用例 2 条);
+  `python -m pytest` 253 passed(251→253);`python -m pyflakes src/ scripts/ tests/` 0 告警;
+  跑完 `git status` 干净(data/outputs/ 等运行时产物未入库)。

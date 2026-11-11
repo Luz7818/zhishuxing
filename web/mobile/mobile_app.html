@@ -530,8 +530,8 @@
 
     .mode-tabs { position: relative; display: flex; gap: 6px; padding: 5px; margin-bottom: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; }
     /* 滑动高亮药丸:选中态在两个模式间滑移(与底部导航同一语言),而非原地换底色
-       (F3 曲线归位:在屏内移动走 --ease-in-out;.3s 硬编码时长留待下一批归阶梯) */
-    .mode-pill { position: absolute; top: 5px; bottom: 5px; left: 0; border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-xs), var(--card-hi); transition: transform .3s var(--ease-in-out), width .3s var(--ease-in-out); z-index: 0; }
+       (F3 曲线归位:在屏内移动走 --ease-in-out;2.12 收尾时长归 --dur-4 阶梯,与 seg-pill 同口径) */
+    .mode-pill { position: absolute; top: 5px; bottom: 5px; left: 0; border-radius: 999px; background: var(--surface); box-shadow: var(--shadow-xs), var(--card-hi); transition: transform var(--dur-4) var(--ease-in-out), width var(--dur-4) var(--ease-in-out); z-index: 0; }
     .mode-pill.no-anim { transition: none !important; }
     .mode-tab { position: relative; z-index: 1; flex: 1; text-align: center; padding: 8px 0; border-radius: 999px; font-size: 12.5px; font-weight: 500; color: var(--t3); transition: color .18s var(--ease-out); cursor: pointer; }
     .mode-tab.active { color: var(--primary); font-weight: 700; }
@@ -720,11 +720,11 @@
     .nav-item.active .nv-ico { background: transparent; transform: translateY(-1px); }
     .nav-item:active .nv-ico { transform: scale(.92); }
     /* 滑动高亮药丸:在 tab 之间滑移(单一高亮元素,不是每项各自淡入)
-       (F3 曲线归位:--ease-in-out,检票闸机滑轨/列车屏内行进;.34s 时长留待下一批归阶梯) */
+       (F3 曲线归位:--ease-in-out,检票闸机滑轨/列车屏内行进;2.12 收尾时长归 --dur-4 阶梯) */
     .nav-pill {
       position: absolute; top: 5px; bottom: 5px; left: 0; width: 0;
       border-radius: 15px; background: var(--primary-soft); z-index: 0;
-      transition: transform .34s var(--ease-in-out), width .34s var(--ease-in-out);
+      transition: transform var(--dur-4) var(--ease-in-out), width var(--dur-4) var(--ease-in-out);
     }
     .nav-pill.no-anim { transition: none !important; }
 

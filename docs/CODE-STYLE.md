@@ -51,6 +51,6 @@
 - **不回潮红线**:2.10.0 已否决滚动耦合 reveal(进过视口即定格,git c20ccda);
   主按钮保持 2.11.1 纯色口径不回升渐变;hover 明度反馈单一机制 = `--primary-h`/
   `--surface-2` 背景换色,不引入 brightness。
-- **scopeNote(下一批待收)**:移动端三处滑动药丸(mode/seg/nav)曲线已统一
-  `--ease-in-out`,但 .3s/.34s 时长仍硬编码,未归 `--dur-*` 阶梯(控制台 nav-pill 已是
-  `--dur-3`);历史 sheet 出入场 .24s~.32s 与 toast 时长两端不一致,同样留待下一批。
+- **scopeNote(下一批待收)**:移动端三处滑动药丸(mode/seg/nav)曲线与时长均已归位
+  (`--ease-in-out` + `var(--dur-4)`,2.12 收尾批清账;控制台 nav-pill 为 `--dur-3`);
+  历史 sheet 出入场 .24s~.32s 与 toast 时长两端不一致,仍留待下一批。

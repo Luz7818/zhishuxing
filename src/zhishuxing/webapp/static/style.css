@@ -860,11 +860,14 @@ html[data-theme="dark"] .legend .swatch { box-shadow: inset 0 0 0 1px rgba(255,2
 .hstat .hs-txt b { display: block; font-size: 20px; margin: 0; }
 .hstat .hs-txt > span { font-size: 11.5px; color: #9aa8c2; white-space: nowrap; }
 
-/* ---- 欢迎页特性卡:斜向光泽扫过(hover 一次性动效) ---- */
+/* ---- 欢迎页特性卡:斜向光泽扫过(hover 一次性动效) ----
+   Rare 豁免(CODE-STYLE 动效章节已登记):光泽 = 光沿动线行进母题(heroSheen/lineFlow
+   同族),0.3s 阶梯上限内呈现不出「扫过」的行进感,保留 0.8s 自有节奏;缓动归
+   --ease-in-out(在屏内行进分工),不落裸 ease */
 .feat { position: relative; overflow: hidden; }
 .feat::after { content: ""; position: absolute; inset: 0; pointer-events: none;
                background: linear-gradient(115deg, transparent 32%, rgba(165,243,252,.09) 48%, transparent 62%);
-               transform: translateX(-130%); transition: transform .8s ease; }
+               transform: translateX(-130%); transition: transform .8s var(--ease-in-out); }
 .feat:hover::after { transform: translateX(130%); }
 .feat:hover { box-shadow: var(--shadow-sm); }
 

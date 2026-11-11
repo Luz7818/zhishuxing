@@ -27,9 +27,9 @@ from ..rl.runtime import MADDPGRuntime
 def parse_groups(groups_payload: List[Dict[str, Any]]) -> List[PassengerGroup]:
     """把 API payload（[x,y] 坐标）解析为 PassengerGroup。
 
-    缺必需字段 / 坐标形状不对一律抛 ValueError（路由层既有 ValueError→400 通道），
-    不让 KeyError/IndexError/TypeError 落进 500 —— 客户端可触发的错误不该按服务端故障上报。
-    """
+    缺必需字段 / 坐标形状不对 / 坐标元素与可选字段显式 null 一律抛 ValueError
+    （路由层既有 ValueError→400 通道），不让 KeyError/IndexError/TypeError 落进 500
+    —— 客户端可修正的输入错误不该按服务端故障上报（如 [null,1] 的 int(None)）。"""
     groups: List[PassengerGroup] = []
     for item in groups_payload:
         if not isinstance(item, dict):
@@ -38,14 +38,24 @@ def parse_groups(groups_payload: List[Dict[str, Any]]) -> List[PassengerGroup]:
         if missing:
             raise ValueError(f"场景组缺少必需字段: {'/'.join(missing)}")
         for key in ("start", "goal"):
-            if not isinstance(item[key], (list, tuple)) or len(item[key]) != 2:
+            coord = item[key]
+            if not isinstance(coord, (list, tuple)) or len(coord) != 2:
                 raise ValueError(f"场景组 {key} 应为 [x, y] 两项坐标")
+            if any(el is None or isinstance(el, (dict, list, tuple)) for el in coord):
+                raise ValueError(f"场景组 {key} 坐标两项都应为数值,不能为 null 或数组/对象")
+        for key, default in (("release_time", 0), ("passengers", 10)):
+            raw = item.get(key, default)
+            if raw is None or isinstance(raw, (dict, list, tuple)):
+                raise ValueError(f"场景组 {key} 应为数值,不能为 null 或数组/对象")
+        via = item.get("via_landmarks", [])
+        if not isinstance(via, (list, tuple)):
+            raise ValueError("场景组 via_landmarks 应为地标名数组,不能为 null 或字符串")
         groups.append(
             PassengerGroup(
                 name=item["name"],
                 start=(int(item["start"][0]), int(item["start"][1])),
                 goal=(int(item["goal"][0]), int(item["goal"][1])),
-                via_landmarks=item.get("via_landmarks", []),
+                via_landmarks=via,
                 release_time=int(item.get("release_time", 0)),
                 passengers=int(item.get("passengers", 10)),
             )

@@ -405,6 +405,22 @@ def test_dashboard_rejects_group_missing_fields(client):
     assert "start" in bad_shape.json["error"]
 
 
+def test_dashboard_rejects_group_null_values(client):
+    """场景组坐标元素与可选字段显式 null 按 400 拒收(原 int(None) TypeError→500)。"""
+    base = {"name": "g", "start": [1, 2], "goal": [28, 12]}
+    cases = [
+        {**base, "start": [None, 1]},      # 坐标元素 null:int(None) → TypeError(500)
+        {**base, "goal": [28, None]},
+        {**base, "release_time": None},    # 可选字段显式 null:int(None) → TypeError(500)
+        {**base, "passengers": None},
+        {**base, "via_landmarks": None},   # null 越过 .get 默认值,业务层迭代 None → 500
+    ]
+    for payload in cases:
+        resp = client.post("/api/dashboard/run", json={"groups": [payload]})
+        assert resp.status_code == 400, payload
+        assert resp.json["ok"] is False
+
+
 def test_internal_error_returns_fixed_envelope_without_exc_text(client, monkeypatch):
     """fail() 非 HTTPException 分支回固定文案,异常原文只进服务端日志不回传客户端。"""
     svc = client.application.extensions["service"]

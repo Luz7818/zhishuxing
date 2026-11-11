@@ -217,8 +217,8 @@ section.page.active { display: block; }   /* 入场动效移至 v3.4 的子元�
 
 /* ================= 卡片 ================= */
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
-        box-shadow: var(--shadow-xs), var(--card-inset-hi); padding: 20px 24px 22px; margin-bottom: 20px;
-        transition: border-color .18s ease, box-shadow .18s ease; }
+        box-shadow: var(--shadow-xs), var(--card-inset-hi); padding: 20px 24px 22px; margin-bottom: 20px; }
+/* 卡片 transition 统一在 v6.4 重定时层声明(border-color/box-shadow --dur-2 + transform --dur-1) */
 .card:hover { border-color: var(--line-2); box-shadow: var(--shadow-sm), var(--card-inset-hi); }
 .card > h3 { margin: 0 0 4px; font-size: 15px; font-weight: 700; letter-spacing: .1px; }
 .card > .desc { color: var(--t3); font-size: 12.5px; margin: 0 0 16px; line-height: 1.6; }

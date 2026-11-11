@@ -1149,3 +1149,38 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
   弃用提示,与本批无关);`python -m pytest -o addopts="" --collect-only -q` 262
   collected;`python -m pyflakes src/ scripts/ tests/` 0 告警退出码 0;`zhishuxing
   smoke` → `Web smoke test passed.`。版本号不动(测试基建+单点前端缺陷修复,未发版)。
+
+
+## 2026-11-12 · SQLite 上线三件套:WAL + busy_timeout + updated_at 索引(未发版)
+
+### Added(新增)
+
+- **会话库连接统一上线三件套**(`llm/session_store.py`,综合路线图 §3.2-1 判定
+  「上线硬前置」,不做就带 SQLITE_BUSY 风险上公网):
+  - `journal_mode=WAL`:写不阻塞读(读者拿一致性快照),备份/运维工具并发读库时
+    服务写路径不再互斥等待;WAL 是库文件持久属性,存量库打开时原位升级、无需迁移
+    脚本;伴生 `-wal`/`-shm` 文件与库同目录;
+  - `busy_timeout=5000`(`BUSY_TIMEOUT_MS` 常量):`threading.Lock` 只覆盖单实例内
+    并发,这里补锁模型之外的进程级锁冲突(备份/运维工具短暂持库)的内部重试窗口,
+    不再立即抛 "database is locked";
+  - `updated_at` 索引(`idx_sessions_updated_at`):`purge_expired` 的
+    `DELETE WHERE updated_at < ?` 由 SCAN 全表改 SEARCH 走索引(深评 §2 扣分点
+    「`updated_at` 无索引,purge_expired 全表扫描」收口),TTL 清理成本随过期条数
+    而非表大小增长。
+- `tests/test_session_store.py` +4 条钉死三件套:新连接即 WAL/busy_timeout=5000
+  (带裸连接对照组防恒真)、WAL 重开持久(等价服务重启)、索引在库且
+  EXPLAIN QUERY PLAN 走 SEARCH 不 SCAN、旧格式库原位升级(旧数据可读可续写)。
+  负向验证:git stash 回退实现 → 4 条新测试全红,还原后全绿。
+
+### 文档
+
+- AGENTS「当前状态」测试两行 262→266、「对话会话已持久化」约定行补三件套与备份
+  伴生文件提示;README「262 个测试通过」→266;src/README session_store 行补
+  WAL/busy_timeout/索引;docs/DEPLOY.md 卷数据段补「会话库为 WAL 模式,运行中只拷
+  sessions.db 会漏最近写入,备份须连 -wal/-shm 伴生文件一起取」。
+- 版本号不动(部署加固,无契约变化,未发版)。
+
+### 测试
+
+- 262→266(+4);`python -m pytest` **266 passed**;`python -m pyflakes src/ scripts/
+  tests/` 0 告警;`zhishuxing smoke` → `Web smoke test passed.`。

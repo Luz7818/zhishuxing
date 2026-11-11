@@ -102,8 +102,8 @@
 
 | 项 | 值 | 复核命令 |
 |---|---|---|
-| 测试 | `262 passed`（本机实测 20–60 s 之间浮动，受机器负载影响，别当判据） | `python -m pytest` |
-| 用例分布 | `262 tests collected` | `python -m pytest -o addopts="" --collect-only -q` |
+| 测试 | `266 passed`（本机实测 20–60 s 之间浮动，受机器负载影响，别当判据） | `python -m pytest` |
+| 用例分布 | `266 tests collected` | `python -m pytest -o addopts="" --collect-only -q` |
 | 静态检查 | `0 告警`，退出码 0 | `python -m pyflakes src/ scripts/ tests/` |
 | API 冒烟 | `Web smoke test passed.`，退出码 0 | `zhishuxing smoke` |
 | 配置体检 | 本机配好 3 项必需密钥 → 退出码 0；全新 clone 无 `.env` → 退出码 1 并列缺 3 项 | `zhishuxing doctor` |
@@ -142,7 +142,8 @@
   其余功能不受影响。本机曾有的 `third_party/` 镜像已于 2026-10-07 删除（代码零引用）。
 - **测试与 smoke 会写 `data/outputs/`**（未跟踪）；不要把某张图当基线提交进 `samples/`。
 - **对话会话已持久化**（2.3）：内存是第一读写层，SQLite 写穿到 `data/runs/sessions.db`，
-  重启按 session_id 惰性回填，30 天不活跃自动清理。
+  重启按 session_id 惰性回填，30 天不活跃自动清理；会话库连接统一 **WAL 日志 +
+  busy_timeout=5000 + updated_at 索引**（上线三件套，备份须含 `-wal`/`-shm` 伴生文件）。
 - **全链路都是请求/响应，没有流式推送**：没有 SSE/WebSocket。
 - 不要把 `data/samples/` 当运行时目录去改；不要给 `legacy/` 补测试或塞进 pyflakes；
   不要放宽 `POST /api/settings` 的 loopback 判定；不要给 `unity/` 造工程文件或写 CI；

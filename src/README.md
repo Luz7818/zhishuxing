@@ -74,7 +74,7 @@
 | `kb.py` | 纯 Python BM25（中文 2-gram + ASCII 词，标题重复一次加权）；`ingest_directory()` 把 txt/md/html 清洗切段写入 JSONL，按 id 覆盖所以可重复跑 | `assistant.py`、`cli.py kb-ingest` |
 | `adapters.py` | `MockLLMAdapter`（确定性模板，`mock=True`）与 `SiliconFlowLLMAdapter`（OpenAI 兼容，缺 Key 或未装 `openai` 时抛 `RuntimeError` 由调用方降级） | `system.py`、`service.py`、`assistant.py` |
 | `actions.py` | 智能体动作协议：动作注册表白名单 + 两条触发通道（"打开/切换板块"规则短路不经 LLM、泛化请求由 LLM 输出 JSON 动作信封），服务端校验后下发前端执行（如 `switch_tab`） | `assistant.py` 的 `handle()` |
-| `session_store.py` | 会话持久化：SQLite 单文件（`data/runs/sessions.db`）写穿读缓存，重启按 `session_id` 惰性回填，30 天不活跃清理 | `assistant.py`（构造 `SessionStore`） |
+| `session_store.py` | 会话持久化：SQLite 单文件（`data/runs/sessions.db`）写穿读缓存，重启按 `session_id` 惰性回填，30 天不活跃清理（`updated_at` 索引加速）；连接统一 WAL 日志 + busy_timeout（上线三件套） | `assistant.py`（构造 `SessionStore`） |
 
 ## `zhishuxing/planning/` 与 `zhishuxing/analysis/`
 

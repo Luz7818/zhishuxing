@@ -15,7 +15,9 @@ curl http://127.0.0.1:7860/health
 
 - 服务只监听 `127.0.0.1:7860`,公网请前置 Nginx/Caddy 反代 + HTTPS(证书用 certbot 自动签续);
 - 数据都在卷里(`outputs` / `model` / `runs`),镜像重建不丢;**会话库 `sessions.db`
-  在 `runs` 卷中,服务重启后对话历史照常恢复**(30 天不活跃自动清理);
+  在 `runs` 卷中,服务重启后对话历史照常恢复**(30 天不活跃自动清理);会话库为 WAL
+  日志模式,运行中只拷 `sessions.db` 会漏最近写入 —— 备份须连 `-wal`/`-shm` 伴生
+  文件一起取(或先停服再整卷打包);
 - 更新 = `git pull && docker compose up -d --build`;回滚 = 换镜像重建;
 - **单实例边界**:进程内锁不跨进程,`docker compose` 里不要 scale 副本(AGENTS 约定)。
 

@@ -201,3 +201,79 @@ def test_assistant_sessions_bounded_by_lru_eviction(tmp_path):
     assert "sid-0" not in a._sessions                  # 最老被淘汰
     assert f"sid-{total - 1}" in a._sessions           # 最新保留
     a._store.close()
+
+
+# -------------------------------------------------------- 上线三件套(WAL+busy_timeout+索引)
+
+def test_wal_and_busy_timeout_applied_on_new_db(tmp_path):
+    """上线三件套之一/之二(综合路线图 §3.2-1「上线硬前置」):SessionStore 打开的
+    连接即处于 WAL 模式、busy_timeout=5000 —— 不做就带 SQLITE_BUSY 风险上公网。"""
+    import sqlite3 as _sqlite3
+
+    bare = _sqlite3.connect(str(tmp_path / "fresh.db"))    # 对照组:裸连接默认非 WAL,防恒真断言
+    try:
+        assert bare.execute("PRAGMA journal_mode").fetchone()[0] != "wal"
+    finally:
+        bare.close()
+
+    store = SessionStore(db_path=tmp_path / "sessions.db")
+    assert store._conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    assert store._conn.execute("PRAGMA busy_timeout").fetchone()[0] == 5000
+    store.close()
+
+
+def test_wal_persists_across_reopen(tmp_path):
+    """WAL 是库文件的持久属性:close 后用裸连接重开(等价服务重启/运维排查)仍是 WAL,
+    不依赖「每次连接重设」这一兜底。"""
+    import sqlite3
+
+    db = tmp_path / "sessions.db"
+    store = SessionStore(db_path=db)
+    store.save("s-1", {"history": [1]})
+    store.close()
+
+    raw = sqlite3.connect(str(db))
+    try:
+        assert raw.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    finally:
+        raw.close()
+
+
+def test_updated_at_index_serves_purge_query_plan(tmp_path):
+    """上线三件套之三:idx_sessions_updated_at 在库,且 purge_expired 的
+    `DELETE WHERE updated_at < ?` 查询计划走 SEARCH(索引)而非 SCAN(全表)——
+    深评 §2 扣分点收口,TTL 清理成本随过期条数而非表大小增长。"""
+    store = SessionStore(db_path=tmp_path / "sessions.db")
+    names = {row[1] for row in store._conn.execute("PRAGMA index_list('sessions')").fetchall()}
+    assert "idx_sessions_updated_at" in names
+
+    plan = store._conn.execute(
+        "EXPLAIN QUERY PLAN DELETE FROM sessions WHERE updated_at < ?", (0,)
+    ).fetchall()
+    detail = " ".join(str(row[-1]) for row in plan).lower()
+    assert "idx_sessions_updated_at" in detail
+    assert "scan" not in detail          # 有索引时计划为 SEARCH ... USING INDEX(本机实测)
+    store.close()
+
+
+def test_legacy_db_upgraded_in_place(tmp_path):
+    """存量库升级:旧格式库(非 WAL、无索引、已有数据)被新代码打开时原位补齐
+    WAL 与索引,旧数据完好可续写 —— 部署侧 git pull 重启即得,无需迁移脚本。"""
+    import sqlite3
+
+    db = tmp_path / "sessions.db"
+    raw = sqlite3.connect(str(db))
+    raw.execute(
+        "CREATE TABLE sessions ("
+        "session_id TEXT PRIMARY KEY, updated_at REAL NOT NULL, payload TEXT NOT NULL)"
+    )
+    raw.execute("INSERT INTO sessions VALUES ('legacy', 1, '{\"history\":[\"旧\"]}')")
+    raw.commit()
+    raw.close()
+
+    store = SessionStore(db_path=db)
+    assert store.load("legacy")["history"] == ["旧"]       # 旧数据原样可读
+    assert store._conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
+    store.save("legacy", {"history": ["新"]})              # 原位续写不冲突
+    assert store.load("legacy")["history"] == ["新"]
+    store.close()

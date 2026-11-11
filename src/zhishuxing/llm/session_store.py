@@ -9,9 +9,14 @@
   不做整表回填(`load_missing` 仅保留给测试与运维工具);
 - **单连接 + 锁**:SQLite 连接随 store 实例持有,写路径全部经
   `threading.Lock` 串行 —— 服务是单实例部署(AGENTS 边界),不追求多进程;
+  连接统一 WAL 日志 + busy_timeout(上线三件套,综合路线图 §3.2-1):写不阻塞读、
+  进程级锁冲突内部重试 5 秒 —— 锁模型覆盖不了的场景(备份/运维工具并发开库)不再
+  立即抛 "database is locked";
 - **30 天过期**:`purge_expired()` 在 TransferAssistant 构造(即服务启动)时
   真实调用一次;长驻进程里另在写入路径机会式清理(每 `PURGE_EVERY_N_SAVES`
-  次落库触发一次,`save()` 内部顺带执行),过期会话静默删除;
+  次落库触发一次,`save()` 内部顺带执行),过期会话静默删除;`updated_at`
+  有索引(上线三件套之一),`DELETE WHERE updated_at < ?` 走索引而非全表扫描
+  (深评 §2 指出的第一个补点);
 - **profile 存 JSON**:PassengerProfile.to_dict()/from_dict 序列化,
   schema 演进时旧记录解析失败按"无档案"处理,不炸服务。
 """
@@ -28,6 +33,9 @@ from typing import Any, Dict, Optional
 DEFAULT_TTL_SECONDS = 30 * 24 * 3600  # 30 天
 # 写入路径机会式清理的频率:每落库 N 次顺带清一次过期会话(低频摊薄 DELETE 扫描成本)
 PURGE_EVERY_N_SAVES = 50
+# 上线三件套之 busy_timeout(SQLITE_BUSY 内部重试上限,毫秒):进程级锁冲突
+# (备份/运维工具短暂持库)时等待 5 秒而非立即抛 "database is locked"
+BUSY_TIMEOUT_MS = 5000
 
 
 class SessionStore:
@@ -37,12 +45,28 @@ class SessionStore:
         self._lock = threading.Lock()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+        # 上线三件套(WAL + busy_timeout + updated_at 索引;综合路线图 §3.2-1 判定
+        # 「上线硬前置」,不做就带 SQLITE_BUSY 风险上公网):
+        # - journal_mode=WAL:写不阻塞读(读者拿一致性快照),备份/运维工具并发
+        #   读库时服务写路径不再互斥等待;WAL 是库文件的持久属性,存量库打开时
+        #   原位升级、无需迁移脚本,重设为幂等兜底。伴生的 -wal/-shm 文件与库
+        #   同目录,备份须三者同取(或先 checkpoint),见 docs/DEPLOY.md 提示。
+        # - busy_timeout=5000:threading.Lock 只覆盖单实例内的并发,这里补的是
+        #   锁模型之外的进程级冲突(SQLITE_BUSY)的内部重试窗口。
+        self._conn.execute(f"PRAGMA busy_timeout={BUSY_TIMEOUT_MS}")
+        self._conn.execute("PRAGMA journal_mode=WAL").fetchone()
         self._conn.execute(
             """CREATE TABLE IF NOT EXISTS sessions (
                    session_id TEXT PRIMARY KEY,
                    updated_at REAL NOT NULL,
                    payload    TEXT NOT NULL
                )"""
+        )
+        # 上线三件套之 updated_at 索引:purge_expired 的
+        # `DELETE WHERE updated_at < ?` 由 SCAN 全表改 SEARCH 走索引,
+        # TTL 清理成本随过期条数而非表大小增长(深评 §2 扣分点收口)
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_sessions_updated_at ON sessions (updated_at)"
         )
         self._conn.commit()
         self._saves_since_purge = 0

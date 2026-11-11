@@ -276,6 +276,9 @@ function repaintThemedCanvases() {
     $$("#rewardLegend .swatch").forEach((sw, i) => { sw.style.background = colors[i % colors.length]; });
   }
   if (ftSeriesCache) {
+    const fc = ftColors();
+    ftSeriesCache.loss[0] = { ...ftSeriesCache.loss[0], color: fc[0] };
+    ftSeriesCache.metric = ftSeriesCache.metric.map((s, i) => ({ ...s, color: fc[i + 1] }));
     drawLineChart($("ftLossCanvas"), ftSeriesCache.loss, { animate: false });
     drawLineChart($("ftMetricCanvas"), ftSeriesCache.metric, { animate: false, yMin: 0, yMax: 1 });
   }
@@ -462,6 +465,23 @@ const CHART_COLORS = {
 };
 const chartColors = () => CHART_COLORS[document.documentElement.dataset.theme === "dark" ? "dark" : "light"];
 
+/* 微调序列色(2.12 收尾):F5 时留缓存的暗色板硬编码收编,与 CHART_COLORS 同口径——
+   明暗两组、亮色取 600 系保证浅底对比度;[损失, BLEU4, ROUGE-1, ROUGE-L] 各自
+   色相稳定(损失红、指标蓝/绿/琥珀),不随 chartColors 调色板序号漂移 */
+const FT_COLORS = {
+  dark: ["#f87171", "#38bdf8", "#34d399", "#f59e0b"],
+  light: ["#dc2626", "#0284c7", "#059669", "#b45309"],
+};
+const ftColors = () => FT_COLORS[document.documentElement.dataset.theme === "dark" ? "dark" : "light"];
+
+/* 回退折线色(2.12 收尾):行进线/辉光/起终点 pin 随明暗主题取色,亮色取 600 系;
+   重绘走 repaintThemedCanvases 既有路径(折线缓存按新主题重画终态) */
+const POLYLINE_COLORS = {
+  dark: { route: "#38bdf8", routeGlow: "rgba(56,189,248,.6)", origin: "#22d3ee", dest: "#34d399" },
+  light: { route: "#0284c7", routeGlow: "rgba(2,132,199,.6)", origin: "#0891b2", dest: "#059669" },
+};
+const polylineColors = () => POLYLINE_COLORS[document.documentElement.dataset.theme === "dark" ? "dark" : "light"];
+
 /* 同一画布的描线动画互斥:新数据到达即取消旧帧,不叠加 */
 const chartAnims = new WeakMap();
 
@@ -574,10 +594,11 @@ function drawPolyline(canvas, coords, labels = {}, progress = 1) {
   ctx.fillStyle = cvar("--canvas-bg");
   ctx.fillRect(0, 0, W, H);
 
-  ctx.strokeStyle = "#38bdf8";
+  const pc = polylineColors();
+  ctx.strokeStyle = pc.route;
   ctx.lineWidth = 3;
   ctx.lineJoin = "round";
-  ctx.shadowColor = "rgba(56,189,248,0.6)";
+  ctx.shadowColor = pc.routeGlow;
   ctx.shadowBlur = 8;
   ctx.beginPath();
   const upto = Math.max(2, Math.ceil(coords.length * progress));
@@ -605,8 +626,8 @@ function drawPolyline(canvas, coords, labels = {}, progress = 1) {
       ctx.fillText(label, x, y - 13);
     }
   };
-  pin(coords[0], "#22d3ee", labels.origin || "起点");
-  pin(coords[coords.length - 1], "#34d399", labels.destination || "终点");
+  pin(coords[0], pc.origin, labels.origin || "起点");
+  pin(coords[coords.length - 1], pc.dest, labels.destination || "终点");
 }
 
 /* 回退折线的描线入场:与 drawLineChart 同一语言(0.56s ease-out,新请求取消旧帧) */
@@ -1583,13 +1604,15 @@ function initLLM() {
       $("ftRL").textContent = result.final.rougeL;
 
       const epochs = result.series.epoch;
-      /* 序列留档:主题切换后微调画布按新令牌重绘(repaintThemedCanvases) */
+      /* 序列留档:主题切换后微调画布按新令牌重绘(repaintThemedCanvases);
+         序列色随明暗主题取色(FT_COLORS),重绘时按 ftColors() 重映射 */
+      const fc = ftColors();
       ftSeriesCache = {
-        loss: [{ x: epochs, y: result.series.loss, color: "#f87171" }],
+        loss: [{ x: epochs, y: result.series.loss, color: fc[0] }],
         metric: [
-          { x: epochs, y: result.series.bleu4, color: "#38bdf8" },
-          { x: epochs, y: result.series.rouge1, color: "#34d399" },
-          { x: epochs, y: result.series.rougeL, color: "#f59e0b" },
+          { x: epochs, y: result.series.bleu4, color: fc[1] },
+          { x: epochs, y: result.series.rouge1, color: fc[2] },
+          { x: epochs, y: result.series.rougeL, color: fc[3] },
         ],
       };
       drawLineChart($("ftLossCanvas"), ftSeriesCache.loss);

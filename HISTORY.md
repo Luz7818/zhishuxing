@@ -1184,3 +1184,68 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 
 - 262→266(+4);`python -m pytest` **266 passed**;`python -m pyflakes src/ scripts/
   tests/` 0 告警;`zhishuxing smoke` → `Web smoke test passed.`。
+
+## 2026-11-12 · v2.12.0 验收收尾批:F2 遗留清单核销 + 验收非阻塞项收口(未发版)
+
+### 背景
+
+独立验收在 v2.12.0 发布提交(d1ace0d)后留下遗留项,本批逐条清零;只动表现层与
+入口校验,除 `parse_groups` 外不碰后端 .py;版本号与 pyproject 不动(未发版)。
+
+### F2 遗留核实(先建真值再动手,如实记录)
+
+- 验收探针所称「移动端 :576/:577/:579 死代码与 :577/:760 的 .12/.15s 仍存在」在
+  本批起点 HEAD(76c6bdd)实测不成立,按清单逐项 grep 建立真值:
+  - `grep -nE 'transition[^;]*\.(15|12)s'`(style.css + mobile_app.html 两文件)→
+    **0 命中**(全文件仅余 animation-delay 的 .12s/.15s 三处,属本批明示豁免范围);
+  - `background-size:160% 100%` / `background-position:0% 0%` / `92% 0%` 两文件
+    **0 命中**,mobile `.btn-primary` 全部 9 处出现逐一核对均为 2.11.1 纯色口径
+    (a637173 已清,半截死代码即 F2 注释块现位);
+  - mobile theme-fading button(:764-767)transform 已是 `var(--dur-1)`,.26s 主题色
+    过渡属 docs/CODE-STYLE.md 动效章节明示规范值(「主题切换规范」段已写明豁免
+    理由),无需再改。
+- 「全仓 transition 硬编码归零」类全称声明核查:TODO.md 全历史(git log -S)从未
+  写过该表述;HISTORY 既有条目按「只追加」纪律不改写;本批起 TODO 的 F2 记述
+  一律按清单核口径(见 TODO 当前进度)。
+
+### Fixed(修复 · 验收非阻塞项)
+
+- **parse_groups 空值防护**(本批唯一后端 .py 改动):验收探针实测四条 500 路径
+  收口——坐标元素显式 null(如 `start:[null,1]`,原形状检查放过、`int(None)` 抛
+  TypeError)与 `release_time`/`passengers` 显式 null、`via_landmarks` 显式 null
+  (越过 `.get` 默认值,业务层迭代 None)全部前置校验回 400 错误信封,对齐
+  ARCHITECTURE 关键约定「客户端可修正的输入错误一律回 400」;数值字符串等既有
+  可强转输入的宽松口径不变。`tests/test_api.py` 补
+  `test_dashboard_rejects_group_null_values` 一条钉五例,负向验证:实现前实跑为红
+  (int(None) TypeError→500),实现后绿;测试 266→267,AGENTS「当前状态」与
+  README 测试数同步(102c6e7)。
+- **app.js 微调序列与回退折线画布随明暗主题取色**(F5 收尾):`ftSeriesCache` 四色
+  (#f87171/#38bdf8/#34d399/#f59e0b)改 `FT_COLORS` 明暗两组(亮 600 系
+  #dc2626/#0284c7/#059669/#b45309,损失红/指标蓝绿琥珀色相稳定),`drawPolyline`
+  行进线/辉光/起终点 pin 收 `POLYLINE_COLORS`;主题切换沿用
+  `repaintThemedCanvases` 既有路径重绘(animate:false 终态,不重放描线)。drawGrid
+  的地标/路径/起终点色与 AMap 在线覆盖层色不在验收清单,维持现状(0a1b257);
+  app v=6.10。
+
+### Changed(变更 · 验收非阻塞项)
+
+- **`.feat::after` 光泽扫过收敛**:时长 .8s 按 Rare 豁免机制登记(光沿动线行进
+  母题,heroSheen/lineFlow 同族,0.3s 阶梯上限内呈现不出「扫过」感;豁免理由就地
+  注释 + CODE-STYLE 动效章节 Rare 清单登记),缓动由裸 ease 归 `--ease-in-out`;
+  style v=6.13(1323d54)。
+- **`.card` 死 transition 行删除**:原 :221 `border-color .18s ease, box-shadow
+  .18s ease` 整行被 v6.4 重定时层(border-color/box-shadow `--dur-2` +
+  transform `--dur-1`)同名覆盖,层叠后从不生效;删除并留指针注释防回潮;
+  style v=6.14(51fd5be)。
+- **移动端三药丸时长归阶梯**:mode-pill .3s / nav-pill .34s → `var(--dur-4)`
+  (对齐 seg-pill 既有做法;数值上 .3s==--dur-4,.34s→.3s 差 40ms 不可辨),曲线
+  `--ease-in-out` 不变;CODE-STYLE scopeNote 清账(三药丸曲线+时长均已归位),
+  sheet/toast 时长不一致仍留下一批;sw.js 对壳文档网络优先,无需 bump 缓存名
+  (9a76ec7)。
+
+### 验证(终态实跑)
+
+- `python -m pytest` **267 passed**;`python -m pyflakes src/ scripts/ tests/`
+  0 告警,退出码 0;`python -m zhishuxing.cli smoke` → `Web smoke test passed.`
+  退出码 0;`node --check app.js` 过。
+- 版本号与 pyproject 不动(未发版);绝不 push,推送等人确认。

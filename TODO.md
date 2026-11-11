@@ -8,8 +8,15 @@
 - 正在做：v2.12.0 发布（2026-11-11）——后端优化批（PERF-05/06/07）+ 请求入口健壮性
   + 前端动效升级批（F1–F7）整批随版收口；版本判定为「加能力升次版本」（逐项核对无
   契约破坏，判定理由与全部变更见 HISTORY v2.12.0 条目）；门禁 pytest 255 + pyflakes 0
-  + smoke 过。待办残留：真机视觉走查待有真实渲染环境人工复核（本机渲染帧冻结）；
-  移动端三药丸 .3s/.34s 时长归阶梯（下一批，scopeNote 已记）
+  + smoke 过。待办残留：真机视觉走查待有真实渲染环境人工复核（本机渲染帧冻结）
+- 刚完成：v2.12.0 验收收尾批——F2 遗留清单核销 + 验收非阻塞项收口（2026-11-12，
+  未发版）。F2 残留按清单核销（不称「全仓归零」）：mobile .btn-primary 半截死代码与
+  .15s/.12s transition 两项 grep 实测 0 残留（a637173 已清，探针所见应为旧检出），
+  theme-fading 按钮 transform 已在 --dur-1、.26s 属 CODE-STYLE 主题过渡规范值；
+  非阻塞项逐项独立提交：app.js 微调序列/回退折线画布随明暗取色（亮 600 系）、
+  .feat::after 光泽按 Rare 登记并收缓动、.card 死 transition 行删除、移动端三药丸
+  .3s/.34s 归 --dur-4（CODE-STYLE scopeNote 已清账）、parse_groups 空值防护四条
+  500 路径回 400（+1 测试）；门禁 pytest 267 + pyflakes 0 + smoke 过
 - 刚完成：SQLite 上线三件套（2026-11-12）——会话库 sessions.db 连接统一 journal_mode=WAL
   + busy_timeout=5000 + updated_at 索引（综合路线图 §3.2-1「上线硬前置」，深评 §2 指出
   purge_expired 全表扫描的补点），存量库打开时原位升级、无需迁移脚本；新增

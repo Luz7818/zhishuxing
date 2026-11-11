@@ -1112,3 +1112,40 @@ LLM 自动挂载/直连化、动作协议、Dock 布局重构、导航页地图�
 - `zhishuxing smoke` → `Web smoke test passed.`,退出码 0;
 - 提交后打本地 tag `v2.12.0`(按 docs/GIT.md 与 AGENTS「版本发布」行;绝不 push,
   推送等人确认)。
+
+## 2026-11-12 · 体检拍板快项:X2-02 前端结构回归网 + ZX2-1 移动端贴底跟随修复(未发版)
+
+### Fixed(修复)
+
+- **ZX2-1 移动端贴底跟随失效(P2)**:`web/mobile/mobile_app.html` `finish()` 里
+  `chatNearBottom()` 原在 `appendChild(assistantMsgEl(entry))` **之后**才测——长回复
+  落地后距底必 >80px,用户贴底阅读时新回复不再自动滚底。修复:测量挪到 append 之前
+  (`const nearBottom = chatNearBottom()` 先测后插),滚底判定用 append 前的测量值,
+  与桌面 `app.js` `appendChatMessage`(先测 `nearBottom` 再 `box.appendChild(el)`)同构。
+
+### Added(新增)
+
+- **`tests/test_frontend_regression.py` 7 条前端结构回归网(X2-02)**:全走 Flask client
+  取产物(跟随包路径,CI/安装态成立),零新依赖。回读保护次序 2(桌面/移动:测量必须
+  先于 append;移动侧另钉 append 后不得二次测量 `chatNearBottom()` 计数=1);a11y 锚点
+  5(两端 aria-live、画廊键盘四锚点、画布 role=img——5 张静态在 index.html +
+  chatRouteCanvas 动态注入锚点改在 app.js 源码钉、reduced-motion 兜底含 style.css
+  「必须显式落到终态」哨兵注释)。负向验证各红:回退移动次序→
+  `test_chat_autoscroll_measures_before_append_mobile` 红;删 aria-live→
+  `test_chat_aria_live_desktop` 红。
+- 手册锚点漂移两处如实修正(相对 2026-11-05 执行手册):行号随 2.12.0 批漂移(结构
+  未变);chatRouteCanvas 不在 index.html 静态标记(`app.js:1404` 动态注入),该断言
+  改钉 app.js 源码,手册原样照抄会红。
+
+### 文档
+
+- README.md「244 个测试通过」漂移修正(2.12.0 批 244→255 时漏改,本批随 262 一并
+  收口;同行 11 CLI/27 路由/7 报告实测复核无误不动);AGENTS「当前状态」测试两行
+  255→262;TODO「当前进度」补本批条目。
+
+### 测试
+
+- 255→262(+7);`python -m pytest` **262 passed**(23.57s,1 warning 为 torch/pynvml
+  弃用提示,与本批无关);`python -m pytest -o addopts="" --collect-only -q` 262
+  collected;`python -m pyflakes src/ scripts/ tests/` 0 告警退出码 0;`zhishuxing
+  smoke` → `Web smoke test passed.`。版本号不动(测试基建+单点前端缺陷修复,未发版)。

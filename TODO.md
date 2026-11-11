@@ -10,6 +10,11 @@
   契约破坏，判定理由与全部变更见 HISTORY v2.12.0 条目）；门禁 pytest 255 + pyflakes 0
   + smoke 过。待办残留：真机视觉走查待有真实渲染环境人工复核（本机渲染帧冻结）；
   移动端三药丸 .3s/.34s 时长归阶梯（下一批，scopeNote 已记）
+- 刚完成：体检拍板快项 X2-02 前端结构回归网 + ZX2-1 移动端贴底跟随修复（2026-11-12）——
+  mobile_app.html finish() 贴底测量挪到 append 前（与桌面 appendChatMessage 同构）；
+  新增 tests/test_frontend_regression.py 7 条结构断言（回读保护次序 2 + a11y 锚点 5，
+  负向验证：回退次序/删 aria-live 各红一条）；README「244 个测试」漂移一并收口；
+  门禁 pytest 262 + pyflakes 0 + smoke 过（未发版，版本号不动）
 - 下一个：多枢纽接入工具（任务 6）；SEC-07 Ed25519 签名升级仍随任务 5 排期
 
 ## 任务计划

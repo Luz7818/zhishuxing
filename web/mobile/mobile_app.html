@@ -1701,13 +1701,16 @@
         const entry = { role: 'assistant', text: data.reply || '', data };
         state.chatLog.push(entry);
         persistChatLog();
+        /* 回读保护:测量必须先于 append——长回复落地后距底必 >80px,append 后再测会误判用户已翻阅,
+           贴底跟随失效(与桌面 app.js appendChatMessage 先测后插同构) */
+        const nearBottom = chatNearBottom();
         $('chatLog').appendChild(assistantMsgEl(entry));
         if (data.route && (data.route.origin_text || data.route.details)) {
           state.lastChat = data;
           renderRoutePage(data);
           buzz(12);
         }
-        if (chatNearBottom()) scrollChatBottom();
+        if (nearBottom) scrollChatBottom();
         state.isPlanning = false;
         $('btnSend').disabled = false;
         $('btnSend').classList.remove('loading');
